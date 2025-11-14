@@ -1,5 +1,5 @@
 #--------------------------PROGRAM NAME-----------------------#
-NAME							:=	webservMeBaby
+NAME							:=	webServMeBaby
 all:							$(NAME)
 
 # ./$(NAME) worlds/world.rt
@@ -26,13 +26,13 @@ endif
 CC								:=	c++
 CFLAGS							:=	-Wall -Wextra -Werror
 CFLAGS							+=	-std=c++98
-DEBUGFLAGS						:=	-g2
+DEBUGFLAGS						:=	-g2 -D_GLIBCXX_DEBUG
 # CFLAGS						+=	-fsanitize=address
 # CFLAGS						+=	-fsanitize=undefined
 
 LINK := $(shell ld -v 2>&1 | grep --quiet GNU && gold -v)
 ifneq (,$(LINK))
-	# LDFLAGS			=	-fuse-ld=gold
+	LDFLAGS			=	-fuse-ld=gold
 endif
 
 COMPILER						:=	$(CC) $(CFLAGS)
@@ -74,13 +74,11 @@ CPPFLAGS						:=	-MMD -MP
 #--------------------------HEADER FILES-----------------------#
 INC_DIR							:=	include
 CPPFLAGS						+=	-I$(INC_DIR)
-CPPFLAGS						+=	-I$(LIBFT_DIR)/$(INC_DIR)
-CPPFLAGS						+=	-I$(MINILIBX_DIR) 
 
 
 #----------------------------LINKING--------------------------#
 $(NAME):		$(LIBFT) $(MINILIBX) $(OBJ_FILES) | linking
-	$(LINKER) $(OPTIFLAGS) $(OBJ_FILES) $(LIBFLAGS) -o $@
+	$(CC) $(OPTIFLAGS) $(OBJ_FILES) $(LIBFLAGS) -o $@
 	@printf "\n"
 
 $(DEBUG_EXEC):	$(LIBFT) $(MINILIBX) $(DEBUG_OBJ) | linking
