@@ -30,7 +30,7 @@ DEBUGFLAGS						:=	-g2 -D_GLIBCXX_DEBUG
 # CFLAGS						+=	-fsanitize=address
 # CFLAGS						+=	-fsanitize=undefined
 
-LINK := $(shell ld -v 2>&1 | grep --quiet GNU && gold -v)
+LINK := $(shell ld -v 2>&1 | grep --quiet GNU && gold -v 2>/dev/null)
 ifneq (,$(LINK))
 	LDFLAGS			=	-fuse-ld=gold
 endif

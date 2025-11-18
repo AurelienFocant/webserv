@@ -1,67 +1,93 @@
-#include <stdlib.h>
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netdb.h>
-
+#include <strings.h>
+#include <stdlib.h>
 #include <iostream>
-#include <string.h>
+#include <arpa/inet.h>
 
-#include <fcntl.h>
-#include <unistd.h>
-
-std::string response = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 637\r\nCache-Control: s-maxage=300, public, max-age=0\r\nContent-Language: en-US\r\nDate: Thu, 06 Dec 2018 17:37:18 GMT\r\nETag: \"2e77ad1dc6ab0b53a2996dfd4653c1c3\"\r\nServer: meinheld/0.6.1\r\nStrict-Transport-Security: max-age=63072000\r\nX-Content-Type-Options: nosniff\r\nX-Frame-Options: DENY\r\nX-XSS-Protection: 1; mode=block\r\nVary: Accept-Encoding,Cookie\r\nAge: 7\r\n\r\n<!doctype html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>A basic webpage</title>\r\n</head>\r\n<body>\r\n<h1>Basic HTML webpage</h1>\r\n<p>Hello, world!</p>\r\n</body>\r\n</html>\r\n";
-std::string response2 = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 637\r\nCache-Control: s-maxage=300, public, max-age=0\r\nContent-Language: en-US\r\nDate: Thu, 06 Dec 2018 17:37:18 GMT\r\nETag: \"2e77ad1dc6ab0b53a2996dfd4653c1c3\"\r\nServer: meinheld/0.6.1\r\nStrict-Transport-Security: max-age=63072000\r\nX-Content-Type-Options: nosniff\r\nX-Frame-Options: DENY\r\nX-XSS-Protection: 1; mode=block\r\nVary: Accept-Encoding,Cookie\r\nAge: 7\r\n\r\n<!doctype html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>A basic webpage</title>\r\n</head>\r\n<body>\r\n<h1>Basic HTML webpage</h1>\r\n<p>Hello, you!</p>\r\n</body>\r\n</html>\r\n";
-
-int	main()
+void	print_ai_structs(struct addrinfo *addrinfo)
 {
-	int	sockfd;
-	int ret;
-	struct sockaddr_in server_addr;
-	// std::string buffer;
-
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = INADDR_ANY;
-	server_addr.sin_port = htons(8080);
-
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-	ret = bind(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr));
-	if (ret)
-		std::cout << "ERROR2\n";
-
-	ret = listen(sockfd, 256);
-	if (ret)
-		std::cout << "ERROR3\n";
-
-	int	n = 0;
-
-	while (1) {
-		int	client_fd = 0;	
-		struct sockaddr_in	client_addr;
-		socklen_t client_addr_len = sizeof(client_addr);
-
-		client_fd = accept(sockfd, (struct sockaddr *) &client_addr, &client_addr_len);
-		if (client_fd == -1)
-			std::cout << "Error\n";
-		if (client_fd > 0) {
-			std::cout << client_fd << std::endl;
-
-			ret = 0;
-			if (n) {
-				if ((ret = send(client_fd, (const void *) response.c_str(), response.length(), 0)) < 0) {
-					std::cout << "ERROR4\n";
-				}
-				--n;
+	while (addrinfo)
+	{
+		std::cerr
+			<< "int	ai_flags:	"		<< addrinfo->ai_flags		<< '\n'
+			<< "int	ai_family:	"		<< addrinfo->ai_family		<< '\n'
+			<< "int	ai_socktype:	"	<< addrinfo->ai_socktype	<< '\n'
+			<< "int	ai_protocol:	"	<< addrinfo->ai_protocol	<< '\n'
+			<< "(int)	ai_addrlen:	"	<< addrinfo->ai_addrlen		<< '\n';
+			if (addrinfo->ai_canonname) {
+				std::cerr
+					<< "char*	ai_canonname:"	<< addrinfo->ai_canonname << '\n';
 			}
 			else {
-				if ((ret = send(client_fd, (const void *) response2.c_str(), response.length(), 0)) < 0) {
-					std::cout << "ERROR5\n";
-				}
-				n++;
+				std::cerr
+					<< "there is no canonnical name\n";
 			}
 
+		if (addrinfo->ai_family == AF_INET) {
+			sockaddr_in	*ipv4;
+			char		ipstr[INET_ADDRSTRLEN];
 
+			ipv4 = (struct sockaddr_in *) addrinfo->ai_addr;
+			inet_ntop(addrinfo->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
+
+			std::cerr << "The address is IPv4:\n";
+			std::cerr
+				<< "sin_family:	"	<< ipv4->sin_family			<< '\n'
+				<< "sin_port:	"	<< ntohs(ipv4->sin_port)	<< '\n'
+				<< "sin_addr:	"	<< ipstr					<< '\n';
 		}
+		else if (addrinfo->ai_family == AF_INET6) {
+			sockaddr_in6	*ipv6;
+			char			ipstr[INET6_ADDRSTRLEN];
+
+			ipv6 = (struct sockaddr_in6 *) addrinfo->ai_addr;
+			inet_ntop(addrinfo->ai_family, &(ipv6->sin6_addr), ipstr, sizeof(ipstr));
+
+			std::cerr << "The address is IPv6:\n";
+			std::cerr
+				<< "sin_family:	"	<< ipv6->sin6_family		<< '\n'
+				<< "sin_port:	"	<< ntohs(ipv6->sin6_port)	<< '\n'
+				<< "sin_addr:	"	<< ipstr					<< '\n';
+		}
+
+		std::cerr << std::endl;
+		addrinfo = addrinfo->ai_next;
 	}
-	return (0);
+}
+
+int	main(int ac, char **av)
+{
+	if (ac > 2) {
+		std::cerr << "Usage: ./webserv [config_file]";
+		(void) av;
+		return (1);
+	}
+
+
+	struct addrinfo	hints;
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_PASSIVE;
+
+
+	int ret;
+	struct addrinfo	*res;
+	if ((ret = getaddrinfo(NULL, "http", &hints, &res)) != 0) {
+		std::cerr << "getaddrinfo error: " << gai_strerror(ret);
+	}
+
+	print_ai_structs(res);
+
+	int	listenfd;
+	listenfd = socket(AF_INET, SOCK_STREAM, 0);
+	(void) listenfd;
+
+
+
+	freeaddrinfo(res);
+	return (EXIT_SUCCESS);
 }
