@@ -75,7 +75,7 @@ int	main()
 		struct sockaddr_in	client_addr;
 		socklen_t client_addr_len = sizeof(client_addr);
 		char ip_buf[INET_ADDRSTRLEN];
-		char response_to_parse[1024];
+		char response_to_parse[102400];
 
 		int pollCount = poll(pollRequests.data(), pollRequests.size(), 1000);
 		if (pollCount < 0)
@@ -111,6 +111,7 @@ int	main()
 				ssize_t	ret;
 				//std::string	request;
 				ret = recv(pollRequests[i].fd, (void *) response_to_parse, sizeof(response_to_parse), 0);
+				std::cout << response_to_parse << std::endl;
 					//request.append(response_to_parse);
 				if (ret <=0)
 				{
@@ -118,7 +119,7 @@ int	main()
 						perror("recv :");
 					else
 						std::cout << "Connection " << pollRequests[i].fd << " closed" << std::endl;
-					return (1);
+					continue ;
 				}
 				// -> parser la requete http blablabla
 
