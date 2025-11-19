@@ -8,6 +8,8 @@
 #include <iostream>
 #include <string.h>
 #include <poll.h>
+#include <sys/epoll.h>
+
 #include <vector>
 
 #include <fcntl.h>
@@ -56,12 +58,25 @@ int	main()
 {
 	int listenSocket;
 	std::vector<struct pollfd> pollRequests;
+	struct epoll_event ev, ready_events[10];
 	
-
 	listenSocket = setUpServer();
 	if (listenSocket < 0)
 		return (1);
 	fcntl(listenSocket, F_SETFL, O_NONBLOCK);
+
+	int e_fd = epoll_create1(0);
+	std::cout << "epoll fd: " << e_fd << std::endl;
+	if (e_fd < 0)
+	{
+		perror("epoll: ");
+		return (1);
+	}
+
+	ev.events = EPOLLIN;
+	ev.data.fd = listenSocket;
+
+	epoll_ctl(e_fd, EPOLL_CTL_ADD, listenSocket, &ev);
 
 	struct pollfd pollFd;
 	memset(&pollFd, 0, sizeof(pollFd));
@@ -69,6 +84,7 @@ int	main()
 	pollFd.events = POLLIN;
 	pollFd.revents = 0;
 	pollRequests.push_back(pollFd);
+	
 
 	while (1) {
 		int	clientFd = 0;
@@ -76,6 +92,10 @@ int	main()
 		socklen_t client_addr_len = sizeof(client_addr);
 		char ip_buf[INET_ADDRSTRLEN];
 		char response_to_parse[102400];
+
+		int efd_count = epoll_wait(e_fd, ready_events, sizeof(ready_events), -1);
+		if (efd_count < 0)
+			perror("epoll_wait: ");
 
 		int pollCount = poll(pollRequests.data(), pollRequests.size(), 1000);
 		if (pollCount < 0)
