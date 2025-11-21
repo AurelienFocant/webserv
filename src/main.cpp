@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <cstdio>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netdb.h>
@@ -17,7 +18,42 @@
 
 #define MAX_EVENTS 1024
 
-std::string response = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 185\r\nCache-Control: s-maxage=300, public, max-age=0\r\nContent-Language: en-US\r\nDate: Thu, 06 Dec 2018 17:37:18 GMT\r\nETag: \"2e77ad1dc6ab0b53a2996dfd4653c1c3\"\r\nServer: meinheld/0.6.1\r\nStrict-Transport-Security: max-age=63072000\r\nX-Content-Type-Options: nosniff\r\nX-Frame-Options: DENY\r\nX-XSS-Protection: 1; mode=block\r\nVary: Accept-Encoding,Cookie\r\nAge: 7\r\n\r\n<!doctype html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>A basic webpage</title>\r\n</head>\r\n<body>\r\n<h1>Basic HTML webpage</h1>\r\n<p>Hello, world!</p>\r\n</body>\r\n</html>\r\n";
+std::string	build_response(void)
+{
+	std::string header =
+		"HTTP/1.1 200 OK\r\n"
+		"Connection: Keep-Alive\r\n"
+		"Content-Type: text/html; charset=utf-8\r\n"
+		"Content-Length: 185\r\n"
+		"Cache-Control: s-maxage=300, public, max-age=0\r\n"
+		"Content-Language: en-US\r\n"
+		"Date: Thu, 06 Dec 2018 17:37:18 GMT\r\n"
+		"ETag: \"2e77ad1dc6ab0b53a2996dfd4653c1c3\"\r\n"
+		"Server: meinheld/0.6.1\r\n"
+		"Strict-Transport-Security: max-age=63072000\r\n"
+		"X-Content-Type-Options: nosniff\r\n"
+		"X-Frame-Options: DENY\r\n"
+		"X-XSS-Protection: 1; mode=block\r\n"
+		"Vary: Accept-Encoding,Cookie\r\n"
+		"Age: 7\r\n"
+		"\r\n";
+
+	std::string body =
+		"<!doctype html>\r\n"
+		"<html lang=\"en\""
+		">\r\n"
+		"<head>\r\n"
+		"<meta charset=\"utf-8\""
+		">\r\n"
+		"<title>A basic webpage</title>\r\n"
+		"</head>\r\n"
+		"<body>\r\n"
+		"<h1>Basic HTML webpage</h1>\r\n"
+		"<p>Hello, world!</p>\r\n"
+		"</body>\r\n"
+		"</html>\r\n";
+	return (header + body);
+}
 
 int	setUpServer()
 {
@@ -33,25 +69,25 @@ int	setUpServer()
 	serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0); // atomique, a la place d'utiliser fcntl avec O_NONBLOCK
 	if (serverSocket < 0)
 	{
-			perror("serverSocket: ");
-			return (-1);
+		perror("ERROR! serverSocket: ");
+		return (-1);
 	}
-	
+
 	// Pouvoir retry sans erreur avant 60s (reutiliser 8080):
 	int	enable = 1;
 	if	(setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
 	{
-		perror("setsockopt: ");
+		perror("ERROR! setsockopt: ");
 		return -1;
 	}
 
 	ret = bind(serverSocket, (struct sockaddr *) &server_addr, sizeof(server_addr));
 	if (ret < 0)
-		perror("bind: ");
+		perror("ERROR! bind: ");
 
 	ret = listen(serverSocket, SOMAXCONN);
 	if (ret < 0)
-		perror("listen: ");
+		perror("ERROR! listen: ");
 
 	return (serverSocket);
 }
@@ -59,26 +95,23 @@ int	setUpServer()
 
 int	main()
 {
-	int listenSocket;
-	struct epoll_event ev, ready_events[MAX_EVENTS];
-	
+	int	listenSocket;
+	struct epoll_event	ev_hints;
+	struct epoll_event	ready_events[MAX_EVENTS];
+
 	listenSocket = setUpServer();
 	if (listenSocket < 0)
 		return (1);
 
-	//fcntl(listenSocket, F_SETFL, O_NONBLOCK);
-
 	int e_fd = epoll_create1(0);
-	std::cout << "epoll fd: " << e_fd << std::endl;
-	if (e_fd < 0)
-	{
-		perror("epoll: ");
+	if (e_fd < 0) {
+		perror("ERROR! epoll: ");
 		return (1);
 	}
 
-	ev.events = EPOLLIN;
-	ev.data.fd = listenSocket;
-	epoll_ctl(e_fd, EPOLL_CTL_ADD, listenSocket, &ev);
+	ev_hints.events = EPOLLIN;
+	ev_hints.data.fd = listenSocket;
+	epoll_ctl(e_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
 	while (1) {
 		int	clientFd = 0;
@@ -88,59 +121,70 @@ int	main()
 
 		int efd_count = epoll_wait(e_fd, ready_events, MAX_EVENTS, 100);
 		if (efd_count < 0)
-			perror("epoll_wait: ");
+			perror("ERROR! epoll_wait: ");
 
-		for (int i = 0; i < efd_count; i++)
-		{
+		for (int i = 0; i < efd_count; i++) {
 			std::cout << "READY FD: " << ready_events[i].data.fd << std::endl;
-			 
-			if (ready_events[i].data.fd == listenSocket)
-			{
+
+			if (ready_events[i].data.fd == listenSocket) {
 				clientFd = accept(listenSocket, (struct sockaddr *) &client_addr, &client_addr_len);
 				if (clientFd < 0)
-					perror("accept: ");
+					perror("ERROR! accept: ");
 
 				fcntl(clientFd, F_SETFL, O_NONBLOCK);
-				
-				ev.events = EPOLLIN;
-				ev.data.fd = clientFd;
-				epoll_ctl(e_fd, EPOLL_CTL_ADD, clientFd, &ev);
+
+				ev_hints.events = EPOLLIN | EPOLLRDHUP;
+				ev_hints.data.fd = clientFd;
+				epoll_ctl(e_fd, EPOLL_CTL_ADD, clientFd, &ev_hints);
 
 				/* PRINT LOG CLIENT */
 				std::cout << "client fd : " << clientFd << std::endl;
 				inet_ntop(AF_INET, &client_addr.sin_addr, ip_buf, sizeof(ip_buf));
 				std::cout << "connection from " << ip_buf << " client port: " << ntohs(client_addr.sin_port) << std::endl;
 			}
-			else
-			{
+			else {
+				ssize_t	bytes_recvd;
+				ssize_t	bytes_sent;
+				ssize_t	total_sent;
+				char	request_to_parse[10];
+				std::string	tmp;
+				std::string	request;
+				std::string response;
+				const char*	data;
 
-				ssize_t	ret;
-				char request_to_parse[1024];
+				do {
+					bytes_recvd = recv(ready_events[i].data.fd, (void *) request_to_parse, sizeof(request_to_parse), 0);
+					if (bytes_recvd > 0) {
+						std::string	tmp(request_to_parse, bytes_recvd);
+						request.append(tmp);
+					}
+					std::cout << "bytes read: " << bytes_recvd << std::endl;
 
-				if (ready_events[i].events & EPOLLHUP) {
+				} while (bytes_recvd > 0);
+
+				if (bytes_recvd < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+					perror("ERROR! recv :");
+
+				if (bytes_recvd == 0 && ready_events[i].events & EPOLLRDHUP) {
 					std::cout << "SIGHUP flag was set\n";
+					epoll_ctl(e_fd, EPOLL_CTL_DEL, ready_events[i].data.fd, NULL);
+					close(ready_events[i].data.fd);
+					continue ;
 				}
 
-				std::string	request;
-				do {
-					ret = recv(ready_events[i].data.fd, (void *) request_to_parse, sizeof(request_to_parse) - 1, 0);
-					if (ret > 0) {
-						request_to_parse[ret] = '\0';
-						request.append(request_to_parse);
+
+				total_sent = 0;
+				response = build_response();
+				data = response.c_str();
+				while (total_sent < response.length()) {
+					bytes_sent = send(ready_events[i].data.fd, data + total_sent, response.length() - total_sent, MSG_NOSIGNAL);
+					if (bytes_sent < 0) {
+						perror("ERROR! send: ");
+						break ;
 					}
-					std::cout << "bytes read: " << ret << std::endl;
+					total_sent += bytes_sent;
+				}
 
-				} while (ret > 0);
-
-				if (ret < 0)
-					perror("recv :");
-
-				if ((send(ready_events[i].data.fd, (const void *) response.c_str(), response.length(), MSG_NOSIGNAL)) < 0)
-					perror("send: ");
-
-				if (ret == 0)
-					close(ready_events[i].data.fd);
-				// -> parser la requete http blablabla
 			}
 		}
 	}
