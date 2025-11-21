@@ -11,7 +11,6 @@
 #include <poll.h>
 #include <sys/epoll.h>
 
-#include <vector>
 #include <map>
 
 #include <fcntl.h>
@@ -27,15 +26,67 @@ class Connection
 		int					clientFd;
 		struct sockaddr_in	clientAddr;
 		std::string			request;
-		int					requOffset;
 		std::string			response;
 		int					respOffset;
+		bool				connClosed;
+		struct epoll_event	epollEvent;
 
-		void	receiveRequest() {
+		bool	receiveRequest() {
+			char	buf[10];
+			int		bytesRecvd;
+
+
+			while ((bytesRecvd = recv(clientFd, buf, sizeof(buf), 0)) > 0) {
+				request.append(buf, bytesRecvd);
+			}
+
+			if (bytesRecvd == 0 && epollEvent.events & EPOLLRDHUP) {
+				connClosed = true;
+				return false;
+			}
+			if (epollEvent.events & EPOLLERR || epollEvent.events & EPOLLHUP) {
+				connClosed = true;
+				return false;
+			}
+
+			connClosed = false;
+			return (true);
 		};
-		void	parseRequest() {
+
+		bool	parseRequest() {
+			return (true);
 		};
-		void	sendResponse() {
+
+		void	sendResponse(int epollFd) {
+			ssize_t bytesSent = send(clientFd,
+									response.c_str() + respOffset,
+									response.length() - respOffset,
+									MSG_NOSIGNAL);
+
+			if (bytesSent > 0) {
+				respOffset += bytesSent;
+
+				if (respOffset >= (int)response.length()) {
+					// full response sent --> stop watching EPOLLOUT
+					struct epoll_event	ev;
+
+					ev.events = EPOLLIN | EPOLLRDHUP; // keep listening for reads
+					ev.data.fd = clientFd;
+					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) < 0) {
+						perror("epoll_ctl MOD");
+						connClosed = true;
+					}
+
+					response.clear();
+					respOffset = 0;
+				}
+			}
+			else if (bytesSent < 0) {
+				if (errno != EAGAIN && errno != EWOULDBLOCK) {
+					perror("send");
+					connClosed = true;
+				}
+			}
 		};
 };
 
@@ -115,7 +166,7 @@ Connection	add_clientFD_to_epoll(int epollFd, int listenSocket)
 {
 	Connection	res;
 	socklen_t	client_addr_len = sizeof(res.clientAddr);
-	struct epoll_event	ev_hints;
+	struct epoll_event	ev;
 
 	res.clientFd = accept(listenSocket, (struct sockaddr *) &res.clientAddr, &client_addr_len);
 	if (res.clientFd < 0) {
@@ -125,9 +176,9 @@ Connection	add_clientFD_to_epoll(int epollFd, int listenSocket)
 
 	fcntl(res.clientFd, F_SETFL, O_NONBLOCK);
 
-	ev_hints.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
-	ev_hints.data.fd = res.clientFd;
-	epoll_ctl(epollFd, EPOLL_CTL_ADD, res.clientFd, &ev_hints);
+	ev.events = EPOLLIN | EPOLLRDHUP;
+	ev.data.fd = res.clientFd;
+	epoll_ctl(epollFd, EPOLL_CTL_ADD, res.clientFd, &ev);
 	return (res);
 }
 
@@ -142,64 +193,55 @@ void	main_loop(int epollFd, int listenSocket)
 			perror("ERROR! epoll_wait: ");
 
 		for (int i = 0; i < efd_count; i++) {
-			if (ready_events[i].data.fd == listenSocket) {
+			int	fd = ready_events[i].data.fd;
+
+			if (fd == listenSocket) {
 				Connection newConnection = add_clientFD_to_epoll(epollFd, listenSocket);
+				newConnection.epollEvent = ready_events[i];
 				connections[newConnection.clientFd] = newConnection;
 			}
 			else {
 				std::map<int, Connection>::iterator	it;
-				it = connections.find(ready_events[i].data.fd);
+				it = connections.find(fd);
 				if (it != connections.end()) {
 					Connection& currConn = it->second;
 
-					currConn.receiveRequest();
+					if (ready_events[i].events & EPOLLIN) {
+						currConn.receiveRequest();
+						if (currConn.connClosed) {
+							epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
+							close(fd);
+							connections.erase(it);
+							continue ;
+						}
+					}
+
 					currConn.parseRequest();
-					currConn.sendResponse();
-				}
 
-				ssize_t	bytes_recvd;
-				ssize_t	bytes_sent;
-				ssize_t	total_sent;
-				char	request_to_parse[10];
-				std::string	tmp;
-				std::string	request;
-				std::string response;
-				const char*	data;
-
-				do {
-					bytes_recvd = recv(ready_events[i].data.fd, (void *) request_to_parse, sizeof(request_to_parse), 0);
-					if (bytes_recvd > 0) {
-						std::string	tmp(request_to_parse, bytes_recvd);
-						request.append(tmp);
+					if (currConn.response.empty()) {
+						struct epoll_event	ev;
+						ev.events = EPOLLOUT | EPOLLRDHUP;
+						ev.data.fd = currConn.clientFd;
+						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn.clientFd, &ev);
+						currConn.response = build_response();
 					}
-					std::cout << "bytes read: " << bytes_recvd << std::endl;
 
-				} while (bytes_recvd > 0);
-
-				if (bytes_recvd < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))
-					perror("ERROR! recv :");
-
-				if (bytes_recvd == 0 && ready_events[i].events & EPOLLRDHUP) {
-					std::cout << "SIGHUP flag was set\n";
-					epoll_ctl(epollFd, EPOLL_CTL_DEL, ready_events[i].data.fd, NULL);
-					close(ready_events[i].data.fd);
-					continue ;
-				}
-
-
-				total_sent = 0;
-				ssize_t length = response.length();
-				response = build_response();
-				data = response.c_str();
-				while (total_sent < length) {
-					bytes_sent = send(ready_events[i].data.fd, data + total_sent, response.length() - total_sent, MSG_NOSIGNAL);
-					if (bytes_sent < 0) {
-						perror("ERROR! send: ");
-						break ;
+					if (ready_events[i].events & EPOLLOUT) {
+						currConn.sendResponse(epollFd);
+						if (currConn.connClosed) {
+							epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
+							close(fd);
+							connections.erase(it);
+							continue ;
+						}
 					}
-					total_sent += bytes_sent;
-				}
 
+					if (ready_events[i].events & EPOLLERR || ready_events[i].events & EPOLLHUP) {
+						epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
+						close(fd);
+						connections.erase(it);
+					}
+				}
 			}
 		}
 	}
