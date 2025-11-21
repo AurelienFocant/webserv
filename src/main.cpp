@@ -12,11 +12,32 @@
 #include <sys/epoll.h>
 
 #include <vector>
+#include <map>
 
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <cerrno>
+
 #define MAX_EVENTS 1024
+
+class Connection
+{
+	public:
+		int					clientFd;
+		struct sockaddr_in	clientAddr;
+		std::string			request;
+		int					requOffset;
+		std::string			response;
+		int					respOffset;
+
+		void	receiveRequest() {
+		};
+		void	parseRequest() {
+		};
+		void	sendResponse() {
+		};
+};
 
 std::string	build_response(void)
 {
@@ -67,16 +88,14 @@ int	setUpServer()
 
 	//serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0); // atomique, a la place d'utiliser fcntl avec O_NONBLOCK
-	if (serverSocket < 0)
-	{
+	if (serverSocket < 0) {
 		perror("ERROR! serverSocket: ");
 		return (-1);
 	}
 
 	// Pouvoir retry sans erreur avant 60s (reutiliser 8080):
 	int	enable = 1;
-	if	(setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
-	{
+	if	(setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0) {
 		perror("ERROR! setsockopt: ");
 		return -1;
 	}
@@ -92,57 +111,52 @@ int	setUpServer()
 	return (serverSocket);
 }
 
-
-int	main()
+Connection	add_clientFD_to_epoll(int epollFd, int listenSocket)
 {
-	int	listenSocket;
+	Connection	res;
+	socklen_t	client_addr_len = sizeof(res.clientAddr);
 	struct epoll_event	ev_hints;
-	struct epoll_event	ready_events[MAX_EVENTS];
 
-	listenSocket = setUpServer();
-	if (listenSocket < 0)
-		return (1);
-
-	int e_fd = epoll_create1(0);
-	if (e_fd < 0) {
-		perror("ERROR! epoll: ");
-		return (1);
+	res.clientFd = accept(listenSocket, (struct sockaddr *) &res.clientAddr, &client_addr_len);
+	if (res.clientFd < 0) {
+		perror("ERROR! accept: ");
+		throw std::runtime_error("accept socket failed");
 	}
 
-	ev_hints.events = EPOLLIN;
-	ev_hints.data.fd = listenSocket;
-	epoll_ctl(e_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
+	fcntl(res.clientFd, F_SETFL, O_NONBLOCK);
+
+	ev_hints.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
+	ev_hints.data.fd = res.clientFd;
+	epoll_ctl(epollFd, EPOLL_CTL_ADD, res.clientFd, &ev_hints);
+	return (res);
+}
+
+void	main_loop(int epollFd, int listenSocket)
+{
+	struct epoll_event			ready_events[MAX_EVENTS];
+	std::map<int, Connection>	connections;
 
 	while (1) {
-		int	clientFd = 0;
-		struct sockaddr_in	client_addr;
-		socklen_t client_addr_len = sizeof(client_addr);
-		char ip_buf[INET_ADDRSTRLEN];
-
-		int efd_count = epoll_wait(e_fd, ready_events, MAX_EVENTS, 100);
+		int efd_count = epoll_wait(epollFd, ready_events, MAX_EVENTS, 100);
 		if (efd_count < 0)
 			perror("ERROR! epoll_wait: ");
 
 		for (int i = 0; i < efd_count; i++) {
-			std::cout << "READY FD: " << ready_events[i].data.fd << std::endl;
-
 			if (ready_events[i].data.fd == listenSocket) {
-				clientFd = accept(listenSocket, (struct sockaddr *) &client_addr, &client_addr_len);
-				if (clientFd < 0)
-					perror("ERROR! accept: ");
-
-				fcntl(clientFd, F_SETFL, O_NONBLOCK);
-
-				ev_hints.events = EPOLLIN | EPOLLRDHUP;
-				ev_hints.data.fd = clientFd;
-				epoll_ctl(e_fd, EPOLL_CTL_ADD, clientFd, &ev_hints);
-
-				/* PRINT LOG CLIENT */
-				std::cout << "client fd : " << clientFd << std::endl;
-				inet_ntop(AF_INET, &client_addr.sin_addr, ip_buf, sizeof(ip_buf));
-				std::cout << "connection from " << ip_buf << " client port: " << ntohs(client_addr.sin_port) << std::endl;
+				Connection newConnection = add_clientFD_to_epoll(epollFd, listenSocket);
+				connections[newConnection.clientFd] = newConnection;
 			}
 			else {
+				std::map<int, Connection>::iterator	it;
+				it = connections.find(ready_events[i].data.fd);
+				if (it != connections.end()) {
+					Connection& currConn = it->second;
+
+					currConn.receiveRequest();
+					currConn.parseRequest();
+					currConn.sendResponse();
+				}
+
 				ssize_t	bytes_recvd;
 				ssize_t	bytes_sent;
 				ssize_t	total_sent;
@@ -167,16 +181,17 @@ int	main()
 
 				if (bytes_recvd == 0 && ready_events[i].events & EPOLLRDHUP) {
 					std::cout << "SIGHUP flag was set\n";
-					epoll_ctl(e_fd, EPOLL_CTL_DEL, ready_events[i].data.fd, NULL);
+					epoll_ctl(epollFd, EPOLL_CTL_DEL, ready_events[i].data.fd, NULL);
 					close(ready_events[i].data.fd);
 					continue ;
 				}
 
 
 				total_sent = 0;
+				ssize_t length = response.length();
 				response = build_response();
 				data = response.c_str();
-				while (total_sent < response.length()) {
+				while (total_sent < length) {
 					bytes_sent = send(ready_events[i].data.fd, data + total_sent, response.length() - total_sent, MSG_NOSIGNAL);
 					if (bytes_sent < 0) {
 						perror("ERROR! send: ");
@@ -188,5 +203,33 @@ int	main()
 			}
 		}
 	}
+}
+
+int	main()
+{
+	int	listenSocket;
+	struct epoll_event	ev_hints;
+
+	listenSocket = setUpServer();
+	if (listenSocket < 0)
+		return (1);
+
+	int epollFd = epoll_create1(0);
+	if (epollFd < 0) {
+		perror("ERROR! epoll: ");
+		return (1);
+	}
+
+	ev_hints.events = EPOLLIN;
+	ev_hints.data.fd = listenSocket;
+	epoll_ctl(epollFd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
+
+	try {
+		main_loop(epollFd, listenSocket);
+	}
+	catch (std::exception &e) {
+		std::cerr << "Exception happened: " << e.what() << std::endl;
+	}
+
 	return (0);
 }
