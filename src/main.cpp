@@ -20,112 +20,10 @@
 
 #define MAX_EVENTS 1024
 
-class Connection
-{
-	public:
-		int					clientFd;
-		struct sockaddr_in	clientAddr;
-		std::string			request;
-		std::string			response;
-		int					respOffset;
-		bool				connClosed;
-		struct epoll_event	epollEvent;
-
-		bool	receiveRequest() {
-			char	buf[10];
-			int		bytesRecvd;
-
-
-			while ((bytesRecvd = recv(clientFd, buf, sizeof(buf), 0)) > 0) {
-				request.append(buf, bytesRecvd);
-			}
-
-			if (bytesRecvd == 0 && epollEvent.events & EPOLLRDHUP) {
-				connClosed = true;
-				return false;
-			}
-			if (epollEvent.events & EPOLLERR || epollEvent.events & EPOLLHUP) {
-				connClosed = true;
-				return false;
-			}
-
-			connClosed = false;
-			return (true);
-		};
-
-		bool	parseRequest() {
-			return (true);
-		};
-
-		void	sendResponse(int epollFd) {
-			ssize_t bytesSent = send(clientFd,
-									response.c_str() + respOffset,
-									response.length() - respOffset,
-									MSG_NOSIGNAL);
-
-			if (bytesSent > 0) {
-				respOffset += bytesSent;
-
-				if (respOffset >= (int)response.length()) {
-					// full response sent --> stop watching EPOLLOUT
-					struct epoll_event	ev;
-
-					ev.events = EPOLLIN | EPOLLRDHUP; // keep listening for reads
-					ev.data.fd = clientFd;
-					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) < 0) {
-						perror("epoll_ctl MOD");
-						connClosed = true;
-					}
-
-					response.clear();
-					respOffset = 0;
-				}
-			}
-			else if (bytesSent < 0) {
-				if (errno != EAGAIN && errno != EWOULDBLOCK) {
-					perror("send");
-					connClosed = true;
-				}
-			}
-		};
-};
-
-std::string	build_response(void)
-{
-	std::string header =
-		"HTTP/1.1 200 OK\r\n"
-		"Connection: Keep-Alive\r\n"
-		"Content-Type: text/html; charset=utf-8\r\n"
-		"Content-Length: 185\r\n"
-		"Cache-Control: s-maxage=300, public, max-age=0\r\n"
-		"Content-Language: en-US\r\n"
-		"Date: Thu, 06 Dec 2018 17:37:18 GMT\r\n"
-		"ETag: \"2e77ad1dc6ab0b53a2996dfd4653c1c3\"\r\n"
-		"Server: meinheld/0.6.1\r\n"
-		"Strict-Transport-Security: max-age=63072000\r\n"
-		"X-Content-Type-Options: nosniff\r\n"
-		"X-Frame-Options: DENY\r\n"
-		"X-XSS-Protection: 1; mode=block\r\n"
-		"Vary: Accept-Encoding,Cookie\r\n"
-		"Age: 7\r\n"
-		"\r\n";
-
-	std::string body =
-		"<!doctype html>\r\n"
-		"<html lang=\"en\""
-		">\r\n"
-		"<head>\r\n"
-		"<meta charset=\"utf-8\""
-		">\r\n"
-		"<title>A basic webpage</title>\r\n"
-		"</head>\r\n"
-		"<body>\r\n"
-		"<h1>Basic HTML webpage</h1>\r\n"
-		"<p>Hello, world!</p>\r\n"
-		"</body>\r\n"
-		"</html>\r\n";
-	return (header + body);
-}
+// We need to be able to check every connection independently
+// We put those is a std::map, which is a <key, value> pair
+// with the key being the clientFd of the connection
+#include "Connection.hpp"
 
 int	setUpServer()
 {
@@ -162,30 +60,30 @@ int	setUpServer()
 	return (serverSocket);
 }
 
-Connection	add_clientFD_to_epoll(int epollFd, int listenSocket)
+Connection*	add_clientFD_to_epoll(int epollFd, int listenSocket)
 {
-	Connection	res;
-	socklen_t	client_addr_len = sizeof(res.clientAddr);
+	Connection	*res = new Connection;
+	socklen_t	client_addr_len = sizeof(res->clientAddr);
 	struct epoll_event	ev;
 
-	res.clientFd = accept(listenSocket, (struct sockaddr *) &res.clientAddr, &client_addr_len);
-	if (res.clientFd < 0) {
+	res->clientFd = accept(listenSocket, (struct sockaddr *) &res->clientAddr, &client_addr_len);
+	if (res->clientFd < 0) {
 		perror("ERROR! accept: ");
 		throw std::runtime_error("accept socket failed");
 	}
 
-	fcntl(res.clientFd, F_SETFL, O_NONBLOCK);
+	fcntl(res->clientFd, F_SETFL, O_NONBLOCK);
 
 	ev.events = EPOLLIN | EPOLLRDHUP;
-	ev.data.fd = res.clientFd;
-	epoll_ctl(epollFd, EPOLL_CTL_ADD, res.clientFd, &ev);
+	ev.data.fd = res->clientFd;
+	epoll_ctl(epollFd, EPOLL_CTL_ADD, res->clientFd, &ev);
 	return (res);
 }
 
 void	main_loop(int epollFd, int listenSocket)
 {
 	struct epoll_event			ready_events[MAX_EVENTS];
-	std::map<int, Connection>	connections;
+	std::map<int, Connection*>	connections;
 
 	while (1) {
 		int efd_count = epoll_wait(epollFd, ready_events, MAX_EVENTS, 100);
@@ -196,19 +94,24 @@ void	main_loop(int epollFd, int listenSocket)
 			int	fd = ready_events[i].data.fd;
 
 			if (fd == listenSocket) {
-				Connection newConnection = add_clientFD_to_epoll(epollFd, listenSocket);
-				newConnection.epollEvent = ready_events[i];
-				connections[newConnection.clientFd] = newConnection;
+				Connection* newConnection = add_clientFD_to_epoll(epollFd, listenSocket);
+				newConnection->epollEvent = ready_events[i];				// Reference epollEvent in its Connection
+				connections[newConnection->clientFd] = newConnection;	// Add Connection to map<int, Connection>
 			}
 			else {
-				std::map<int, Connection>::iterator	it;
-				it = connections.find(fd);
-				if (it != connections.end()) {
-					Connection& currConn = it->second;
+				// Find the connection that matches the fd of ready_event[i]
+				std::map<int, Connection*>::iterator	it;	// declare iterator
+				it = connections.find(fd);				// find the right key
+				if (it != connections.end()) {			// check before dereference
+					Connection* currConn = it->second;	// currConn is the value of <key, value>
 
+
+					// If socket is ready for reading
 					if (ready_events[i].events & EPOLLIN) {
-						currConn.receiveRequest();
-						if (currConn.connClosed) {
+						currConn->receiveRequest();
+
+						// Close Connection if needed
+						if (currConn->connClosed) {
 							epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
 							close(fd);
 							connections.erase(it);
@@ -216,19 +119,31 @@ void	main_loop(int epollFd, int listenSocket)
 						}
 					}
 
-					currConn.parseRequest();
 
-					if (currConn.response.empty()) {
+					// We'll need to do loads of stuff in here
+					currConn->parseRequest();
+
+
+					// If response is empty --> build it
+					// and tell epoll we want it to tell us
+					// when the socket is ready for writing
+					if (currConn->response.empty()) {
 						struct epoll_event	ev;
 						ev.events = EPOLLOUT | EPOLLRDHUP;
-						ev.data.fd = currConn.clientFd;
-						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn.clientFd, &ev);
-						currConn.response = build_response();
+						ev.data.fd = currConn->clientFd;
+						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn->clientFd, &ev);
+						currConn->response = currConn->build_response();
+
+						currConn->sendResponse(epollFd);
 					}
 
+
+					// If the socket is ready for writing
 					if (ready_events[i].events & EPOLLOUT) {
-						currConn.sendResponse(epollFd);
-						if (currConn.connClosed) {
+						currConn->sendResponse(epollFd);
+
+						// Close Connection if needed
+						if (currConn->connClosed) {
 							epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
 							close(fd);
 							connections.erase(it);
@@ -236,6 +151,7 @@ void	main_loop(int epollFd, int listenSocket)
 						}
 					}
 
+					// Close connection if error
 					if (ready_events[i].events & EPOLLERR || ready_events[i].events & EPOLLHUP) {
 						epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
 						close(fd);
