@@ -56,7 +56,7 @@ DEBUG_OBJ						:=	$(SRC_FILES:$(SRC_DIR)%.cpp=$(DEBUG_DIR)%.o)
 
 $(OBJ_DIR)/%.o:		$(SRC_DIR)/%.cpp | compiling
 	@mkdir -p $(@D)
-	$(COMPILER) $(OPTIFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(COMPILER) $(DEBUGFLAGS) $(CPPFLAGS) -c $< -o $@
 
 $(DEBUG_DIR)/%.o:	$(SRC_DIR)/%.cpp | compiling
 	@mkdir -p $(@D)
