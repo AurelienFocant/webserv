@@ -49,7 +49,7 @@ int	setUpServer()
 	if (ret < 0)
 		perror("bind: ");
 
-	ret = listen(serverSocket, 256);
+	ret = listen(serverSocket, SOMAXCONN);
 	if (ret < 0)
 		perror("listen: ");
 
@@ -101,6 +101,8 @@ int	main()
 				clientFd = accept(listenSocket, (struct sockaddr *) &client_addr, &client_addr_len);
 				if (clientFd < 0)
 					perror("accept: ");
+
+				fcntl(clientFd, F_SETFL, O_NONBLOCK);
 				
 				ev.events = EPOLLIN;
 				ev.data.fd = clientFd;
