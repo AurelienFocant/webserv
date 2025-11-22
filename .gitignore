@@ -1,3 +1,5 @@
 .build/
 webServMeBaby
 debugMyServerPlease
+misc/.cache
+misc/compile_*
