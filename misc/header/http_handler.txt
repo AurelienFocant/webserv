@@ -1,0 +1,9 @@
+1st	ligne -> start ligne
+	always get first ligne -> error if doesn't exist
+Headers:
+	parse ':'
+		-> before ':' to whitespace -> options
+		-> after ':' to next option(?) -> option value, different type(string, int ...)
+Empty line
+Body:
+		->after empty line to end of string ?
