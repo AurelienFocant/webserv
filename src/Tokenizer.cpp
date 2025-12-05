@@ -3,9 +3,9 @@
 #include <iostream>
 
 Tokenizer::Tokenizer( void )
+{
 	: _input("default input")
 	, _it(_input.begin())
-{
 }
 
 Tokenizer::Tokenizer( std::string const& s )
