@@ -12,9 +12,14 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 	while (i) {
 		new_token._tkType = WORD; 
 		stream >> new_token._lexeme; 
-		token_list.push_back(new_token);
 		i--;
+		if (new_token._lexeme.find('\n') != -1)
+			break ;
+		token_list.push_back(new_token);
 	}
+/*	if (i < 0)
+		handle_error;
+*/
 	_input.erase(0, _input.find('\n') + 1);
 	while (_it != _input.end()) {
 		switch (peek()) {

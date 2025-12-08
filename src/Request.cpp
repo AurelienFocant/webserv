@@ -6,57 +6,69 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/04 16:00:05 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/08 16:46:05 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
+/*Constructor - Copy Constructor - Destructor*/
+Request::Request(std::vector<t_Token>& token_list) {
+	if (!parseRequest(token_list)) {
+		std::cerr << "Wrong Request" << std::endl;
+	}
+}
+
 /*Public Methods*/
-bool	Request::parseRequest(std::string request) {
-	std::stringstream	stream;
+bool	Request::parseRequest(std::vector<t_Token>& token_list) {
+	std::vector<t_Token>::const_iterator	it = token_list.begin();
 
-	stream << request;
-	parseRequestLine(stream);
-	parseHeader(stream);
-	return (0);
+	//Parsing for mandatory first line information
+	if (!setMethod(*it))
+		return (false);
+	it++;
+	if (!setRequestUrl(*it))
+		return (false);
+	it++;
+	if (!setHttpVersion(*it))
+		return (false);
+	it++;
+	if ((*it)._tkType != EOL)	
+		return (false);
+	return (true);
 }
 
-bool	Request::parseRequestLine(std::stringstream& request) {
-	int			pos = 0;
-
-	char*				buffer;
-	std::string			token;
-
-	request >> token;
-	setMethod(token);
-	request >> token;
-	setRequestUrl(token);
-	request >> token;
-	setHttpVersion(token);
-	request.getline(buffer, 60);
-	std::cout << getMethod() << " " << getRequestUrl() << " " << getHttpVersion() << std::endl;
-	return (1);
+bool	Request::setMethod(const t_Token& token) {
+	if (token._tkType != WORD)	
+		return (false);
+	if (!token._lexeme.compare("GET")) {
+		method = "GET";
+		return (true);
+	}
+	return (false);
 }
 
-bool	Request::parseHeader(std::stringstream& request) {
-	std::string	token = "1";
-	std::string	test1 = "Yolo";
-	std::string	test2 = "Halaa";
-	char	buffer_token[256];
-	char	buffer_arg[256];
+bool	Request::setRequestUrl(const t_Token& token) {
+	if (token._tkType != WORD)
+		return (false);
+	if (token._lexeme[0] == '/') {
+		request_url = token._lexeme;
+		return (true);
+	}
+	return (false);
+}
 
-	int	i = 2;
-	while (i && token.length() && token != "\r\n\r\n") {	
-		request.getline(buffer_token, 60, ':');
-		request.getline(buffer_arg, 256, '\r');
-		options[buffer_token] = buffer_arg;
-		//this->options.insert(std::make_pair("Hello", "World!"));
-		//		this->options.insert(test1, test2);
-		i--;
+bool	Request::setHttpVersion(const t_Token& token) {
+	if (token._tkType != WORD)
+		return (false);
+	if (!token._lexeme.compare("HTTP/1.0") || !token._lexeme.compare("HTTP/1.1")) {
+		http_version = token._lexeme;
+		return (true);
 	}
-	for (std::map<std::string, std::string>::const_iterator it = options.begin(); it != options.end(); ++it) {
-	      std::cout << "{" << it->first << " = " << it->second << "}" << std::endl;
-	}
-	return (1);
+	return (false);
+}
+
+std::ostream&	operator<<(std::ostream& ostream, Request& other) {
+	ostream << other.getMethod() << '\t' << other.getRequestUrl() << '\t' << other.getHttpVersion();
+	return (ostream);
 }
