@@ -3,15 +3,13 @@
 #include <iostream>
 
 Tokenizer::Tokenizer( void )
-{
 	: _input("default input")
-	, _it(_input.begin())
+	, _it(_input.begin()) {
 }
 
 Tokenizer::Tokenizer( std::string const& s )
 	: _input(s)
-	, _it(_input.begin())
-{
+	, _it(_input.begin()) {
 }
 
 Tokenizer::Tokenizer( const Tokenizer& src )
@@ -49,4 +47,20 @@ bool	Tokenizer::match(char c)
 		return (false);
 	advance();
 	return (true);
+}
+
+std::string	Tokenizer::getTokenType(t_Token token) {
+	switch (token._tkType) {
+		case (ERROR):
+			return ("ERROR");	
+		case (WORD):
+			return ("WORD");	
+		case (COLON):
+			return ("COLON");	
+		case (COMA):
+			return ("COMA");	
+		case (EOL):
+			return ("EOL");	
+	}
+	return ("\0");
 }

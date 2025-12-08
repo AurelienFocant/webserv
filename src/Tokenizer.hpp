@@ -5,7 +5,7 @@
 #include <vector>
 
 typedef enum {
-	WORD, SEMICOLON
+	ERROR, WORD, COLON, COMA, EOL
 }	t_tokenType;
 
 typedef struct {
@@ -15,7 +15,7 @@ typedef struct {
 
 class Tokenizer
 {
-	private:
+	protected:
 
 		std::string					_input;
 		std::string::const_iterator _it;
@@ -30,13 +30,14 @@ class Tokenizer
 
 		Tokenizer	( const Tokenizer& src );
 		Tokenizer&	operator= ( const Tokenizer& rhs );
-		~Tokenizer	( void );
+		virtual ~Tokenizer	( void );
 
 		char	peek() const;
 		char	advance();
 		bool	match(char c);
 
 		virtual std::vector<t_Token>	scanTokens() = 0;
+		static std::string				getTokenType(t_Token token) ;
 };
 
 #endif // TOKENIZER_HPP
