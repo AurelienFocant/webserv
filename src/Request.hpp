@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/08 16:31:23 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/09 11:23:24 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,10 +43,11 @@ class	Request	{
 		std::string	getMethod() { return(method);}
 		std::string	getRequestUrl() { return(request_url);}
 		std::string	getHttpVersion() { return(http_version);}
+		const std::multimap<std::string, std::string>&	getOptions() {return (options);}
 
 	private:
 	/*Private Attributes*/
-		std::map<std::string, std::string>		options;
+		std::multimap<std::string, std::string>		options;
 		std::string								type;
 		std::string								method;
 		std::string								request_url;
@@ -54,6 +55,8 @@ class	Request	{
 
 	/*Private Methods*/
 		bool	parseRequest(std::vector<t_Token>& token_list);
+	static const std::string	authorized_method;
+	static const std::string	unimplemented_method;
 };
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
