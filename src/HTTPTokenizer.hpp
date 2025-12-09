@@ -9,11 +9,13 @@
 class	HTTPTokenizer : virtual public Tokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
+		HTTPTokenizer() {}
 		HTTPTokenizer(std::string input);
+		virtual ~HTTPTokenizer() {};
 	/*Overloaded Operators*/
 	/*Public Methods*/
 		std::vector<t_Token>	scanTokens() ;
-		std::string				getWord() ;
+		std::string				getWord(std::string delim_list) ;
 		
 	private:
 	/*Private Attributes*/

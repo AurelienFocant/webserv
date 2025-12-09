@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/09 11:23:24 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/09 14:57:02 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,11 @@
 # include "HTTPTokenizer.hpp"
 /*MACROS*/
 
-class	Request	{
+class	Request	: virtual private HTTPTokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
-		Request(std::vector<t_Token>& token_list);
+		Request();
+		Request(std::string request);
 //		Request(const Request& copy_from);
 //		~Request();
 
@@ -34,6 +35,9 @@ class	Request	{
 //		Request&	operator=(const Request& other) ;
 
 	/*Publics Methods*/
+	/*Publics Attributes*/
+		bool	valid;
+		int		status_code;
 
 	/*Getters - Setters*/
 		bool	setMethod(const t_Token& token) ;
@@ -54,7 +58,7 @@ class	Request	{
 		std::string								http_version;
 
 	/*Private Methods*/
-		bool	parseRequest(std::vector<t_Token>& token_list);
+		bool	parseRequest();
 	static const std::string	authorized_method;
 	static const std::string	unimplemented_method;
 };

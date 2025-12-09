@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/09 11:28:33 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/09 14:56:57 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,29 +16,37 @@ const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method = "HEAD";
 
 /*Constructor - Copy Constructor - Destructor*/
-Request::Request(std::vector<t_Token>& token_list) {
-	if (!parseRequest(token_list)) {
-		std::cerr << "Wrong Request" << std::endl;
-	}
+Request::Request() : HTTPTokenizer() {
+	valid = false;
+	status_code = -1;
+}
+
+Request::Request(std::string request) : HTTPTokenizer(request) {
+	valid = false;
+	status_code = -1;
+	if (!parseRequest()) {}
 }
 
 /*Public Methods*/
-bool	Request::parseRequest(std::vector<t_Token>& token_list) {
+bool	Request::parseRequest() {
+	std::vector<t_Token>	token_list = scanTokens();
 	std::vector<t_Token>::const_iterator	it = token_list.begin();
 
 	//Parsing for mandatory first line information
-	if (!setMethod(*it))
+	if (!(valid = setMethod(*it)))
 		return (false);
 	it++;
-	if (!setRequestUrl(*it))
+	if (!(valid = setRequestUrl(*it)))
 		return (false);
 	it++;
-	if (!setHttpVersion(*it))
+	if (!(valid = setHttpVersion(*it)))
 		return (false);
 	it++;
-/*	if ((*it)._tkType != EOL)	
+	if ((*it)._tkType != EOL) {
+		valid = false;
 		return (false);
-*/
+	}
+	it++;
 	//Parsing header
 	while (it->_tkType == WORD) {
 		std::string	options_name = it->_lexeme;
@@ -64,6 +72,10 @@ bool	Request::parseRequest(std::vector<t_Token>& token_list) {
 	}
 	if (it->_tkType != EOL)
 		return (false);
+	//Parsing body if POST request
+	if (!method.compare("POST")) {
+//		get body
+	}
 	return (true);
 }
 

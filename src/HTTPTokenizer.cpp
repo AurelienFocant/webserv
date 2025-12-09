@@ -6,21 +6,36 @@ HTTPTokenizer::HTTPTokenizer(std::string input) : Tokenizer(input) {
 std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 	std::vector<t_Token> token_list;
 	t_Token	new_token;
-	std::stringstream	stream;
-	stream << _input;
-	int	i = 3;
-	while (i) {
-		new_token._tkType = WORD; 
-		stream >> new_token._lexeme; 
-		i--;
-		if (new_token._lexeme.find('\n') != -1)
-			break ;
-		token_list.push_back(new_token);
+
+	//Tokenizing first line of request
+	while (*_it != '\n') {
+		switch (peek()) {
+			case (' '):
+				advance();
+				break ;
+			case ('\r'):
+				advance();
+				if (peek() == '\n') {
+					new_token._tkType = EOL;
+					new_token._lexeme = "\\r\\n";
+					token_list.push_back(new_token);
+				}
+				else {
+					new_token._tkType = ERROR;
+					new_token._lexeme = "ERROR";
+					token_list.push_back(new_token);
+					return (token_list);
+				}
+				break ;
+			default:
+				new_token._tkType = WORD;
+				new_token._lexeme = getWord(" \r");
+				token_list.push_back(new_token);
+		}
 	}
-/*	if (i < 0)
-		handle_error;
-*/
-	_input.erase(0, _input.find('\n') + 1);
+	advance();
+
+	//Tokenizing Header
 	while (_it != _input.end()) {
 		switch (peek()) {
 			case (':'):
@@ -52,22 +67,20 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 				break ;
 			default:
 				new_token._tkType = WORD;
-				new_token._lexeme = getWord();
+				new_token._lexeme = getWord(":,\r");
 				token_list.push_back(new_token);
 		}
 	}
 	return (token_list);
 }
 
-std::string	HTTPTokenizer::getWord() {
+std::string	HTTPTokenizer::getWord(std::string delim_list) {
 	int		j = 0;
 	while (_it[j] == ' ' || _it[j] == '\t')
 		j++;
 	int		i = 0;
-	while (_it[i + j] != ':' && _it[i + j] != ',' && _it[i + j] != '\r')
+	while (delim_list.find(_it[i + j]) == -1)
 		i++;
-//	while (_it[i] == ' ' || _it[i] == '\t')
-//		i--;
 	std::string	word = _input.substr(_it - _input.begin() + j, i);
 	if (_input[_it - _input.begin() + i + j])
 		_it += i + j;
