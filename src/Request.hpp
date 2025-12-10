@@ -14,6 +14,7 @@
 # define	REQUEST_HPP
 
 /*INCLUDES*/
+# include <cstdlib>
 # include <iostream>
 # include <sstream>
 # include <string>
@@ -24,8 +25,10 @@
 /*MACROS*/
 
 /*ENUM*/
-enum HttpStatusCode // ERROR_TYPE = Error_code	http version
+typedef enum // ERROR_TYPE = Error_code	http version
 {
+	INIT_STATE						= -1,
+
     // 1xx — Informational
     CONTINUE                        = 100,	 // 1.1
     SWITCHING_PROTOCOLS            	= 101,	 // 1.1
@@ -75,7 +78,7 @@ enum HttpStatusCode // ERROR_TYPE = Error_code	http version
     SERVICE_UNAVAILABLE             = 503,   // 1.0
     GATEWAY_TIMEOUT                 = 504,   // 1.1
     HTTP_VERSION_NOT_SUPPORTED      = 505    // 1.1
-};
+}									t_HttpCode;
 
 class	Request	: public HTTPTokenizer {
 	public:
@@ -89,36 +92,49 @@ class	Request	: public HTTPTokenizer {
 //		Request&	operator=(const Request& other) ;
 
 	/*Publics Methods*/
-	/*Publics Attributes*/
-		bool	valid;
-		int		status_code;
 
 	/*Getters - Setters*/
-		bool	setMethod(const t_Token& token) ;
-		bool	setRequestUrl(const t_Token& token) ;
-		bool	setHttpVersion(const t_Token& token) ;
+		bool	setMethod(std::vector<t_Token>::const_iterator& it) ;
+		bool	setRequestUrl(std::vector<t_Token>::const_iterator& it) ;
+		bool	setHttpVersion(std::vector<t_Token>::const_iterator& it) ;
 
-		std::string	getMethod() { return(method);}
-		std::string	getRequestUrl() { return(request_url);}
-		std::string	getHttpVersion() { return(http_version);}
+		std::string		getMethod() { return(method);}
+		std::string		getRequestUrl() { return(request_url);}
+		std::string		getHttpVersion() { return(http_version);}
+		bool			getCompleted() { return(complete);}
+		t_HttpCode		getStatusCode() { return(status_code);}
 		const std::multimap<std::string, std::string>&	getOptions() {return (options);}
 
 	private:
 	/*Private Attributes*/
-		std::multimap<std::string, std::string>		options;
+		//Request State
+		bool									complete;
+		t_HttpCode								status_code;
+
+		//Request informations
 		std::string								type;
 		std::string								method;
 		std::string								request_url;
 		std::string								http_version;
+		std::string								html_body;
+
+		//Request usefull header informations
+		std::multimap<std::string, std::string>	options;
+		size_t									content_length;
+
+		//Http methods limits -> assigned in Request.cpp
+		static const std::string				authorized_method;
+		static const std::string				unimplemented_method;
+		static const char*		 				important_argument[];
 
 	/*Private Methods*/
 		bool	parseRequest();
-	static const std::string	authorized_method;
-	static const std::string	unimplemented_method;
+		std::string	normalizeOptions(std::string argument) ;
+		void	detectImportantValue(std::string& argument, std::string value) ;
 };
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
-std::string		httpStatusToString(HttpStatusCode& code) ;
-HttpStatusCode httpStatusFromString(const std::string& s) ;
+std::string		httpStatusToString(t_HttpCode code) ;
+t_HttpCode httpStatusFromString(const std::string& s) ;
 
 #endif
