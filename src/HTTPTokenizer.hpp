@@ -9,8 +9,8 @@
 class	HTTPTokenizer : virtual public Tokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
-		HTTPTokenizer() {}
-		HTTPTokenizer(std::string input);
+		HTTPTokenizer();
+		HTTPTokenizer(std::string const& input);
 		virtual ~HTTPTokenizer() {};
 	/*Overloaded Operators*/
 	/*Public Methods*/

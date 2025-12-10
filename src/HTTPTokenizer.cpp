@@ -1,6 +1,11 @@
 #include "HTTPTokenizer.hpp"
 
-HTTPTokenizer::HTTPTokenizer(std::string input) : Tokenizer(input) {
+HTTPTokenizer::HTTPTokenizer() : Tokenizer() {
+	std::cout << "Defaul constructor called: HTTPTokenizer" << std::endl;
+}
+
+HTTPTokenizer::HTTPTokenizer(std::string const& input) : Tokenizer(input) {
+	std::cout << "String constructor called: HTTPTokenizer" << std::endl;
 };
 
 std::vector<t_Token>	HTTPTokenizer::scanTokens() {

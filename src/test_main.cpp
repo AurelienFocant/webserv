@@ -10,6 +10,6 @@ int main() {
 	std::cout << "----------------------------------------" << std::endl;
 	*/
 
-	std::cout << message << std::endl;
+//	std::cout << message << std::endl;
 	return (0);
 }
