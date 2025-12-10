@@ -19,14 +19,14 @@ const std::string	Request::unimplemented_method = "HEAD";
 Request::Request() : HTTPTokenizer() {
 	valid = false;
 	status_code = -1;
-	std::cout << "Default constructor called: HTTPTokenizer" << std::endl;
+	std::cout << "Default constructor called: Request" << std::endl;
 }
 
 Request::Request(std::string const& request) : HTTPTokenizer(request) {
 	valid = false;
 	status_code = -1;
-	std::cout << "String constructor called: HTTPTokenizer" << std::endl;
-//	if (!parseRequest()) {}
+	std::cout << "String constructor called: Request" << std::endl;
+	if (!parseRequest()) {}
 }
 
 /*Public Methods*/

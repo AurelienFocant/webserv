@@ -6,12 +6,12 @@
 # include <sstream>
 # include "Tokenizer.hpp"
 
-class	HTTPTokenizer : virtual public Tokenizer {
+class	HTTPTokenizer : public Tokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
 		HTTPTokenizer();
 		HTTPTokenizer(std::string const& input);
-		virtual ~HTTPTokenizer() {};
+		virtual ~HTTPTokenizer() {std::cout << "Destructor called: HTTPTokenizer" << std::endl;};
 	/*Overloaded Operators*/
 	/*Public Methods*/
 		std::vector<t_Token>	scanTokens() ;

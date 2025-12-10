@@ -23,13 +23,13 @@
 # include "HTTPTokenizer.hpp"
 /*MACROS*/
 
-class	Request	: virtual public HTTPTokenizer {
+class	Request	: public HTTPTokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
 		Request();
 		Request(std::string const& request);
 //		Request(const Request& copy_from);
-//		~Request();
+		~Request() {std::cout << "Destructor called: Request" << std::endl;};
 
 	/*Overloaded operators*/
 //		Request&	operator=(const Request& other) ;

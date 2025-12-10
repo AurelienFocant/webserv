@@ -5,13 +5,13 @@
 Tokenizer::Tokenizer( void )
 	: _input("default input")
 	, _it(_input.begin()) {
-	std::cout << "Default constructor called: HTTPTokenizer" << std::endl;
+	std::cout << "Default constructor called: Tokenizer" << std::endl;
 }
 
 Tokenizer::Tokenizer( std::string const& s )
 	: _input(s)
 	, _it(_input.begin()) {
-	std::cout << "String constructor called: HTTPTokenizer" << std::endl;
+	std::cout << "String constructor called: Tokenizer" << std::endl;
 }
 
 Tokenizer::Tokenizer( const Tokenizer& src )
