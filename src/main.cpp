@@ -122,7 +122,7 @@ void	main_loop(int epollFd, int listenSocket)
 
 
 					// We'll need to do loads of stuff in here
-					currConn->parseRequest();
+					currConn->request_message.parseRequest();
 
 
 					// If response is empty --> build it

@@ -104,7 +104,7 @@ bool	Request::parseRequest() {
 
 	//Parsing body if POST request
 	if (!method.compare("POST")) {
-		if (content_length == -1) {
+		if (content_length == std::numeric_limits<unsigned long>::max()) {
 			complete = true;
 			status_code = LENGTH_REQUIRED;
 		}
@@ -119,8 +119,7 @@ bool	Request::parseRequest() {
 }
 
 std::string	Request::normalizeOptions(std::string argument) {
-	std::string::iterator	it = argument.begin();
-	for (it; it != argument.end(); it++) {
+	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
 		*it = std::tolower(*it);
 	}
 	return (argument);
@@ -147,12 +146,12 @@ bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
 	t_Token	token = *it;
 	if (token._tkType != WORD)	
 		return (false);
-	if (authorized_method.find(token._lexeme) != -1) {
+	if (authorized_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
 		method = token._lexeme;
 		it++;
 		return (true);
 	}
-	if (unimplemented_method.find(token._lexeme) != -1) {
+	if (unimplemented_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
 		method = "Error";
 		status_code = NOT_IMPLEMENTED;
 		return (false);
@@ -195,6 +194,7 @@ std::ostream&	operator<<(std::ostream& ostream, Request& other) {
 
 std::string httpStatusToString(t_HttpCode code)  {
     switch (code)  {
+		case INIT_STATE:					  return "Initialized";
         // --- 1xx ---
         case CONTINUE:                        return "Continue";
         case SWITCHING_PROTOCOLS:             return "Switching Protocols";

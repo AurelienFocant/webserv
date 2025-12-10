@@ -98,7 +98,7 @@ std::string	HTTPTokenizer::getWord(std::string delim_list) {
 	while (*_it == ' ' || *_it == '\t')
 		advance();
 	std::string::const_iterator	end_word = _it;
-	while (end_word != _input.end() && delim_list.find(*end_word) == -1)
+	while (end_word != _input.end() && delim_list.find(*end_word) == std::numeric_limits<unsigned long>::max())
 		end_word++;
 	std::string	word = _input.substr(_it - _input.begin(), end_word - _it);
 	_it = end_word;

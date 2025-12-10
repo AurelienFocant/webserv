@@ -92,18 +92,16 @@ class	Request	: public HTTPTokenizer {
 //		Request&	operator=(const Request& other) ;
 
 	/*Publics Methods*/
+		bool	parseRequest();
 
-	/*Getters - Setters*/
-		bool	setMethod(std::vector<t_Token>::const_iterator& it) ;
-		bool	setRequestUrl(std::vector<t_Token>::const_iterator& it) ;
-		bool	setHttpVersion(std::vector<t_Token>::const_iterator& it) ;
+	/*Getters*/
+		std::string		getMethod() const { return(method);}
+		std::string		getRequestUrl() const { return(request_url);}
+		std::string		getHttpVersion() const { return(http_version);}
+		bool			getCompleted() const { return(complete);}
+		t_HttpCode		getStatusCode() const { return(status_code);}
 
-		std::string		getMethod() { return(method);}
-		std::string		getRequestUrl() { return(request_url);}
-		std::string		getHttpVersion() { return(http_version);}
-		bool			getCompleted() { return(complete);}
-		t_HttpCode		getStatusCode() { return(status_code);}
-		const std::multimap<std::string, std::string>&	getOptions() {return (options);}
+		const std::multimap<std::string, std::string>&	getOptions() const {return (options);}
 
 	private:
 	/*Private Attributes*/
@@ -128,7 +126,10 @@ class	Request	: public HTTPTokenizer {
 		static const char*		 				important_argument[];
 
 	/*Private Methods*/
-		bool	parseRequest();
+		bool	setMethod(std::vector<t_Token>::const_iterator& it) ;
+		bool	setRequestUrl(std::vector<t_Token>::const_iterator& it) ;
+		bool	setHttpVersion(std::vector<t_Token>::const_iterator& it) ;
+
 		std::string	normalizeOptions(std::string argument) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
 };

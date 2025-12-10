@@ -5,7 +5,7 @@
 #include <vector>
 
 typedef enum {
-	ERROR, WORD, COLON, COMA, EOL, EOF
+	ERROR, WORD, COLON, COMA, EOL
 }	t_tokenType;
 
 typedef struct {

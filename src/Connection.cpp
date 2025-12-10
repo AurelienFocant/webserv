@@ -46,11 +46,6 @@ bool	Connection::receiveRequest()
 	return (true);
 };
 
-bool	Connection::parseRequest()
-{
-	return (true);
-};
-
 void	Connection::sendResponse(int epollFd)
 {
 	ssize_t bytesSent = send(clientFd,

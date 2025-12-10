@@ -2,6 +2,7 @@
 # define	HTTPTOKENIZER_HPP
 
 # include <string>
+# include <limits>
 # include <iostream>
 # include <sstream>
 # include "Tokenizer.hpp"

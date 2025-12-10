@@ -21,6 +21,10 @@
 
 #include <cerrno>
 
+#include "Request.hpp"
+
+class Request;
+
 class Connection
 {
 	public:
@@ -31,6 +35,7 @@ class Connection
 		int					respOffset;
 		bool				connClosed;
 		struct epoll_event	epollEvent;
+		Request				request_message;
 
 
 
@@ -40,7 +45,6 @@ class Connection
 		~Connection	( void );
 
 		bool	receiveRequest();
-		bool	parseRequest();
 		void	sendResponse(int epollFd);
 
 		std::string	build_response();
