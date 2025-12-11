@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/11 11:41:31 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/11 18:28:46 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,18 +21,32 @@ const char*			Request::important_argument[] = {
 
 /*Constructor - Copy Constructor - Destructor*/
 Request::Request() : HTTPTokenizer() {
-	complete = false;
-	status_code = INIT_STATE;
-	content_length = -1;
+	cleanRequest();
 	std::cout << "Default constructor called: Request" << std::endl;
 }
 
 Request::Request(std::string const& request) : HTTPTokenizer(request) {
-	complete = false;
-	status_code = INIT_STATE;
-	content_length = -1;
+	cleanRequest();
 	std::cout << "String constructor called: Request" << std::endl;
 	if (!parseRequest()) {}
+}
+
+bool	Request::cleanRequest() {
+	//Request State
+	_complete = false;
+	_status_code = INIT_STATE;
+
+	//Request informations
+	_method.clear();
+	_request_uri.clear();
+	_http_version.clear();
+	_body.clear();
+
+	//request usefull header informations
+	_headers.clear();
+	_content_length = -1; 
+
+	return (true);
 }
 
 /*Public Methods*/
@@ -49,25 +63,54 @@ bool	Request::parseRequest() {
 	if (!setMethod(it)
 			|| !setRequestUrl(it)
 			|| !setHttpVersion(it)
-			|| (*it)._tkType != EOL) {
-		if (status_code == INIT_STATE)
-			status_code = BAD_REQUEST;
-		complete = true;
-		return (false);
+			|| (*it)._tkType != EOL
+			) {
+		if (_status_code == INIT_STATE)
+			_status_code = BAD_REQUEST;
+		_complete = true;
+		return (_complete);
 	}
 	it++;
+	if (it != token_list.end() && !parseHeader(it, token_list))
+		return (_complete);
 
+	//Check for GET request
+	if (!_method.compare("GET")) {
+		_complete = true;
+		if (it == token_list.end())
+			_status_code = OK;
+		else
+			_status_code = BAD_REQUEST;
+	}
+
+	//Parsing body if POST request
+	if (!_method.compare("POST")) {
+		if (_content_length == std::numeric_limits<unsigned long>::max()) {
+			_complete = true;
+			_status_code = LENGTH_REQUIRED;
+		}
+		else if (it->_tkType == WORD && it->_lexeme.size() == _content_length) {
+			_complete = true;
+			_status_code = OK;
+			_body = it->_lexeme;
+		}
+		else
+			return (_complete);
+	}
+	return (_complete);
+}
 	//Parsing header
+bool	Request::parseHeader(std::vector<t_Token>::const_iterator& it, std::vector<t_Token>& token_list) {
 	while (it != token_list.end() && it->_tkType != EOL) {
 		while (it->_tkType == WORD) {
-			std::string	options_name = normalizeOptions(it->_lexeme);
+			std::string	options_name = normalizeHeadersKey(it->_lexeme);
 			it++;
 			if (it->_tkType == COLON) {
 				it++;
 				if (it->_tkType == WORD) {
 					while (it->_tkType == WORD) {
 						detectImportantValue(options_name, it->_lexeme);
-						options.insert(std::make_pair(options_name, it->_lexeme));		
+						_headers.insert(std::make_pair(options_name, it->_lexeme));		
 						it++;
 						if (it->_tkType != COMA)
 							break ;
@@ -75,14 +118,14 @@ bool	Request::parseRequest() {
 					}
 				}
 				else {
-					complete = true;
-					status_code = BAD_REQUEST;
+					_complete = true;
+					_status_code = BAD_REQUEST;
 					return (false);
 				}
 			}
 			else {
-				complete = true;
-				status_code = BAD_REQUEST;
+				_complete = true;
+				_status_code = BAD_REQUEST;
 				return (false);
 			}
 			if (it->_tkType == EOL)
@@ -92,33 +135,10 @@ bool	Request::parseRequest() {
 			return (false);
 	}
 	it++;
-
-	//Check for GET request
-	if (!method.compare("GET")) {
-		complete = true;
-		if (it == token_list.end())
-			status_code = OK;
-		else
-			status_code = BAD_REQUEST;
-	}
-
-	//Parsing body if POST request
-	if (!method.compare("POST")) {
-		if (content_length == std::numeric_limits<unsigned long>::max()) {
-			complete = true;
-			status_code = LENGTH_REQUIRED;
-		}
-		else if (it->_tkType == WORD && it->_lexeme.size() == content_length) {
-			complete = true;
-			status_code = OK;
-		}
-		else
-			return (false);
-	}
 	return (true);
 }
 
-std::string	Request::normalizeOptions(std::string argument) {
+std::string	Request::normalizeHeadersKey(std::string argument) {
 	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
 		*it = std::tolower(*it);
 	}
@@ -133,7 +153,7 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 		case (sizeof(important_argument)):
 			break ;
 		case (0):
-			content_length = std::atol(value.c_str()); 
+			_content_length = std::atol(value.c_str()); 
 			break ;
 		default:
 			break ; 
@@ -147,13 +167,13 @@ bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
 	if (token._tkType != WORD)	
 		return (false);
 	if (authorized_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
-		method = token._lexeme;
+		_method = token._lexeme;
 		it++;
 		return (true);
 	}
 	if (unimplemented_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
-		method = "Error";
-		status_code = NOT_IMPLEMENTED;
+		_method = "Error";
+		_status_code = NOT_IMPLEMENTED;
 		return (false);
 	}
 	return (false);
@@ -164,7 +184,7 @@ bool	Request::setRequestUrl(std::vector<t_Token>::const_iterator& it) {
 	if (token._tkType != WORD)
 		return (false);
 	if (token._lexeme[0] == '/') {
-		request_url = token._lexeme;
+		_request_uri = token._lexeme;
 		it++;
 		return (true);
 	}
@@ -176,16 +196,22 @@ bool	Request::setHttpVersion(std::vector<t_Token>::const_iterator& it) {
 	if (token._tkType != WORD)
 		return (false);
 	if (!token._lexeme.compare("HTTP/1.0") || !token._lexeme.compare("HTTP/1.1")) {
-		http_version = token._lexeme;
+		_http_version = token._lexeme;
 		it++;
 		return (true);
 	}
 	return (false);
 }
 
+bool	Request::setInput(std::string input) {
+	cleanRequest();
+	HTTPTokenizer::setInput(input);
+	return (true);
+}
+
 std::ostream&	operator<<(std::ostream& ostream, Request& other) {
 	ostream << other.getMethod() << '\t' << other.getRequestUrl() << '\t' << other.getHttpVersion() << '\n';
-	for (std::multimap<std::string, std::string>::const_iterator	it = other.getOptions().begin(); it != other.getOptions().end(); it++) {
+	for (std::multimap<std::string, std::string>::const_iterator	it = other.getHeadersValue().begin(); it != other.getHeadersValue().end(); it++) {
 		std::cout << it->first << ' ' << it->second << '\n';
 	}
 	std::cout << '\n' << other.getStatusCode() << ' ' << httpStatusToString(other.getStatusCode()) << std::endl;

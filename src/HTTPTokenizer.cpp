@@ -112,7 +112,9 @@ std::string	HTTPTokenizer::getInput() const {
 }
 
 bool	HTTPTokenizer::setInput(std::string input) {
+	_input.clear();
 	_input = input;
+	_it = _input.begin();
 	return (true);
 }
 
