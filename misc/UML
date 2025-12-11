@@ -1,23 +1,26 @@
-WebServ
+WebServ {
 	-- int							epollFd;
 	-- std::vector<VirtualServer>	virtualServers
 	-- std::vector<ListeningSocket>	listenSockets;
 	-- int							timeout;
 	-- std::vector<std::string>		logFiles;
+}
 
-ListeningSocket
+ListeningSocket {
 	-- int			fd;
 	-- int 			port;
 	-- std::string	host;
+}
 
-VirtualServers
+VirtualServers {
 	-- std::string	root;
 	-- std::string	server_name;
 	-- std::map<std::string loc, std::string path>		locations;
 	-- std::map<int errCode, std::string path>			error_pages;
 	-- std::vector<std::string>		allowdMethods;
+}
 
-Connection
+Connection {
 	-- int					clientFd;
 	-- struct sockaddr_in	clientAddr;
 	-- Request				request;
@@ -25,19 +28,26 @@ Connection
 	-- bool					pending_eof;
 	-- bool					keepAlive;
 	-- int					timeSinceLastActive;
+}
 
-Request
+Request {
 	-- std::string	requestStr;
 	-- std::string	method;
 	-- std::string	targetUri;
 	-- std::string	httpVersion;
+
 	-- std::map<std::string header, std::string value>	headers;
+	-- int			connection;
+	-- std::string	host;
+	-- std::string	cookies;
+
 	-- int			statusCode;
 	-- std::string	body;
-	-- std::string	cookies;
-	-- int	chunked; ??
 
-Response
+	-- int	chunked; ??
+}
+
+Response {
 	-- std::string	responseStr
 	-- int			statusCode;
 	-- std::string	statusLine;
@@ -45,3 +55,4 @@ Response
 	-- int			targetUriFd;
 	-- int			offset;
 	-- int	chunked; ??
+}
