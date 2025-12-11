@@ -1,13 +1,12 @@
-<<<<<<< HEAD
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.hpp                                        :+:      :+:    :+:   */
+/*                                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/09 14:57:02 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/11 16:44:26 by afocant          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,11 +114,12 @@ class	Request	: public HTTPTokenizer {
 		std::string								method;
 		std::string								request_url;
 		std::string								http_version;
-		std::string								html_body;
+		std::string								html_body;          // rename to body (could be json)
 
 		//Request usefull header informations
-		std::multimap<std::string, std::string>	options;
+		std::multimap<std::string, std::string>	options;            // rename to headers
 		size_t									content_length;
+        // + Connection, Host, etc etc ?
 
 		//Http methods limits -> assigned in Request.cpp
 		static const std::string				authorized_method;
@@ -139,68 +139,70 @@ std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
 std::string		httpStatusToString(t_HttpCode code) ;
 t_HttpCode httpStatusFromString(const std::string& s) ;
 
-#ifndef REQUEST_HPP
-#define REQUEST_HPP
-
-#include <iostream>
-
-class Request
-{
-	private:
-
-	int _state; // complete, incomplete, error
-	bool _connection;
-	int	_statusCode; //if state = error (431, 411, 413 400...);
-
-	/* request line */
-	std::string _method; 
-	std::string _requestUri;
-	std::string _version;
-
-	public:
-
-	void	hasError(); //
-	void	isComplete(); //-> change to EPOLLOUT->processRequest()->buildResponse();
-
-	const std::string&	getState() const;
-	const std::string&	getStatusCode() const;
-
-	void	setStatusCode(int code);
-
-
-	const std::string& getMethod() const;
-	const std::string& getRequestUri() const;
-
-
-
-};
-
-processRequest()
-	-> validMethod
-	-> validLocations
-	-> methodHandlers
-
-std::string statusText;
-
-
-class Response
-{
-	private:
-
-	buildStatusLine(const Request& Request);
-	buildHeader(const Request& Request);
-		Server:
-		Date:
-		Content-Lenght:
-		Content-Type:
-		Connection:
-	buildContent();
-
-	public: 
-
-	buildResponse();
-
-};
-
-
 #endif
+
+// #ifndef REQUEST_HPP
+// #define REQUEST_HPP
+//
+// #include <iostream>
+//
+// class Request
+// {
+// 	private:
+//
+// 	int _state; // complete, incomplete, error
+// 	bool _connection;
+// 	int	_statusCode; //if state = error (431, 411, 413 400...);
+//
+// 	/* request line */
+// 	std::string _method; 
+// 	std::string _requestUri;
+// 	std::string _version;
+//
+// 	public:
+//
+// 	void	hasError(); //
+// 	void	isComplete(); //-> change to EPOLLOUT->processRequest()->buildResponse();
+//
+// 	const std::string&	getState() const;
+// 	const std::string&	getStatusCode() const;
+//
+// 	void	setStatusCode(int code);
+//
+//
+// 	const std::string& getMethod() const;
+// 	const std::string& getRequestUri() const;
+//
+//
+//
+// };
+//
+// processRequest()
+// 	-> validMethod
+// 	-> validLocations
+// 	-> methodHandlers
+//
+// std::string statusText;
+//
+//
+// class Response
+// {
+// 	private:
+//
+// 	buildStatusLine(const Request& Request);
+// 	buildHeader(const Request& Request);
+// 		Server:
+// 		Date:
+// 		Content-Lenght:
+// 		Content-Type:
+// 		Connection:
+// 	buildContent();
+//
+// 	public: 
+//
+// 	buildResponse();
+//
+// };
+//
+//
+// #endif
