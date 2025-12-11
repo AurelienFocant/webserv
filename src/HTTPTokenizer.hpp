@@ -20,7 +20,9 @@ class	HTTPTokenizer : private Tokenizer {
 
 		bool		setInput(std::string input) ;
 		std::string	getInput() const ;
+		std::vector<t_Token>	getTokenList() const;
 		static std::string	getTokenType(t_Token token) ;
+		void	cleanTokenList() ;
 		
 	private:
 	/*Private Attributes*/

@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/11 18:28:46 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/11 19:04:52 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,8 @@ bool	Request::cleanRequest() {
 
 /*Public Methods*/
 bool	Request::parseRequest() {
-	std::vector<t_Token>	token_list = scanTokens();
+	HTTPTokenizer::scanTokens();
+	std::vector<t_Token>	token_list = getTokenList();
 	std::vector<t_Token>::const_iterator	it = token_list.begin();
 	
 	for (std::vector<t_Token>::const_iterator it = token_list.begin(); it != token_list.end(); it++) {
@@ -67,7 +68,6 @@ bool	Request::parseRequest() {
 			) {
 		if (_status_code == INIT_STATE)
 			_status_code = BAD_REQUEST;
-		_complete = true;
 		return (_complete);
 	}
 	it++;
@@ -76,7 +76,6 @@ bool	Request::parseRequest() {
 
 	//Check for GET request
 	if (!_method.compare("GET")) {
-		_complete = true;
 		if (it == token_list.end())
 			_status_code = OK;
 		else
@@ -164,8 +163,10 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 /*Getter*/
 bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
 	t_Token	token = *it;
-	if (token._tkType != WORD)	
+	if (token._tkType != WORD) {
+		_complete = true;
 		return (false);
+	}
 	if (authorized_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
 		_method = token._lexeme;
 		it++;
@@ -174,6 +175,7 @@ bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
 	if (unimplemented_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
 		_method = "Error";
 		_status_code = NOT_IMPLEMENTED;
+		_complete = true;
 		return (false);
 	}
 	return (false);
@@ -181,8 +183,10 @@ bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
 
 bool	Request::setRequestUrl(std::vector<t_Token>::const_iterator& it) {
 	t_Token	token = *it;
-	if (token._tkType != WORD)
+	if (token._tkType != WORD) {
+		_complete = true;
 		return (false);
+	}
 	if (token._lexeme[0] == '/') {
 		_request_uri = token._lexeme;
 		it++;
@@ -193,8 +197,10 @@ bool	Request::setRequestUrl(std::vector<t_Token>::const_iterator& it) {
 
 bool	Request::setHttpVersion(std::vector<t_Token>::const_iterator& it) {
 	t_Token	token = *it;
-	if (token._tkType != WORD)
+	if (token._tkType != WORD) {
+		_complete = true;
 		return (false);
+	}
 	if (!token._lexeme.compare("HTTP/1.0") || !token._lexeme.compare("HTTP/1.1")) {
 		_http_version = token._lexeme;
 		it++;

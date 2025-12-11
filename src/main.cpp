@@ -123,8 +123,10 @@ void	main_loop(int epollFd, int listenSocket)
 
 					// We'll need to do loads of stuff in here
 					currConn->request_message.setInput(currConn->request);
-					if (currConn->request_message.parseRequest())
+					if (currConn->request_message.parseRequest()) {
 						currConn->request.clear();
+						currConn->request_message.cleanTokenList();
+					}
 					std::cout << currConn->request_message << std::endl;
 
 
