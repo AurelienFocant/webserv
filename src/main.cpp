@@ -122,7 +122,9 @@ void	main_loop(int epollFd, int listenSocket)
 
 
 					// We'll need to do loads of stuff in here
+					currConn->request_message.setInput(currConn->request);
 					currConn->request_message.parseRequest();
+					std::cout << currConn->request_message << std::endl;
 
 
 					// If response is empty --> build it

@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/09 14:56:57 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/11 11:41:31 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ bool	Request::parseRequest() {
 	std::vector<t_Token>::const_iterator	it = token_list.begin();
 	
 	for (std::vector<t_Token>::const_iterator it = token_list.begin(); it != token_list.end(); it++) {
-		std::cout << Tokenizer::getTokenType(*it) << '\t' << (*it)._lexeme << std::endl;
+		std::cout << HTTPTokenizer::getTokenType(*it) << '\t' << (*it)._lexeme << std::endl;
 	}
 	std::cout << "----------------------------------------" << std::endl;
 

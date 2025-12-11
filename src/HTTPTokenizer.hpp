@@ -7,7 +7,7 @@
 # include <sstream>
 # include "Tokenizer.hpp"
 
-class	HTTPTokenizer : public Tokenizer {
+class	HTTPTokenizer : private Tokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
 		HTTPTokenizer();
@@ -17,6 +17,10 @@ class	HTTPTokenizer : public Tokenizer {
 	/*Public Methods*/
 		std::vector<t_Token>	scanTokens() ;
 		std::string				getWord(std::string delim_list) ;
+
+		bool		setInput(std::string input) ;
+		std::string	getInput() const ;
+		static std::string	getTokenType(t_Token token) ;
 		
 	private:
 	/*Private Attributes*/

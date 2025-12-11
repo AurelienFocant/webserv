@@ -106,3 +106,28 @@ std::string	HTTPTokenizer::getWord(std::string delim_list) {
 		word.erase(word.size() - 1);
 	return (word);
 }
+
+std::string	HTTPTokenizer::getInput() const {
+	return (_input);
+}
+
+bool	HTTPTokenizer::setInput(std::string input) {
+	_input = input;
+	return (true);
+}
+
+std::string	HTTPTokenizer::getTokenType(t_Token token) {
+	switch (token._tkType) {
+		case (ERROR):
+			return ("ERROR");	
+		case (WORD):
+			return ("WORD");	
+		case (COLON):
+			return ("COLON");	
+		case (COMA):
+			return ("COMA");	
+		case (EOL):
+			return ("EOL");	
+	}
+	return ("\0");
+}
