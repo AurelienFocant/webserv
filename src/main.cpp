@@ -24,6 +24,7 @@
 // We put those is a std::map, which is a <key, value> pair
 // with the key being the clientFd of the connection
 #include "Connection.hpp"
+#include "Tokenizer.hpp"
 
 int	setUpServer()
 {
