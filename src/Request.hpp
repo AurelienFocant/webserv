@@ -98,7 +98,7 @@ class	Request	: public HTTPTokenizer {
 	/*Setters - Getters*/
 		bool			setInput(std::string input) ;
 		std::string		getMethod() const { return(_method);}
-		std::string		getRequestUrl() const { return(_request_uri);}
+		std::string		getRequestUri() const { return(_request_uri);}
 		std::string		getHttpVersion() const { return(_http_version);}
 		bool			getCompleted() const { return(_complete);}
 		t_HttpCode		getStatusCode() const { return(_status_code);}
@@ -108,6 +108,7 @@ class	Request	: public HTTPTokenizer {
 	private:
 	/*Private Attributes*/
 		//Request State
+		int										_progress;
 		bool									_complete;
 		t_HttpCode								_status_code;
 
@@ -129,12 +130,19 @@ class	Request	: public HTTPTokenizer {
 
 	/*Private Methods*/
 		bool	setMethod(std::vector<t_Token>::const_iterator& it) ;
-		bool	setRequestUrl(std::vector<t_Token>::const_iterator& it) ;
+		bool	setRequestUri(std::vector<t_Token>::const_iterator& it) ;
 		bool	setHttpVersion(std::vector<t_Token>::const_iterator& it) ;
-		bool	parseHeader(std::vector<t_Token>::const_iterator& it, std::vector<t_Token>& token_list) ;
+		bool	parseHeader(std::vector<t_Token>::const_iterator& it) ;
 
 		std::string	normalizeHeadersKey(std::string argument) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
+
+		enum	progress {
+			METHOD = 1,
+			URI,
+			VERSION,
+			PARSED
+		};
 };
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;

@@ -16,7 +16,7 @@ const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
 						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
 const char*			Request::important_argument[] = {
-	"content_length"
+	"content-length"
 	};
 
 /*Constructor - Copy Constructor - Destructor*/
@@ -33,6 +33,7 @@ Request::Request(std::string const& request) : HTTPTokenizer(request) {
 
 bool	Request::cleanRequest() {
 	//Request State
+	_progress = 0;
 	_complete = false;
 	_status_code = INIT_STATE;
 
@@ -51,10 +52,12 @@ bool	Request::cleanRequest() {
 
 /*Public Methods*/
 bool	Request::parseRequest() {
-	HTTPTokenizer::scanTokens();
+	if (_progress < PARSED)
+		HTTPTokenizer::scanTokens();
 	std::vector<t_Token>	token_list = getTokenList();
 	std::vector<t_Token>::const_iterator	it = token_list.begin();
 	
+	std::cout << "----------------------------------------" << std::endl;
 	for (std::vector<t_Token>::const_iterator it = token_list.begin(); it != token_list.end(); it++) {
 		std::cout << HTTPTokenizer::getTokenType(*it) << '\t' << (*it)._lexeme << std::endl;
 	}
@@ -62,45 +65,93 @@ bool	Request::parseRequest() {
 
 	//Parsing for mandatory first line information
 	if (!setMethod(it)
-			|| !setRequestUrl(it)
+			|| !setRequestUri(it)
 			|| !setHttpVersion(it)
 			|| (*it)._tkType != EOL
 			) {
 		if (_status_code == INIT_STATE)
 			_status_code = BAD_REQUEST;
-		return (_complete);
 	}
 	it++;
-	if (it != token_list.end() && !parseHeader(it, token_list))
+	if (it != token_list.end() && !parseHeader(it))
 		return (_complete);
-
-	//Check for GET request
-	if (!_method.compare("GET")) {
-		if (it == token_list.end())
-			_status_code = OK;
-		else
-			_status_code = BAD_REQUEST;
+	
+	if (_progress >= PARSED && _status_code == INIT_STATE) {
+		if (!_method.compare("GET")) { //Check for GET request
+			if (it == token_list.end()) {
+				_complete = true;
+				_status_code = OK;
+			}
+		}
+		if (!_method.compare("POST")) { //Parsing body if POST request
+			std::cout << _content_length << '\t' << _body << std::endl;
+			if (_content_length == std::numeric_limits<unsigned long>::max()) {
+				_complete = true;
+				_status_code = LENGTH_REQUIRED;
+			}
+			else {
+				_body += getInput(_content_length - _body.size());
+				if (_body.size() == _content_length) {
+					_complete = true;
+					_status_code = OK;
+					std::cout << "body: " << _body << std::endl;
+				}
+			}
+		}
 	}
-
-	//Parsing body if POST request
-	if (!_method.compare("POST")) {
-		if (_content_length == std::numeric_limits<unsigned long>::max()) {
-			_complete = true;
-			_status_code = LENGTH_REQUIRED;
-		}
-		else if (it->_tkType == WORD && it->_lexeme.size() == _content_length) {
-			_complete = true;
-			_status_code = OK;
-			_body = it->_lexeme;
-		}
-		else
-			return (_complete);
+	std::cout << _progress << std::endl;
+	if (it != token_list.end() && it->_tkType == EOC) {
+		removeEOC();
 	}
 	return (_complete);
 }
 	//Parsing header
-bool	Request::parseHeader(std::vector<t_Token>::const_iterator& it, std::vector<t_Token>& token_list) {
-	while (it != token_list.end() && it->_tkType != EOL) {
+
+bool	Request::parseHeader(std::vector<t_Token>::const_iterator& it) {
+	if (_progress >= PARSED)
+		return (true);
+	int	nbr_eol = 0;
+	std::string	options_name;
+	while (it->_tkType != EOC && nbr_eol != 2) {
+		switch (it->_tkType) {
+			case (WORD):
+				options_name = normalizeHeadersKey(it->_lexeme);
+				if ((++it)->_tkType == COLON && (++it)->_tkType == WORD) {
+					while (it->_tkType == WORD) {
+						detectImportantValue(options_name, it->_lexeme);
+						_headers.insert(std::make_pair(options_name, it->_lexeme));		
+						options_name.clear();
+						it++;
+						if (it->_tkType != COMA)
+							break ;
+						it++;
+					}
+				}
+				break ;
+			case (EOL):
+				nbr_eol++;
+				it++;
+				break ;
+			case (EOC):
+				break ;
+			case (ERROR):
+				//fall-through
+			default:
+				_complete = true;
+				_status_code = BAD_REQUEST;
+				return (false);
+		}
+	}
+	if (nbr_eol == 2)
+		_progress = PARSED;
+	if (it->_tkType == EOC && nbr_eol == 2) {
+		removeEOC();
+		it++;
+	}
+
+	return (true);
+}
+/*
 		while (it->_tkType == WORD) {
 			std::string	options_name = normalizeHeadersKey(it->_lexeme);
 			it++;
@@ -133,10 +184,13 @@ bool	Request::parseHeader(std::vector<t_Token>::const_iterator& it, std::vector<
 		if (it->_tkType != EOL)
 			return (false);
 	}
-	it++;
+	if (it->_tkType == EOL) {
+		cleanTokenList();
+		_complete = true;
+	}
 	return (true);
 }
-
+*/
 std::string	Request::normalizeHeadersKey(std::string argument) {
 	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
 		*it = std::tolower(*it);
@@ -162,65 +216,67 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 
 /*Getter*/
 bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
+//	if (_progress >= METHOD)
+//		return (true);
 	t_Token	token = *it;
 	if (token._tkType != WORD) {
 		_complete = true;
 		return (false);
 	}
-	if (authorized_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
-		_method = token._lexeme;
-		it++;
-		return (true);
-	}
-	if (unimplemented_method.find(token._lexeme) != std::numeric_limits<unsigned long>::max()) {
-		_method = "Error";
-		_status_code = NOT_IMPLEMENTED;
-		_complete = true;
-		return (false);
-	}
-	return (false);
+	_method = token._lexeme;
+	it++;
+	return (true);
 }
 
-bool	Request::setRequestUrl(std::vector<t_Token>::const_iterator& it) {
+bool	Request::setRequestUri(std::vector<t_Token>::const_iterator& it) {
+//	if (_progress >= URI)
+//		return (true);
 	t_Token	token = *it;
-	if (token._tkType != WORD) {
-		_complete = true;
-		return (false);
-	}
-	if (token._lexeme[0] == '/') {
-		_request_uri = token._lexeme;
-		it++;
-		return (true);
+	switch (token._tkType) {
+		case (EOC):
+			return (true);
+		case (WORD):
+			_request_uri = token._lexeme;
+			it++;
+			return (true);
+		default:
+			_complete = true;
 	}
 	return (false);
 }
 
 bool	Request::setHttpVersion(std::vector<t_Token>::const_iterator& it) {
+//	if (_progress >= VERSION)
+//		return (true);
 	t_Token	token = *it;
-	if (token._tkType != WORD) {
-		_complete = true;
-		return (false);
-	}
-	if (!token._lexeme.compare("HTTP/1.0") || !token._lexeme.compare("HTTP/1.1")) {
-		_http_version = token._lexeme;
-		it++;
-		return (true);
+	switch (token._tkType) {
+		case (EOC):
+			return (true);
+		case (WORD):
+			if (!token._lexeme.compare("HTTP/1.0")
+				|| !token._lexeme.compare("HTTP/1.1")) {
+				_http_version = token._lexeme;
+				it++;
+				return (true);
+			}
+			//fall-through
+		default:
+			_complete = true;
 	}
 	return (false);
 }
 
 bool	Request::setInput(std::string input) {
-	cleanRequest();
 	HTTPTokenizer::setInput(input);
 	return (true);
 }
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) {
-	ostream << other.getMethod() << '\t' << other.getRequestUrl() << '\t' << other.getHttpVersion() << '\n';
+	ostream << other.getMethod() << '\t' << other.getRequestUri() << '\t' << other.getHttpVersion() << '\n';
 	for (std::multimap<std::string, std::string>::const_iterator	it = other.getHeadersValue().begin(); it != other.getHeadersValue().end(); it++) {
 		std::cout << it->first << ' ' << it->second << '\n';
 	}
-	std::cout << '\n' << other.getStatusCode() << ' ' << httpStatusToString(other.getStatusCode()) << std::endl;
+	std::cout << other.getStatusCode() << ' ' << httpStatusToString(other.getStatusCode()) << std::endl;
 	return (ostream);
 }
 
