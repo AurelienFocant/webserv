@@ -146,6 +146,7 @@ class	Request	: public HTTPTokenizer {
 };
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
+std::ostream&	operator<<(std::ostream& ostream, std::vector<t_Token>& other) ;
 std::string		httpStatusToString(t_HttpCode code) ;
 t_HttpCode httpStatusFromString(const std::string& s) ;
 

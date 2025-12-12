@@ -147,6 +147,7 @@ std::vector<t_Token>	HTTPTokenizer::getTokenList() const {
 }
 
 void	HTTPTokenizer::removeEOC() {
+	if (_token_list.back()._tkType == EOC)
 		_token_list.pop_back();
 }
 

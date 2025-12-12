@@ -47,6 +47,9 @@ bool	Request::cleanRequest() {
 	_headers.clear();
 	_content_length = -1; 
 
+	//Tokenizer cleaning
+	cleanTokenList();
+
 	return (true);
 }
 
@@ -57,11 +60,7 @@ bool	Request::parseRequest() {
 	std::vector<t_Token>	token_list = getTokenList();
 	std::vector<t_Token>::const_iterator	it = token_list.begin();
 	
-	std::cout << "----------------------------------------" << std::endl;
-	for (std::vector<t_Token>::const_iterator it = token_list.begin(); it != token_list.end(); it++) {
-		std::cout << HTTPTokenizer::getTokenType(*it) << '\t' << (*it)._lexeme << std::endl;
-	}
-	std::cout << "----------------------------------------" << std::endl;
+	std::cout << "Request.cpp -l63:\n" << token_list;
 
 	//Parsing for mandatory first line information
 	if (!setMethod(it)
@@ -72,10 +71,9 @@ bool	Request::parseRequest() {
 		if (_status_code == INIT_STATE)
 			_status_code = BAD_REQUEST;
 	}
-	it++;
+//	it++;
 	if (it != token_list.end() && !parseHeader(it))
 		return (_complete);
-	
 	if (_progress >= PARSED && _status_code == INIT_STATE) {
 		if (!_method.compare("GET")) { //Check for GET request
 			if (it == token_list.end()) {
@@ -84,7 +82,6 @@ bool	Request::parseRequest() {
 			}
 		}
 		if (!_method.compare("POST")) { //Parsing body if POST request
-			std::cout << _content_length << '\t' << _body << std::endl;
 			if (_content_length == std::numeric_limits<unsigned long>::max()) {
 				_complete = true;
 				_status_code = LENGTH_REQUIRED;
@@ -94,12 +91,10 @@ bool	Request::parseRequest() {
 				if (_body.size() == _content_length) {
 					_complete = true;
 					_status_code = OK;
-					std::cout << "body: " << _body << std::endl;
 				}
 			}
 		}
 	}
-	std::cout << _progress << std::endl;
 	if (it != token_list.end() && it->_tkType == EOC) {
 		removeEOC();
 	}
@@ -115,6 +110,7 @@ bool	Request::parseHeader(std::vector<t_Token>::const_iterator& it) {
 	while (it->_tkType != EOC && nbr_eol != 2) {
 		switch (it->_tkType) {
 			case (WORD):
+				nbr_eol = 0;
 				options_name = normalizeHeadersKey(it->_lexeme);
 				if ((++it)->_tkType == COLON && (++it)->_tkType == WORD) {
 					while (it->_tkType == WORD) {
@@ -151,46 +147,7 @@ bool	Request::parseHeader(std::vector<t_Token>::const_iterator& it) {
 
 	return (true);
 }
-/*
-		while (it->_tkType == WORD) {
-			std::string	options_name = normalizeHeadersKey(it->_lexeme);
-			it++;
-			if (it->_tkType == COLON) {
-				it++;
-				if (it->_tkType == WORD) {
-					while (it->_tkType == WORD) {
-						detectImportantValue(options_name, it->_lexeme);
-						_headers.insert(std::make_pair(options_name, it->_lexeme));		
-						it++;
-						if (it->_tkType != COMA)
-							break ;
-						it++;
-					}
-				}
-				else {
-					_complete = true;
-					_status_code = BAD_REQUEST;
-					return (false);
-				}
-			}
-			else {
-				_complete = true;
-				_status_code = BAD_REQUEST;
-				return (false);
-			}
-			if (it->_tkType == EOL)
-				it++;
-		}
-		if (it->_tkType != EOL)
-			return (false);
-	}
-	if (it->_tkType == EOL) {
-		cleanTokenList();
-		_complete = true;
-	}
-	return (true);
-}
-*/
+
 std::string	Request::normalizeHeadersKey(std::string argument) {
 	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
 		*it = std::tolower(*it);
@@ -216,8 +173,6 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 
 /*Getter*/
 bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
-//	if (_progress >= METHOD)
-//		return (true);
 	t_Token	token = *it;
 	if (token._tkType != WORD) {
 		_complete = true;
@@ -229,8 +184,6 @@ bool	Request::setMethod(std::vector<t_Token>::const_iterator& it) {
 }
 
 bool	Request::setRequestUri(std::vector<t_Token>::const_iterator& it) {
-//	if (_progress >= URI)
-//		return (true);
 	t_Token	token = *it;
 	switch (token._tkType) {
 		case (EOC):
@@ -246,8 +199,6 @@ bool	Request::setRequestUri(std::vector<t_Token>::const_iterator& it) {
 }
 
 bool	Request::setHttpVersion(std::vector<t_Token>::const_iterator& it) {
-//	if (_progress >= VERSION)
-//		return (true);
 	t_Token	token = *it;
 	switch (token._tkType) {
 		case (EOC):
@@ -277,6 +228,15 @@ std::ostream&	operator<<(std::ostream& ostream, Request& other) {
 		std::cout << it->first << ' ' << it->second << '\n';
 	}
 	std::cout << other.getStatusCode() << ' ' << httpStatusToString(other.getStatusCode()) << std::endl;
+	return (ostream);
+}
+
+std::ostream&	operator<<(std::ostream& ostream, std::vector<t_Token>& token_list) {
+	ostream << "----------------------------------------" << std::endl;
+	for (std::vector<t_Token>::const_iterator it = token_list.begin(); it != token_list.end(); it++) {
+		ostream << HTTPTokenizer::getTokenType(*it) << '\t' << (*it)._lexeme << std::endl;
+	}
+	ostream << "----------------------------------------" << std::endl;
 	return (ostream);
 }
 

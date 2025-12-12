@@ -140,6 +140,7 @@ void	main_loop(int epollFd, int listenSocket)
 						ev.data.fd = currConn->clientFd;
 						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn->clientFd, &ev);
 						currConn->response = currConn->build_response();
+						currConn->request_message.cleanRequest();
 
 						currConn->sendResponse(epollFd);
 					}
