@@ -22,6 +22,7 @@
 #include <cerrno>
 
 #include "Request.hpp"
+#include "VirtualServer.hpp"
 
 class Request;
 
@@ -30,12 +31,13 @@ class Connection
 	public:
 		int					clientFd;
 		struct sockaddr_in	clientAddr;
-		std::string			request;
-		std::string			response;
 		int					respOffset;
 		bool				connClosed;
+		std::string			request;
+		std::string			response;
 		struct epoll_event	epollEvent;
 		Request				request_message;
+		VirtualServer		*virtual_server;
 
 
 

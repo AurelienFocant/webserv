@@ -1,6 +1,7 @@
 #include "Connection.hpp"
 
 #include <iostream>
+#include <fstream>
 
 Connection::Connection( void )
 {
@@ -81,37 +82,55 @@ void	Connection::sendResponse(int epollFd)
 
 std::string	Connection::build_response(void)
 {
-	std::string header =
-		"HTTP/1.1 200 OK\r\n"
-		"Connection: Keep-Alive\r\n"
-		"Content-Type: text/html; charset=utf-8\r\n"
-		"Content-Length: 185\r\n"
-		"Cache-Control: s-maxage=300, public, max-age=0\r\n"
-		"Content-Language: en-US\r\n"
-		"Date: Thu, 06 Dec 2018 17:37:18 GMT\r\n"
-		"ETag: \"2e77ad1dc6ab0b53a2996dfd4653c1c3\"\r\n"
-		"Server: meinheld/0.6.1\r\n"
-		"Strict-Transport-Security: max-age=63072000\r\n"
-		"X-Content-Type-Options: nosniff\r\n"
-		"X-Frame-Options: DENY\r\n"
-		"X-XSS-Protection: 1; mode=block\r\n"
-		"Vary: Accept-Encoding,Cookie\r\n"
-		"Age: 7\r\n"
-		"\r\n";
+	std::string	path = this->virtual_server->error_pages[404];
+	std::ifstream bodyFile(path.c_str());
 
-	std::string body =
-		"<!doctype html>\r\n"
-		"<html lang=\"en\""
-		">\r\n"
-		"<head>\r\n"
-		"<meta charset=\"utf-8\""
-		">\r\n"
-		"<title>A basic webpage</title>\r\n"
-		"</head>\r\n"
-		"<body>\r\n"
-		"<h1>Basic HTML webpage</h1>\r\n"
-		"<p>Hello, world!</p>\r\n"
-		"</body>\r\n"
-		"</html>\r\n";
-	return (header + body);
+	std::string body( (std::istreambuf_iterator<char>(bodyFile) ),
+                       (std::istreambuf_iterator<char>()    ) );
+
+	std::string headers;
+
+	headers += "HTTP/1.1 404 NOT FOUND";
+	headers += "Server: Webserv";
+
+	std::string content = headers + body;
+
+	return (content);
 }
+
+// std::string	Connection::build_response(void)
+// {
+// 	std::string header =
+// 		"HTTP/1.1 200 OK\r\n"
+// 		"Connection: Keep-Alive\r\n"
+// 		"Content-Type: text/html; charset=utf-8\r\n"
+// 		"Content-Length: 185\r\n"
+// 		"Cache-Control: s-maxage=300, public, max-age=0\r\n"
+// 		"Content-Language: en-US\r\n"
+// 		"Date: Thu, 06 Dec 2018 17:37:18 GMT\r\n"
+// 		"ETag: \"2e77ad1dc6ab0b53a2996dfd4653c1c3\"\r\n"
+// 		"Server: meinheld/0.6.1\r\n"
+// 		"Strict-Transport-Security: max-age=63072000\r\n"
+// 		"X-Content-Type-Options: nosniff\r\n"
+// 		"X-Frame-Options: DENY\r\n"
+// 		"X-XSS-Protection: 1; mode=block\r\n"
+// 		"Vary: Accept-Encoding,Cookie\r\n"
+// 		"Age: 7\r\n"
+// 		"\r\n";
+//
+// 	std::string body =
+// 		"<!doctype html>\r\n"
+// 		"<html lang=\"en\""
+// 		">\r\n"
+// 		"<head>\r\n"
+// 		"<meta charset=\"utf-8\""
+// 		">\r\n"
+// 		"<title>A basic webpage</title>\r\n"
+// 		"</head>\r\n"
+// 		"<body>\r\n"
+// 		"<h1>Basic HTML webpage</h1>\r\n"
+// 		"<p>Hello, world!</p>\r\n"
+// 		"</body>\r\n"
+// 		"</html>\r\n";
+// 	return (header + body);
+// }

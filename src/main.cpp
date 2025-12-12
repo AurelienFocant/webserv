@@ -25,6 +25,7 @@
 // with the key being the clientFd of the connection
 #include "Connection.hpp"
 #include "Tokenizer.hpp"
+#include "VirtualServer.hpp"
 
 int	setUpServer()
 {
@@ -100,6 +101,10 @@ void	main_loop(int epollFd, int listenSocket)
 				connections[newConnection->clientFd] = newConnection;	// Add Connection to map<int, Connection>
 			}
 			else {
+
+				VirtualServer	virtualServer;
+				virtualServer.initDefaultConfig();
+
 				// Find the connection that matches the fd of ready_event[i]
 				std::map<int, Connection*>::iterator	it;	// declare iterator
 				it = connections.find(fd);				// find the right key
