@@ -25,5 +25,5 @@ VirtualServer::~VirtualServer( void )
 
 void	VirtualServer::initDefaultConfig(void)
 {
-	this->error_pages[404] = "./www/error_pages/404.html";
+	this->error_pages[404] = "./data/error_pages/404.html";
 }
