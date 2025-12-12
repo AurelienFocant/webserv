@@ -127,20 +127,24 @@ void	main_loop(int epollFd, int listenSocket)
 
 
 					// We'll need to do loads of stuff in here
-					currConn->request_message.setInput(currConn->request);
+					currConn->request_message.addInput(currConn->request);
 					currConn->request_message.parseRequest();
-					std::cout << currConn->request_message << std::endl;
+					currConn->request.clear();
+					std::cout << "main_loop -l129: "<< currConn->request_message << std::endl;
 
 
-					// If response is empty --> build it
+					// If request is complete and response 
+					// is empty --> build it
 					// and tell epoll we want it to tell us
 					// when the socket is ready for writing
-					if (currConn->response.empty()) {
+					if (currConn->request_message.getCompleted()
+						&& currConn->response.empty()) {
 						struct epoll_event	ev;
 						ev.events = EPOLLOUT | EPOLLRDHUP;
 						ev.data.fd = currConn->clientFd;
 						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn->clientFd, &ev);
 						currConn->response = currConn->build_response();
+						currConn->request_message.cleanRequest();
 
 						currConn->sendResponse(epollFd);
 					}

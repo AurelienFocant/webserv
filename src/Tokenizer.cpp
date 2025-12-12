@@ -3,8 +3,9 @@
 #include <iostream>
 
 Tokenizer::Tokenizer( void )
-	: _input("default input")
-	, _it(_input.begin()) {
+	//: _input("default input")
+	//, _it(_input.begin())
+	{
 	std::cout << "Default constructor called: Tokenizer" << std::endl;
 }
 
@@ -63,6 +64,8 @@ std::string	Tokenizer::getTokenType(t_Token token) {
 			return ("COMA");	
 		case (EOL):
 			return ("EOL");	
+		case (EOC):
+			return ("EOC");	
 	}
 	return ("\0");
 }

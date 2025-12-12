@@ -5,7 +5,7 @@
 #include <vector>
 
 typedef enum {
-	ERROR, WORD, COLON, COMA, EOL
+	ERROR, WORD, COLON, COMA, EOL, EOC
 }	t_tokenType;
 
 typedef struct {
@@ -36,8 +36,8 @@ class Tokenizer
 		char	advance();
 		bool	match(char c);
 
+		bool				setInput(std::string input) ;
 		virtual std::string	getInput() const = 0;
-		virtual bool		setInput(std::string input) = 0;
 
 		virtual std::vector<t_Token>			scanTokens() = 0;
 		static std::string				getTokenType(t_Token token) ;

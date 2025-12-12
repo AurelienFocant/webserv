@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*                                                      :+:      :+:    :+:   */
+/*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/11 16:44:26 by afocant          ###   ########.fr       */
+/*   Updated: 2025/12/11 18:08:39 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,33 +92,35 @@ class	Request	: public HTTPTokenizer {
 //		Request&	operator=(const Request& other) ;
 
 	/*Publics Methods*/
-		bool	parseRequest();
+		bool			parseRequest();
+		bool			cleanRequest();
+		bool			addInput(std::string input) ;
 
-	/*Getters*/
-		std::string		getMethod() const { return(method);}
-		std::string		getRequestUrl() const { return(request_url);}
-		std::string		getHttpVersion() const { return(http_version);}
-		bool			getCompleted() const { return(complete);}
-		t_HttpCode		getStatusCode() const { return(status_code);}
+	/*Setters - Getters*/
+		std::string		getMethod() const { return(_method);}
+		std::string		getRequestUri() const { return(_request_uri);}
+		std::string		getHttpVersion() const { return(_http_version);}
+		bool			getCompleted() const { return(_complete);}
+		t_HttpCode		getStatusCode() const { return(_status_code);}
 
-		const std::multimap<std::string, std::string>&	getOptions() const {return (options);}
+		const std::multimap<std::string, std::string>&	getHeadersValue() const {return (_headers);}
 
 	private:
 	/*Private Attributes*/
 		//Request State
-		bool									complete;
-		t_HttpCode								status_code;
+		int										_progress;
+		bool									_complete;
+		t_HttpCode								_status_code;
 
 		//Request informations
-		std::string								type;
-		std::string								method;
-		std::string								request_url;
-		std::string								http_version;
-		std::string								html_body;          // rename to body (could be json)
+		std::string								_method;
+		std::string								_request_uri;
+		std::string								_http_version;
+		std::string								_body;
 
 		//Request usefull header informations
-		std::multimap<std::string, std::string>	options;            // rename to headers
-		size_t									content_length;
+		std::multimap<std::string, std::string>	_headers;
+		size_t									_content_length;
         // + Connection, Host, etc etc ?
 
 		//Http methods limits -> assigned in Request.cpp
@@ -128,14 +130,23 @@ class	Request	: public HTTPTokenizer {
 
 	/*Private Methods*/
 		bool	setMethod(std::vector<t_Token>::const_iterator& it) ;
-		bool	setRequestUrl(std::vector<t_Token>::const_iterator& it) ;
+		bool	setRequestUri(std::vector<t_Token>::const_iterator& it) ;
 		bool	setHttpVersion(std::vector<t_Token>::const_iterator& it) ;
+		bool	parseHeader(std::vector<t_Token>::const_iterator& it) ;
 
-		std::string	normalizeOptions(std::string argument) ;
+		std::string	normalizeHeadersKey(std::string argument) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
+
+		enum	progress {
+			METHOD = 1,
+			URI,
+			VERSION,
+			PARSED
+		};
 };
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
+std::ostream&	operator<<(std::ostream& ostream, std::vector<t_Token>& other) ;
 std::string		httpStatusToString(t_HttpCode code) ;
 t_HttpCode httpStatusFromString(const std::string& s) ;
 

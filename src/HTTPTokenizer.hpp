@@ -12,19 +12,28 @@ class	HTTPTokenizer : private Tokenizer {
 	/*Constructor - Copy Constructor - Destructor*/
 		HTTPTokenizer();
 		HTTPTokenizer(std::string const& input);
-		virtual ~HTTPTokenizer() {std::cout << "Destructor called: HTTPTokenizer" << std::endl;};
+		virtual ~HTTPTokenizer();
+
 	/*Overloaded Operators*/
 	/*Public Methods*/
 		std::vector<t_Token>	scanTokens() ;
 		std::string				getWord(std::string delim_list) ;
+		std::string				extractInput(size_t len) ;
+		bool					addInput(std::string input) ;
+		void					cleanTokenList() ;
+		void					removeEOC();
 
-		bool		setInput(std::string input) ;
-		std::string	getInput() const ;
-		static std::string	getTokenType(t_Token token) ;
+	/*Getters*/
+		std::string				getInput() const ;
+		std::vector<t_Token>	getTokenList() const;
 		
+	/*Static*/
+		static std::string	getTokenType(t_Token token) ;
+
 	private:
 	/*Private Attributes*/
 		std::vector<t_Token>	_token_list;
+		int						_tokenizing;
 };
 
 #endif
