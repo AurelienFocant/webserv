@@ -102,14 +102,16 @@ void	main_loop(int epollFd, int listenSocket)
 			}
 			else {
 
-				VirtualServer	virtualServer;
-				virtualServer.initDefaultConfig();
 
 				// Find the connection that matches the fd of ready_event[i]
 				std::map<int, Connection*>::iterator	it;	// declare iterator
 				it = connections.find(fd);				// find the right key
 				if (it != connections.end()) {			// check before dereference
 					Connection* currConn = it->second;	// currConn is the value of <key, value>
+
+					VirtualServer	virtualServer;
+					virtualServer.initDefaultConfig();
+					currConn->virtual_server = &virtualServer;
 
 
 					// If socket is ready for reading
@@ -138,7 +140,7 @@ void	main_loop(int epollFd, int listenSocket)
 					// and tell epoll we want it to tell us
 					// when the socket is ready for writing
 					if (currConn->request_message.getCompleted()
-						&& currConn->response.empty()) {
+							&& currConn->response.empty()) {
 						struct epoll_event	ev;
 						ev.events = EPOLLOUT | EPOLLRDHUP;
 						ev.data.fd = currConn->clientFd;

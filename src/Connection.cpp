@@ -84,18 +84,22 @@ std::string	Connection::build_response(void)
 {
 	std::string	path = this->virtual_server->error_pages[404];
 	std::ifstream bodyFile(path.c_str());
+	if (!bodyFile.is_open())
+		std::cerr << "FILE NOT OPENED\n";
 
 	std::string body( (std::istreambuf_iterator<char>(bodyFile) ),
                        (std::istreambuf_iterator<char>()    ) );
 
-	std::string headers;
+	std::string error_header("HTTP/1.1 404 NOT FOUND");
 
-	headers += "HTTP/1.1 404 NOT FOUND";
-	headers += "Server: Webserv";
+    std::ostringstream response;
+    response << error_header << "\r\n"
+             << "Content-Length: " << body.size() << "\r\n"
+             << "Content-Type: text/html\r\n"
+             << "\r\n"
+             << body;
 
-	std::string content = headers + body;
-
-	return (content);
+	return (response.str());
 }
 
 // std::string	Connection::build_response(void)
