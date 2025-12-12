@@ -81,18 +81,22 @@ bool	Request::parseRequest() {
 				_status_code = OK;
 			}
 		}
-		if (!_method.compare("POST")) { //Parsing body if POST request
+		else if (!_method.compare("POST")) { //Parsing body if POST request
 			if (_content_length == std::numeric_limits<unsigned long>::max()) {
 				_complete = true;
 				_status_code = LENGTH_REQUIRED;
 			}
 			else {
-				_body += getInput(_content_length - _body.size());
+				_body += extractInput(_content_length - _body.size());
 				if (_body.size() == _content_length) {
 					_complete = true;
 					_status_code = OK;
 				}
 			}
+		}
+		else {
+			_complete = true;
+			_status_code = BAD_REQUEST;
 		}
 	}
 	if (it != token_list.end() && it->_tkType == EOC) {
@@ -217,8 +221,8 @@ bool	Request::setHttpVersion(std::vector<t_Token>::const_iterator& it) {
 	return (false);
 }
 
-bool	Request::setInput(std::string input) {
-	HTTPTokenizer::setInput(input);
+bool	Request::addInput(std::string input) {
+	HTTPTokenizer::addInput(input);
 	return (true);
 }
 

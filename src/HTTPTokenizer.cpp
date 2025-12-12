@@ -8,13 +8,16 @@ HTTPTokenizer::HTTPTokenizer() : Tokenizer() {
 HTTPTokenizer::HTTPTokenizer(std::string const& input) : Tokenizer(input) {
 	_tokenizing = 0;
 	std::cout << "String constructor called: HTTPTokenizer" << std::endl;
-};
+}
+
+HTTPTokenizer::~HTTPTokenizer() {
+	std::cout << "Destructor called: HTTPTokenizer" << std::endl;
+}
 
 std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 	t_Token	new_token;
 
 	//Tokenizing first line of request
-	std::cout << "tokenizing: " << _tokenizing << std::endl;
 	int	nbr_eol = 0;
 	while (_tokenizing < 4 && _it != _input.end() && nbr_eol == 0) {
 		switch (*_it) {
@@ -126,8 +129,10 @@ std::string	HTTPTokenizer::getInput() const {
 	return (_input);
 }
 
-std::string	HTTPTokenizer::getInput(size_t len) const {
-	return (_input.substr(0, len));
+std::string	HTTPTokenizer::extractInput(size_t len) {
+	std::string	tmp = _input.substr(0, len);
+	_input.erase(0, len);
+	return (tmp);
 }
 
 void	HTTPTokenizer::cleanTokenList() {
@@ -135,9 +140,8 @@ void	HTTPTokenizer::cleanTokenList() {
 	_tokenizing = 0;
 }
 
-bool	HTTPTokenizer::setInput(std::string input) {
-	_input.clear();
-	_input = input;
+bool	HTTPTokenizer::addInput(std::string input) {
+	_input += input;
 	_it = _input.begin();
 	return (true);
 }

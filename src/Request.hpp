@@ -92,11 +92,11 @@ class	Request	: public HTTPTokenizer {
 //		Request&	operator=(const Request& other) ;
 
 	/*Publics Methods*/
-		bool	parseRequest();
-		bool	cleanRequest();
+		bool			parseRequest();
+		bool			cleanRequest();
+		bool			addInput(std::string input) ;
 
 	/*Setters - Getters*/
-		bool			setInput(std::string input) ;
 		std::string		getMethod() const { return(_method);}
 		std::string		getRequestUri() const { return(_request_uri);}
 		std::string		getHttpVersion() const { return(_http_version);}

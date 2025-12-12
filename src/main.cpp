@@ -122,11 +122,10 @@ void	main_loop(int epollFd, int listenSocket)
 
 
 					// We'll need to do loads of stuff in here
-					currConn->request_message.setInput(currConn->request);
-					if (currConn->request_message.parseRequest()) {
-					}
+					currConn->request_message.addInput(currConn->request);
+					currConn->request_message.parseRequest();
 					currConn->request.clear();
-					std::cout << currConn->request_message << std::endl;
+					std::cout << "main_loop -l129: "<< currConn->request_message << std::endl;
 
 
 					// If request is complete and response 
