@@ -25,6 +25,7 @@
 // with the key being the clientFd of the connection
 #include "Connection.hpp"
 #include "Tokenizer.hpp"
+#include "VirtualServer.hpp"
 
 int	setUpServer()
 {
@@ -100,11 +101,17 @@ void	main_loop(int epollFd, int listenSocket)
 				connections[newConnection->clientFd] = newConnection;	// Add Connection to map<int, Connection>
 			}
 			else {
+
+
 				// Find the connection that matches the fd of ready_event[i]
 				std::map<int, Connection*>::iterator	it;	// declare iterator
 				it = connections.find(fd);				// find the right key
 				if (it != connections.end()) {			// check before dereference
 					Connection* currConn = it->second;	// currConn is the value of <key, value>
+
+					VirtualServer	virtualServer;
+					virtualServer.initDefaultConfig();
+					currConn->virtual_server = &virtualServer;
 
 
 					// If socket is ready for reading
@@ -133,7 +140,7 @@ void	main_loop(int epollFd, int listenSocket)
 					// and tell epoll we want it to tell us
 					// when the socket is ready for writing
 					if (currConn->request_message.getCompleted()
-						&& currConn->response.empty()) {
+							&& currConn->response.empty()) {
 						struct epoll_event	ev;
 						ev.events = EPOLLOUT | EPOLLRDHUP;
 						ev.data.fd = currConn->clientFd;
