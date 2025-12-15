@@ -7,6 +7,7 @@
 class VirtualServer
 {
 	private:
+		void	_initDefaultErrorPages(void);
 
 
 	public:
