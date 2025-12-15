@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/15 15:58:38 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/15 17:13:57 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ bool	Request::cleanRequest() {
 	_status_code = INIT_STATE;
 
 	//Request informations
-	_method.clear();
+	_method = NOT_SET;
 	_request_uri.clear();
 	_http_version.clear();
 	_body.clear();
@@ -132,13 +132,14 @@ bool	Request::parseFirstLine() {
 }
 
 bool	Request::handleBody() {
-	if (!_method.compare("GET")) { //Check for GET request
+	if (_method == GET) { //Check for GET request
 		if (_progress == PARSED) {
+			extractHeadersInformations();
 			_complete = true;
 			_status_code = OK;
 		}
 	}
-	else if (!_method.compare("POST")) { //Parsing body if POST request
+	else if (_method == POST) { //Parsing body if POST request
 		extractHeadersInformations();
 		if (_content_length == std::numeric_limits<unsigned long>::max()) {
 			_complete = true;
@@ -255,7 +256,7 @@ bool	Request::setMethod() {
 		_progress = PARSER_ERROR;
 		return (false);
 	}
-	_method = token._lexeme;
+	_method = idMethod(token._lexeme);
 	_list_it++;
 	_progress = METHOD;
 	return (true);
@@ -297,6 +298,15 @@ bool	Request::setHttpVersion() {
 			return (false);
 	}
 	return (true);
+}
+
+t_Method	Request::idMethod(std::string& method) {
+	if (method.find("GET") == 0)
+		return (GET);
+	else if (method.find("POST") == 0)
+		return (POST);
+	else
+		return (UNKNOWN);
 }
 
 bool	Request::addInput(std::string input) {

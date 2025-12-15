@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/15 15:58:43 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/15 17:12:06 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,15 @@
 /*MACROS*/
 
 /*ENUM*/
+typedef	enum
+{
+	NOT_SET = -1,
+	GET = 0,
+	POST,
+	DELETE,
+	UNKNOWN,
+}		t_Method;
+
 typedef enum // ERROR_TYPE = Error_code	http version
 {
 	INIT_STATE						= -1,
@@ -97,7 +106,7 @@ class	Request	: private HTTPTokenizer {
 		bool			addInput(std::string input) ;
 
 	/*Setters - Getters*/
-		std::string		getMethod() const { return(_method);}
+		t_Method		getMethod() const { return(_method);}
 		std::string		getRequestUri() const { return(_request_uri);}
 		std::string		getHttpVersion() const { return(_http_version);}
 		bool			getCompleted() const { return(_complete);}
@@ -113,7 +122,7 @@ class	Request	: private HTTPTokenizer {
 		t_HttpCode								_status_code;
 
 		//Request informations
-		std::string								_method;
+		t_Method								_method;
 		std::string								_request_uri;
 		std::string								_http_version;
 		std::string								_body;
@@ -132,6 +141,7 @@ class	Request	: private HTTPTokenizer {
 		//std::vector<t_Token>::const_iterator	_list_it;
 
 	/*Private Methods*/
+		t_Method	idMethod(std::string& method) ;
 		bool	setMethod() ;
 		bool	setRequestUri() ;
 		bool	setHttpVersion() ;
