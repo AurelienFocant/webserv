@@ -1,4 +1,4 @@
-#include "testLocation.cpp"
+#include "RequestHandler.hpp"
 
 bool isFile(const std::string& path)
 {

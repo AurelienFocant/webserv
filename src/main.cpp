@@ -26,6 +26,7 @@
 #include "Connection.hpp"
 #include "Tokenizer.hpp"
 #include "VirtualServer.hpp"
+#include "RequestHandler.hpp"
 
 int	setUpServer()
 {
@@ -141,6 +142,15 @@ void	main_loop(int epollFd, int listenSocket)
 					// when the socket is ready for writing
 					if (currConn->request_message.getCompleted()
 							&& currConn->response.empty()) {
+						
+						/* TEST REQUEST HANDLER */
+						std::cout << "Main 147: Request Handler" << std::endl;
+						std::cout << "Status Code: " << currConn->request_message.getStatusCode() << std::endl;
+						RequestHandler rHandler(currConn->request_message);
+						rHandler.handleRequest();
+						//currConn->response = rHandler.buildResponse();
+						/* --------------------- */
+
 						struct epoll_event	ev;
 						ev.events = EPOLLOUT | EPOLLRDHUP;
 						ev.data.fd = currConn->clientFd;
