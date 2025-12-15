@@ -30,10 +30,13 @@ class	HTTPTokenizer : private Tokenizer {
 	/*Static*/
 		static std::string	getTokenType(t_Token token) ;
 
+	protected:
+		std::vector<t_Token>					_token_list;
+		std::vector<t_Token>::const_iterator	_list_it;
+		
 	private:
 	/*Private Attributes*/
-		std::vector<t_Token>	_token_list;
-		int						_tokenizing;
+		int										_tokenizing;
 };
 
 #endif

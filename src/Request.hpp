@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/11 18:08:39 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/15 15:58:43 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,7 @@ typedef enum // ERROR_TYPE = Error_code	http version
     HTTP_VERSION_NOT_SUPPORTED      = 505    // 1.1
 }									t_HttpCode;
 
-class	Request	: public HTTPTokenizer {
+class	Request	: private HTTPTokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
 		Request();
@@ -120,6 +120,7 @@ class	Request	: public HTTPTokenizer {
 
 		//Request usefull header informations
 		std::multimap<std::string, std::string>	_headers;
+		size_t									_nbr_headers;
 		size_t									_content_length;
         // + Connection, Host, etc etc ?
 
@@ -128,20 +129,28 @@ class	Request	: public HTTPTokenizer {
 		static const std::string				unimplemented_method;
 		static const char*		 				important_argument[];
 
+		//std::vector<t_Token>::const_iterator	_list_it;
+
 	/*Private Methods*/
-		bool	setMethod(std::vector<t_Token>::const_iterator& it) ;
-		bool	setRequestUri(std::vector<t_Token>::const_iterator& it) ;
-		bool	setHttpVersion(std::vector<t_Token>::const_iterator& it) ;
-		bool	parseHeader(std::vector<t_Token>::const_iterator& it) ;
+		bool	setMethod() ;
+		bool	setRequestUri() ;
+		bool	setHttpVersion() ;
+		bool	parseFirstLine() ;
+		bool	parseHeader() ;
+		bool	handleBody() ;
+		bool	extractHeadersInformations() ;
 
 		std::string	normalizeHeadersKey(std::string argument) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
 
 		enum	progress {
-			METHOD = 1,
+			PARSER_ERROR = -1,
+			START = 0,
+			METHOD,
 			URI,
 			VERSION,
-			PARSED
+			FIRST_LINE,
+			PARSED,
 		};
 };
 

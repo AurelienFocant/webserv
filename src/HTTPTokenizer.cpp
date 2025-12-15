@@ -109,6 +109,7 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 		new_token._lexeme = "\0";
 		_token_list.push_back(new_token);
 	}
+	_list_it = _token_list.begin();
 	return (_token_list);
 }
 
@@ -151,8 +152,10 @@ std::vector<t_Token>	HTTPTokenizer::getTokenList() const {
 }
 
 void	HTTPTokenizer::removeEOC() {
+	int	pos = _list_it - _token_list.begin();
 	if (_token_list.back()._tkType == EOC)
 		_token_list.pop_back();
+	_list_it = _token_list.begin() + pos;
 }
 
 std::string	HTTPTokenizer::getTokenType(t_Token token) {
