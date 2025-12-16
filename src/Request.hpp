@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/15 17:12:06 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/16 17:46:05 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,6 +109,7 @@ class	Request	: private HTTPTokenizer {
 		t_Method		getMethod() const { return(_method);}
 		std::string		getRequestUri() const { return(_request_uri);}
 		std::string		getHttpVersion() const { return(_http_version);}
+		std::string		getBody() const ;
 		bool			getCompleted() const { return(_complete);}
 		t_HttpCode		getStatusCode() const { return(_status_code);}
 
@@ -130,6 +131,8 @@ class	Request	: private HTTPTokenizer {
 		//Request usefull header informations
 		std::multimap<std::string, std::string>	_headers;
 		size_t									_nbr_headers;
+		bool									_content_encoding;
+		std::string								_content_type;
 		size_t									_content_length;
         // + Connection, Host, etc etc ?
 
@@ -151,6 +154,7 @@ class	Request	: private HTTPTokenizer {
 		bool	extractHeadersInformations() ;
 
 		std::string	normalizeHeadersKey(std::string argument) ;
+		void	safeInsertion(const std::string& key, const std::string& value) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
 
 		enum	progress {
