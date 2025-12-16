@@ -3,30 +3,65 @@
 
 /* ////////////REQUEST HANDLER////////////////// */
 
+
 //RequestHandler::RequestHandler() : _root("/www/html"), _path(""), _fullPath(""), _statusCode(200) {}
 
-RequestHandler::RequestHandler(const Request& request) : _request(request),  _root("/www/html"), _statusCode(request.getStatusCode()) {}
+RequestHandler::RequestHandler(const Request& request) : _request(request),  _root("/www/html"), _statusCode(request.getStatusCode())
+{
+	initRoutes();
+	printRoutes();
+}
 
+void RequestHandler::initRoutes()
+{
+
+	Location rootLoc;
+	rootLoc.setName("/");
+	rootLoc.setRoot("/var/www/html");
+	rootLoc.setAlias("");
+	_routes["/"] = rootLoc;
+
+	Location imageLoc;
+	imageLoc.setName("/images");
+	imageLoc.setAlias("/var/www/assets/images");
+	rootLoc.setRoot("");
+	_routes["/images"] = imageLoc;
+}
+
+void	RequestHandler::printRoutes()
+{
+	std::map<std::string, Location>::iterator it;
+
+	std::cout << "---------Print routes---------"<< std::endl;
+	for (it = _routes.begin(); it != _routes.end(); it++)
+	{
+		std::cout << "Key: " << it->first
+		<< "\nName-> " << it->second.getName()
+		<< "\nRoot-> " << it->second.getRoot()
+		<< "\nAlias-> " << it->second.getAlias() << std::endl;
+	}
+	std::cout << "---------------------------"<< std::endl;
+
+}
 
 RequestHandler::~RequestHandler() {}
 
 
 void RequestHandler::extractPath()
 {
-	if (_request.getRequestUri().at(0) != '/')
+	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
+	{
 		std::cerr << "BAD URI: " << _request.getRequestUri() << std::endl;
-	
-		
+		return;
+	}
 
-
+	_path = _request.getRequestUri();
+	std::cout << "RequestUri: " << _request.getRequestUri() << std::endl;
 	std::cout << "PATH: " << _path << std::endl;
 
 	size_t queryPos = _path.find("?");
 	if (queryPos != std::string::npos)
 		_path = _path.substr(0, queryPos);
-	
-	std::cout << "RequestUri " << _request.getRequestUri() << std::endl;
-
 }
 
 void RequestHandler::resolvePath()

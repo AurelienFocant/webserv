@@ -32,13 +32,15 @@ class Location
 	/* Getters */
 	std::string	getName() const {return _name;}
 	std::string	getRoot() const {return _root;}
-	std::string	getAliast() const {return _alias;}
+	std::string	getAlias() const {return _alias;}
 
 	/* Setters */
 	void	setName(const std::string& name) {_name = name;}
 	void	setRoot(const std::string& root) {_root = root;}
 	void	setAlias(const std::string& alias) {_alias = alias;}
 };
+
+
 
 
 /* class ServerConfig 
@@ -51,7 +53,7 @@ class Location
 	~ServerConfig	();
 
 	std::string _root;
-	std::map<std::string, Location> route;
+	std::map<std::string, Location> routes;
 	std::map<int, std::string> errors_pages;
 
 	//std::string	getRoot() const {return _root;}
@@ -75,10 +77,16 @@ class RequestHandler
 	//std::string			_index; //define file(s)to search when URI point to a dir
 	int					_statusCode;
 
+	std::map<std::string, Location> _routes; //devrait etre dans config, juste pour tests
+
 	/* Private Methods */
 	void	extractPath();
 	void	resolvePath();
 	bool	validatePath();
+
+	void 	initRoutes();
+	void	printRoutes();
+
 
 	public:
 
