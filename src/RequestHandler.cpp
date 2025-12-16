@@ -14,7 +14,6 @@ RequestHandler::RequestHandler(const Request& request) : _request(request),  _ro
 
 void RequestHandler::initRoutes()
 {
-
 	Location rootLoc;
 	rootLoc.setName("/");
 	rootLoc.setRoot("/var/www/html");

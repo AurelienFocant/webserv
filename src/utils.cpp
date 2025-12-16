@@ -18,23 +18,36 @@ bool isDir(const std::string& path)
 //GET
 bool isReadable(const std::string& path)
 {
-	int	fd = open(path.c_str(), O_RDONLY);
+/* 	int	fd = open(path.c_str(), O_RDONLY);
 	if (fd < 0)
-/* 	{
- 		if (errno == EACCES)
-			return 403;
-	} */
+
 		return false;
-	return true;
+	close(fd);
+	return true; */
+	return (access(path.c_str(), R_OK) == 0);
 }
 
 //POST
 bool isWritable(const std::string& path)
 {
-	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+/* 	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd < 0)
 		return false;
-	return true;
+	close(fd);
+	return true; */
+	return (access(path.c_str(), W_OK) == 0);
+
+}
+
+bool isExecutable(const std::string& path)
+{
+/* 	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (fd < 0)
+		return false;
+	close(fd);
+	return true; */
+	return (access(path.c_str(), X_OK) == 0);
+
 }
 
 /* // Not TOCTOU -> open mieux adapte aux permissions
