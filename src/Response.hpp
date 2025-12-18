@@ -4,7 +4,7 @@
 /*INCLUDES*/
 #include <Request.hpp>
 
-class	Response :
+class	Response
 {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
@@ -16,12 +16,12 @@ class	Response :
 		SEND_HEADER,
 		SEND_BODY,
 		DONE,
-	} t_State;
+	};
 
 	enum	bodyType {
 		STATIC,
 		DYNAMIC,
-	} t_BodyType;
+	};
 
 	/*Publics Methods*/
 
@@ -31,9 +31,9 @@ class	Response :
 	private:
 
 	/*Private Attributes*/
-		t_State			_state;
+		state			_state;
 		t_HttpCode		_status_code;
-		t_BodyType		_type;
+		bodyType		_type;
 
 		//std::string		_headers;
 		//size_t			_headers_sent;

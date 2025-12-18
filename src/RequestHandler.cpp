@@ -95,7 +95,7 @@ bool RequestHandler::processMethods()
 void	RequestHandler::processGetMethod()
 {
 	size_t		file_size;
-	std::string content_type 
+	std::string content_type ;
 
 	if (_isDirectory)
 	{
@@ -107,7 +107,7 @@ void	RequestHandler::processGetMethod()
 	if (fd < 0)
 		return;
 
-	file_size = static_cast<size_t>fileSize(_fullPath); // enregistrer dans Response
+	file_size = fileSize(_fullPath); // enregistrer dans Response
 	content_type = "type"; // a implementer
 
 /* 	
@@ -181,7 +181,7 @@ int RequestHandler::openWriteFile(const std::string& path)
 	return fd;
 }
 
-bool RequestHandler::resolveDirectory()
+bool RequestHandler::resolveIndex()
 {
 	return true;
 }
