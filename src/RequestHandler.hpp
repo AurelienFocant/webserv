@@ -47,7 +47,7 @@ class RequestHandler
 	/* Private Attributes */
 	const Request&		_request;
 	Response&			_response;
-	//const ServerConfig& _config;
+	//const ServerConfig& _config; -> findServer() = identifier le bon serveur grace a son port/ip et hostname si besoin
 	std::string			_root; // default root from config
 	std::string			_path; // request_uri sans query
 	std::string			_fullPath; //defnitive path (after alias or override)
