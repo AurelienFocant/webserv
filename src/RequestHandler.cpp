@@ -6,8 +6,9 @@
 
 //RequestHandler::RequestHandler() : _root("/www/html"), _path(""), _fullPath(""), _statusCode(200) {}
 
-RequestHandler::RequestHandler(const Request& request) 
+RequestHandler::RequestHandler(const Request& request, Response& response) 
 	: _request(request)
+	, _response(response)
 	, _root("/www/html")
 	, _statusCode(request.getStatusCode())
 	, _hasError(false)
@@ -48,6 +49,9 @@ bool RequestHandler::resolvePath()
 
 	_fullPath = _root + _path;
 	std::cout << "Full Path: " << _fullPath << std::endl;
+
+	if (!validatePath())
+		return false;
 
 	return true;
 
@@ -108,7 +112,7 @@ void	RequestHandler::processGetMethod()
 		return;
 
 	file_size = fileSize(_fullPath); // enregistrer dans Response
-	content_type = "type"; // a implementer
+	content_type = getContentType(_fullPath);
 
 /* 	
 	// RESPONSABILITE de Connection -> Send Response au fur et a mesure
@@ -131,8 +135,7 @@ void	RequestHandler::processGetMethod()
 
 void RequestHandler::handleRequest()
 {
-	if (!extractPath() || !resolvePath() ||
-		!validatePath() || !processMethods())
+	if (!extractPath() || !resolvePath() || !processMethods())
 	{
 		_hasError = true;
 		return;
@@ -183,7 +186,19 @@ int RequestHandler::openWriteFile(const std::string& path)
 
 bool RequestHandler::resolveIndex()
 {
-	return true;
+	std::vector<std::string>index = {"index.html", "index.htm"}; //see storing type in ServerConfig
+	std::string				dirPath = _fullPath;
+
+	for (int i = 0; i < index.size(); i++)
+	{
+		std::string testPath =_fullPath = dirPath + index[i];
+		if (access(_fullPath.c_str(), R_OK) == 0)
+		{
+			_fullPath = testPath;
+			return true;
+		}
+	}
+	return false;
 }
 
 bool RequestHandler::isDirectory(const std::string& path)
@@ -200,6 +215,28 @@ size_t RequestHandler::fileSize(const std::string& path)
 	if (stat(path.c_str(), &statBuf) != 0)
 		return false;
 	return statBuf.st_size;
+}
+
+std::string RequestHandler::getContentType(const std::string& path)
+{
+    size_t dotPos = path.find_last_of('.');
+    if (dotPos == std::string::npos) {
+        return "application/octet-stream";  // Default ? 
+    }
+    
+    std::string ext = path.substr(dotPos + 1);
+    
+    if (ext == "html" || ext == "htm")return "text/html";
+    if (ext == "css") return "text/css";
+    if (ext == "js") return "application/javascript";
+    if (ext == "json") return "application/json";
+    if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
+    if (ext == "png") return "image/png";
+    if (ext == "gif") return "image/gif";
+    if (ext == "txt") return "text/plain";
+    if (ext == "pdf") return "application/pdf";
+    
+    return "application/octet-stream";
 }
 
 void RequestHandler::initRoutes()

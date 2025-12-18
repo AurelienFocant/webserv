@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include "Request.hpp"
+#include "Response.hpp"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -45,6 +46,7 @@ class RequestHandler
 
 	/* Private Attributes */
 	const Request&		_request;
+	Response&			_response;
 	//const ServerConfig& _config;
 	std::string			_root; // default root from config
 	std::string			_path; // request_uri sans query
@@ -57,26 +59,27 @@ class RequestHandler
 	std::map<std::string, Location> _routes; //devrait etre dans config, juste pour tests
 
 	/* Private Methods */
-	bool		extractPath();
-	bool		resolvePath();
-	bool		validatePath();
-	bool		processMethods();
-	void		processGetMethod();
-	int			openReadFile(const std::string& path);
-	int			openWriteFile(const std::string& path);
-	bool		resolveIndex();
-	bool 		isDirectory(const std::string& path);
-	size_t		fileSize(const std::string& path);
+	bool			extractPath();
+	bool			resolvePath();
+	bool			validatePath();
+	bool			processMethods();
+	void			processGetMethod();
+	std::string 	getContentType(const std::string& path);
+	int				openReadFile(const std::string& path);
+	int				openWriteFile(const std::string& path);
+	bool			resolveIndex();
+	bool 			isDirectory(const std::string& path);
+	size_t			fileSize(const std::string& path);
 
 	/* For testing */
-	void 		initRoutes();
-	void		printRoutes();
+	void 			initRoutes();
+	void			printRoutes();
 
 	public:
 
 	/* Constructors / Destructors */
 	//RequestHandler	();
-	RequestHandler	(const Request& request);
+	RequestHandler	(const Request& request, Response& response);
 	~RequestHandler	();
 
 	/* Getters */

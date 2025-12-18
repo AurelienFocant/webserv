@@ -146,7 +146,7 @@ void	main_loop(int epollFd, int listenSocket)
 						/* TEST REQUEST HANDLER */
 						std::cout << "Main 147: Request Handler" << std::endl;
 						std::cout << "Status Code: " << currConn->request_message.getStatusCode() << std::endl;
-						RequestHandler rHandler(currConn->request_message);
+						RequestHandler rHandler(currConn->request_message, currConn->response_message);
 						rHandler.handleRequest();
 						if (rHandler.hasError())
 						{
@@ -161,7 +161,7 @@ void	main_loop(int epollFd, int listenSocket)
 						ev.events = EPOLLOUT | EPOLLRDHUP;
 						ev.data.fd = currConn->clientFd;
 						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn->clientFd, &ev);
-						currConn->response = currConn->build_response();
+						//currConn->response = currConn->build_response();
 						currConn->request_message.cleanRequest();
 
 						currConn->sendResponse(epollFd);
