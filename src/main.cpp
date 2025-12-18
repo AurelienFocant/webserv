@@ -148,7 +148,13 @@ void	main_loop(int epollFd, int listenSocket)
 						std::cout << "Status Code: " << currConn->request_message.getStatusCode() << std::endl;
 						RequestHandler rHandler(currConn->request_message);
 						rHandler.handleRequest();
-						//currConn->response = rHandler.buildResponse();
+						if (rHandler.hasError())
+						{
+							std::cerr << "Error: " << rHandler.getStatusCode() << std::endl;
+							// build error response
+						}
+/* 						else 
+							currConn->response = rHandler.buildResponse(); */
 						/* --------------------- */
 
 						struct epoll_event	ev;

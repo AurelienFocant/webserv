@@ -6,10 +6,200 @@
 
 //RequestHandler::RequestHandler() : _root("/www/html"), _path(""), _fullPath(""), _statusCode(200) {}
 
-RequestHandler::RequestHandler(const Request& request) : _request(request),  _root("/www/html"), _statusCode(request.getStatusCode())
+RequestHandler::RequestHandler(const Request& request) 
+	: _request(request)
+	, _root("/www/html")
+	, _statusCode(request.getStatusCode())
+	, _hasError(false)
 {
 	initRoutes();
 	printRoutes();
+}
+
+RequestHandler::~RequestHandler() {}
+
+
+bool RequestHandler::extractPath()
+{
+	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
+	{
+		_statusCode = BAD_REQUEST;
+		return false;
+	}
+
+	_path = _request.getRequestUri();
+	std::cout << "RequestUri: " << _request.getRequestUri() << std::endl;
+	std::cout << "PATH: " << _path << std::endl;
+
+	size_t queryPos = _path.find("?");
+	if (queryPos != std::string::npos)
+		_path = _path.substr(0, queryPos);
+	
+	return true;
+}
+
+bool RequestHandler::resolvePath()
+{
+	if (_root.empty() || _path.empty())
+	{
+		_statusCode = BAD_REQUEST;
+		return false;
+	}
+
+	_fullPath = _root + _path;
+	std::cout << "Full Path: " << _fullPath << std::endl;
+
+	return true;
+
+}
+
+bool RequestHandler::validatePath()
+{
+	struct stat statBuf;
+	if (stat(_fullPath.c_str(), &statBuf) != 0)
+	{
+		if (errno == ENOENT)
+			_statusCode = NOT_FOUND;
+		else if (errno == EACCES)
+			_statusCode = FORBIDDEN;
+		else
+			_statusCode = INTERNAL_SERVER_ERROR;
+		return false;
+	}
+
+	_isDirectory = S_ISDIR(statBuf.st_mode);
+
+	return true;
+}
+
+bool RequestHandler::processMethods()
+{
+	switch(_request.getMethod())
+	{
+		case GET:
+			processGetMethod();
+			break ;
+/* 		case POST:
+			processPostMethod();
+			break ;
+		case DELETE:
+			processDeleteMethod(); */
+			break ;
+		default: 
+			_statusCode = METHOD_NOT_ALLOWED; // ? 
+			return false;
+	}
+	return true;
+}
+
+void	RequestHandler::processGetMethod()
+{
+	size_t		file_size;
+	std::string content_type 
+
+	if (_isDirectory)
+	{
+		if (!resolveIndex())
+			return;
+	}
+
+	int	fd = openReadFile(_fullPath);
+	if (fd < 0)
+		return;
+
+	file_size = static_cast<size_t>fileSize(_fullPath); // enregistrer dans Response
+	content_type = "type"; // a implementer
+
+/* 	
+	// RESPONSABILITE de Connection -> Send Response au fur et a mesure
+
+	char buffer[8192]; //8KB optimal?
+	ssize_t bytesRead;
+
+	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+		response_body.append(buffer, bytesRead);
+	close(fd);
+	if (bytesRead < 0)
+	{
+		_statusCode = INTERNAL_SERVER_ERROR;
+		return;
+	} */
+
+
+	_statusCode = OK;
+}
+
+void RequestHandler::handleRequest()
+{
+	if (!extractPath() || !resolvePath() ||
+		!validatePath() || !processMethods())
+	{
+		_hasError = true;
+		return;
+	}
+
+	_statusCode = OK;
+}
+
+int RequestHandler::openReadFile(const std::string& path)
+{
+	int	fd = open(path.c_str(), O_RDONLY);
+	if (fd < 0)
+	{
+		switch (errno) {
+		case EACCES:
+			_statusCode = FORBIDDEN;
+			break;
+		case ENOENT:
+			_statusCode = NOT_FOUND;
+			break;
+		default:
+			_statusCode = INTERNAL_SERVER_ERROR;
+			break;
+		}
+	}
+	return fd;
+}
+
+int RequestHandler::openWriteFile(const std::string& path)
+{
+	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644); // CHECK FLAGS -> APPEND?
+	if (fd < 0)
+	{
+		switch (errno) {
+		case EACCES:
+			_statusCode = FORBIDDEN;
+			break;
+		case ENOENT:
+			_statusCode = NOT_FOUND;
+			break;
+		default:
+			_statusCode = INTERNAL_SERVER_ERROR;
+			break;
+		}
+	}
+	return fd;
+}
+
+bool RequestHandler::resolveDirectory()
+{
+	return true;
+}
+
+bool RequestHandler::isDirectory(const std::string& path)
+{
+	struct stat statBuf;
+	if (stat(path.c_str(), &statBuf) != 0)
+		return false;
+	return S_ISDIR(statBuf.st_mode);
+}
+
+size_t RequestHandler::fileSize(const std::string& path)
+{
+	struct stat statBuf;
+	if (stat(path.c_str(), &statBuf) != 0)
+		return false;
+	return statBuf.st_size;
 }
 
 void RequestHandler::initRoutes()
@@ -23,7 +213,7 @@ void RequestHandler::initRoutes()
 	Location imageLoc;
 	imageLoc.setName("/images");
 	imageLoc.setAlias("/var/www/assets/images");
-	rootLoc.setRoot("");
+	imageLoc.setRoot("");
 	_routes["/images"] = imageLoc;
 }
 
@@ -43,62 +233,6 @@ void	RequestHandler::printRoutes()
 
 }
 
-RequestHandler::~RequestHandler() {}
-
-
-void RequestHandler::extractPath()
-{
-	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
-	{
-		std::cerr << "BAD URI: " << _request.getRequestUri() << std::endl;
-		return;
-	}
-
-	_path = _request.getRequestUri();
-	std::cout << "RequestUri: " << _request.getRequestUri() << std::endl;
-	std::cout << "PATH: " << _path << std::endl;
-
-	size_t queryPos = _path.find("?");
-	if (queryPos != std::string::npos)
-		_path = _path.substr(0, queryPos);
-}
-
-void RequestHandler::resolvePath()
-{
-
-	_fullPath = _root + _path;
-	std::cout << "Full Path: " << _fullPath << std::endl;
-
-}
-
-bool RequestHandler::validatePath()
-{
-	struct stat statBuf;
-	if (stat(_path.c_str(), &statBuf) != 0)
-	{
-		if (errno == ENOENT)
-			_statusCode = NOT_FOUND;
-		if (errno == EACCES)
-			_statusCode = FORBIDDEN;
-		else
-			_statusCode = INTERNAL_SERVER_ERROR;
-		return false;
-	}
-
-	// + verifier permissions
-
-	return true;
-}
-
-
-void RequestHandler::handleRequest()
-{
-	extractPath();
-
-	resolvePath();
-
-	validatePath();
-}
 
 /* ///////////LOCATION/////////////////// */
 
@@ -118,36 +252,3 @@ Location&	Location::operator= (const Location& rhs)
 }
 
 Location::~Location	() {}
-
-
-/* int	main()
-{
-	std::string method = "GET";
-
-	Location route_test;
-	route_test.setName("/errors/");
-	route_test.setRoot("/var/");
-	route_test.setAlias("");
-
-	ServerConfig server_test;
-	server_test._root = "/www/html";
-	server_test.route["/error/"] = route_test;
-
-	RequestHandler r_handler;
-	r_handler.handleRequest();
-
-
-	Tests permissions
-	std::cout << "isFile: " << (isFile("mainCopy.cpp") ? "true" : "false") << std::endl; 
-	std::cout << "isDir: " << (isDir("mainCopy.cpp") ? "true" : "false") << std::endl;
-	std::cout << "isReadable: " << (isReadable("mainCopy.cpp") ? "true" : "false") << std::endl; 
-	std::cout << "isWritable: " << (isWritable("mainCopy.cpp") ? "true" : "false") << std::endl; 
-	std::cout << "isExecutable: " << (isExecutable("mainCopy.cpp") ? "true" : "false") << std::endl << std::endl; 
-
-	return 0;
-} */
-
-/* //Integration main:
-RequestHandler r_handler(currConn->request_message);
-r_handler.handleRequest();
-currConn->response = r_handler.buildResponse(); */

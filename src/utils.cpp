@@ -15,7 +15,15 @@ bool isDir(const std::string& path)
 		return false;
 	return S_ISDIR(statBuf.st_mode);
 }
-//GET
+
+size_t fileSize(const std::string& path)
+{
+	struct stat statBuf;
+	if (stat(path.c_str(), &statBuf) != 0)
+		return false;
+	return statBuf.st_size;
+}
+
 bool isReadable(const std::string& path)
 {
 /* 	int	fd = open(path.c_str(), O_RDONLY);
@@ -27,7 +35,6 @@ bool isReadable(const std::string& path)
 	return (access(path.c_str(), R_OK) == 0);
 }
 
-//POST
 bool isWritable(const std::string& path)
 {
 /* 	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
