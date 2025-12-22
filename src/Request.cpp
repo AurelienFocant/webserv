@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/16 17:46:40 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/22 16:38:34 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,13 @@ bool	Request::parseRequest() {
 			if (_status_code == INIT_STATE)
 				handleBody();
 			break ;
+		case (BODY_HANDLING):
+			if (_status_code == INIT_STATE) {
+				if (_body_handler) {
+					// SOMETHING
+				}
+			}
+			break ;
 		case (PARSER_ERROR):
 			_progress = PARSER_ERROR;
 			_complete = true;
@@ -137,70 +144,14 @@ bool	Request::handleBody() {
 	if (_method == GET) { //Check for GET request
 		if (_progress == PARSED) {
 			extractHeadersInformations();
+			_progress = DONE;
 			_complete = true;
 			_status_code = OK;
 		}
 	}
 	else if (_method == POST) { //Parsing body if POST request
 		extractHeadersInformations();
-		//start of _content_encoding handling
-		if (_content_encoding) {
-			if (_content_length == std::numeric_limits<unsigned long>::max()) {
-				_complete = true;
-				_status_code = LENGTH_REQUIRED;
-			}
-			else {
-				_body += extractInput(_content_length - _body.size());
-				if (_body.size() == _content_length) {
-					_complete = true;
-					_status_code = OK;
-				}
-			}
-		}
-		//end of _content_encoding handling
-		//start of content_type handling
-		else if (_content_type == "application/x-www-form-urlencoded") {
-			if (_content_length == std::numeric_limits<unsigned long>::max()) {
-				_complete = true;
-				_status_code = LENGTH_REQUIRED;
-			}
-			else {
-				_body += extractInput(_content_length - _body.size());
-				if (_body.size() == _content_length) {
-					_complete = true;
-					_status_code = OK;
-				}
-			}
-		}	
-		else if (_content_type.find("multipart/form-data;boundary=" == 0)) {
-			std::string	delimiter = _content_type.substr(_content_type.find('=') + 1);
-			delimiter.erase(delimiter.find('"'), 1);
-			delimiter.erase(delimiter.find('"'), 1); //CHANGE that after
-			std::string	ender = "--" + delimiter + "--";
-			_body += extractInput(1000);//FIND another way after proof of concept
-			if (_body.find(ender) != std::numeric_limits<unsigned long>::max()) {
-				_complete = true;
-				_status_code = OK;
-			}
-		}
-		else if (_content_type == "text/plain") {
-			if (_content_length == std::numeric_limits<unsigned long>::max()) {
-				_complete = true;
-				_status_code = LENGTH_REQUIRED;
-			}
-			else {
-				_body += extractInput(_content_length - _body.size());
-				if (_body.size() == _content_length) {
-					_complete = true;
-					_status_code = OK;
-				}
-			}
-		}
-		else {
-			_complete = true;
-			_status_code = BAD_REQUEST;
-		}
-		//end of content_type handling
+		defineBodyExtractionHandler();
 	}
 	else {
 		_complete = true;
@@ -208,7 +159,77 @@ bool	Request::handleBody() {
 	}
 	return (_complete);
 }
-	//Parsing header
+
+bool	Request::defineBodyExtractionHandler() {
+	if (_content_encoding) {
+		_body_handler = Request::bodyHandlerTransfertEncoding;
+	}
+	else if (_content_length != std::numeric_limits<unsigned long>::max()) {
+		_body_handler = Request::bodyHandlerContentLength; 
+	}
+	else if (_content_type == "multipart") {
+		_body_handler = Request::bodyHandlerMultipart; 
+	}
+	else {
+		_progress = DONE;
+		_complete = true;
+		_status_code = NOT_IMPLEMENTED;
+		return (false);
+	}
+	_progress = BODY_HANDLING;
+	return (true);
+}
+
+bool	Request::bodyHandlerTransfertEncoding() {
+	if (_content_length == 0 
+		|| _content_length != std::numeric_limits<unsigned long>::max()) {
+		std::string	dft = extractInput('\n');
+		dft.erase(dft.find('\r'));
+		std::stringstream	ss;
+		ss << dft;
+		ss >> _content_length; 
+	}
+	if (_content_length == 0) {
+		_progress = DONE;
+		_complete = true;
+		_status_code = OK;
+	}
+	else {
+		size_t	before_len = _body.size();
+		_body += extractInput(_content_length);
+		_content_length -= (_body.size() - before_len);
+	}
+	return (_complete);
+}
+
+bool	Request::bodyHandlerContentLength() {
+	size_t	before_len = _body.size();
+	_body += extractInput(_content_length);
+	_content_length -= (_body.size() - before_len);
+	if (_content_length == 0) {
+		_progress = DONE;
+		_complete = true;
+		_status_code = OK;
+	}
+	return (_complete);
+}
+
+bool	Request::bodyHandlerMultipart() {
+	static std::string	ender;
+	if (ender.empty()) {
+		std::string	delimiter = _content_type.substr(_content_type.find('=') + 1);
+		delimiter.erase(delimiter.find('"'), 1);
+		delimiter.erase(delimiter.find('"'), 1); //CHANGE that after
+		std::string	ender = "--" + delimiter + "--";
+	}
+	size_t	len = 1000;
+	_body += extractInput(len);//FIND another way after proof of concept
+	if (_body.find(ender) != std::numeric_limits<unsigned long>::max()) {
+		ender.clear();
+		_complete = true;
+		_status_code = OK;
+	}
+}
 
 bool	Request::parseHeader() {
 	if (_list_it == _token_list.end() || _list_it->_tkType == EOC)
