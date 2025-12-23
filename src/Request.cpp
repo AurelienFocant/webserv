@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/15 17:13:57 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/23 15:35:27 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
 						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
 const char*			Request::important_argument[] = {
-	"content-length"
+	"content-length", "content-type", "transfert-encoding"
 	};
 
 /*Constructor - Copy Constructor - Destructor*/
@@ -46,6 +46,8 @@ bool	Request::cleanRequest() {
 	//request usefull header informations
 	_headers.clear();
 	_nbr_headers = 0;
+	_content_encoding = false;
+	_content_type.clear();
 	_content_length = -1; 
 
 	//Tokenizer cleaning
@@ -82,6 +84,13 @@ bool	Request::parseRequest() {
 		case (PARSED):
 			if (_status_code == INIT_STATE)
 				handleBody();
+			break ;
+		case (BODY_HANDLING):
+			if (_status_code == INIT_STATE) {
+				if ((this->*_body_handler)()) {
+					// SOMETHING
+				}
+			}
 			break ;
 		case (PARSER_ERROR):
 			_progress = PARSER_ERROR;
@@ -135,23 +144,14 @@ bool	Request::handleBody() {
 	if (_method == GET) { //Check for GET request
 		if (_progress == PARSED) {
 			extractHeadersInformations();
+			_progress = DONE;
 			_complete = true;
 			_status_code = OK;
 		}
 	}
 	else if (_method == POST) { //Parsing body if POST request
 		extractHeadersInformations();
-		if (_content_length == std::numeric_limits<unsigned long>::max()) {
-			_complete = true;
-			_status_code = LENGTH_REQUIRED;
-		}
-		else {
-			_body += extractInput(_content_length - _body.size());
-			if (_body.size() == _content_length) {
-				_complete = true;
-				_status_code = OK;
-			}
-		}
+		defineBodyExtractionHandler();
 	}
 	else {
 		_complete = true;
@@ -159,7 +159,80 @@ bool	Request::handleBody() {
 	}
 	return (_complete);
 }
-	//Parsing header
+
+bool	Request::defineBodyExtractionHandler() {
+	if (_content_encoding) {
+		_body_handler = &Request::bodyHandlerTransfertEncoding;
+	}
+	else if (_content_length != std::numeric_limits<unsigned long>::max()) {
+		_body_handler = &Request::bodyHandlerContentLength; 
+	}
+	else if (_content_type == "multipart") {
+		_body_handler = &Request::bodyHandlerMultipart; 
+	}
+	else {
+		_progress = DONE;
+		_complete = true;
+		_status_code = NOT_IMPLEMENTED;
+		return (false);
+	}
+	_progress = BODY_HANDLING;
+	return (true);
+}
+
+bool	Request::bodyHandlerTransfertEncoding() {
+	if (_content_length == 0 
+		|| _content_length == std::numeric_limits<unsigned long>::max()) {
+		std::string	dft = extractInput('\n');
+		dft.erase(dft.find('\r'));
+		std::stringstream	ss;
+		ss << std::hex << dft;
+		ss >> _content_length; 
+		if (_content_length)
+			_content_length += 2;
+	}
+	if (_content_length == 0) {
+		_progress = DONE;
+		_complete = true;
+		_status_code = OK;
+	}
+	else {
+		size_t	before_len = _body.size();
+		_body += extractInput(_content_length);
+		_content_length -= (_body.size() - before_len);
+	}
+	return (_complete);
+}
+
+bool	Request::bodyHandlerContentLength() {
+	size_t	before_len = _body.size();
+	_body += extractInput(_content_length);
+	_content_length -= (_body.size() - before_len);
+	if (_content_length == 0) {
+		_progress = DONE;
+		_complete = true;
+		_status_code = OK;
+	}
+	return (_complete);
+}
+
+bool	Request::bodyHandlerMultipart() {
+	static std::string	ender;
+	if (ender.empty()) {
+		std::string	delimiter = _content_type.substr(_content_type.find('=') + 1);
+		delimiter.erase(delimiter.find('"'), 1);
+		delimiter.erase(delimiter.find('"'), 1); //CHANGE that after
+		std::string	ender = "--" + delimiter + "--";
+	}
+	size_t	len = 1000;
+	_body += extractInput(len);//FIND another way after proof of concept
+	if (_body.find(ender) != std::numeric_limits<unsigned long>::max()) {
+		ender.clear();
+		_complete = true;
+		_status_code = OK;
+	}
+	return (_complete);
+}
 
 bool	Request::parseHeader() {
 	if (_list_it == _token_list.end() || _list_it->_tkType == EOC)
@@ -217,11 +290,25 @@ bool	Request::extractHeadersInformations() {
 			default: //COLON, COMA
 				it++;
 				detectImportantValue(options_name, it->_lexeme);
-				_headers.insert(std::make_pair(options_name, it->_lexeme));		
+				safeInsertion(options_name, it->_lexeme);
 		}
 		it++;
 	}
 	return (true);
+}
+
+void	Request::safeInsertion(const std::string& key, const std::string& value) {
+		std::pair  <std::multimap<std::string, std::string>::iterator,
+					std::multimap<std::string, std::string>::iterator>	range = _headers.equal_range(key);
+		std::multimap<std::string, std::string>::iterator	it = range.first;
+		while (it != range.second) {
+			if (it->second == value)
+				break ;
+			it++;
+		}
+		if (it == range.second)
+				_headers.insert(std::make_pair(key, value));		
+		return ;
 }
 
 std::string	Request::normalizeHeadersKey(std::string argument) {
@@ -241,6 +328,12 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 		case (0):
 			_content_length = std::atol(value.c_str()); 
 			break ;
+		case (1):
+			_content_type = value;
+			break ;
+		case (2):
+			_content_encoding = true;
+			break ;
 		default:
 			break ; 
 	}
@@ -248,6 +341,10 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 }
 
 /*Getter*/
+std::string	Request::getBody() const {
+	return (_body);
+}
+	
 bool	Request::setMethod() {
 	if (_progress == PARSER_ERROR)
 		return (false);
@@ -319,12 +416,15 @@ std::ostream&	operator<<(std::ostream& ostream, Request& other) {
 	for (std::multimap<std::string, std::string>::const_iterator	it = other.getHeadersValue().begin(); it != other.getHeadersValue().end(); it++) {
 		std::cout << it->first << ' ' << it->second << '\n';
 	}
+	if (!other.getBody().empty())
+		ostream << other.getBody() << std::endl;
 	std::cout << other.getStatusCode() << ' ' << httpStatusToString(other.getStatusCode()) << std::endl;
+	ostream << "----------------------------------------\n" << std::endl;
 	return (ostream);
 }
 
 std::ostream&	operator<<(std::ostream& ostream, std::vector<t_Token>& token_list) {
-	ostream << "----------------------------------------" << std::endl;
+	ostream << "\n----------------------------------------" << std::endl;
 	for (std::vector<t_Token>::const_iterator it = token_list.begin(); it != token_list.end(); it++) {
 		ostream << HTTPTokenizer::getTokenType(*it) << '\t' << (*it)._lexeme << std::endl;
 	}

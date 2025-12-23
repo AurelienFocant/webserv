@@ -136,6 +136,13 @@ std::string	HTTPTokenizer::extractInput(size_t len) {
 	return (tmp);
 }
 
+std::string	HTTPTokenizer::extractInput(char character) {
+	size_t	pos	= _input.find(character);
+	std::string	tmp = _input.substr(0, pos);
+	_input.erase(0, pos + 1);
+	return (tmp);
+}
+
 void	HTTPTokenizer::cleanTokenList() {
 	_token_list.clear();
 	_tokenizing = 0;

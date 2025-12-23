@@ -19,6 +19,7 @@ class	HTTPTokenizer : private Tokenizer {
 		std::vector<t_Token>	scanTokens() ;
 		std::string				getWord(std::string delim_list) ;
 		std::string				extractInput(size_t len) ;
+		std::string				extractInput(char character) ;
 		bool					addInput(std::string input) ;
 		void					cleanTokenList() ;
 		void					removeEOC();
