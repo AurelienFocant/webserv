@@ -26,6 +26,7 @@
 #include "VirtualServer.hpp"
 
 class Request;
+class Response;
 
 class Connection
 {

@@ -41,13 +41,32 @@ bool RequestHandler::extractPath()
 
 bool RequestHandler::resolvePath()
 {
-	if (_root.empty() || _path.empty())
+	//definir which hostname + if location
+	// + test allowed methods (exists only in locations)
+
+	std::string	root = _root;
+	size_t		longest_match = 0;
+
+	for (	std::map<std::string, Location>::iterator it = _routes.begin(); it != _routes.end(); it++)
+	{
+		if (_path.find(it->first, 0) == 0)
+		{
+			if (it->first.length() > longest_match)
+			{
+				longest_match = it->first.length();
+				if (!it->second.getRoot().empty())
+		 			root = it->second.getRoot();
+			}
+		}
+	}
+
+	if (root.empty() || _path.empty())
 	{
 		_statusCode = BAD_REQUEST;
 		return false;
 	}
 
-	_fullPath = _root + _path;
+	_fullPath = root + _path;
 	std::cout << "Full Path: " << _fullPath << std::endl;
 
 	if (!validatePath())
@@ -135,7 +154,7 @@ void	RequestHandler::processGetMethod()
 
 void RequestHandler::handleRequest()
 {
-	if (!extractPath() || !resolvePath() || !processMethods())
+	if (_request.getStatusCode() != OK || extractPath() || !resolvePath() || !processMethods())
 	{
 		_hasError = true;
 		return;
@@ -186,18 +205,31 @@ int RequestHandler::openWriteFile(const std::string& path)
 
 bool RequestHandler::resolveIndex()
 {
-	std::vector<std::string>index = {"index.html", "index.htm"}; //see storing type in ServerConfig
-	std::string				dirPath = _fullPath;
+	std::vector<std::string>index;
+	index.push_back("index.html");
+	index.push_back("index.htm"); //see storing type in ServerConfig
 
-	for (int i = 0; i < index.size(); i++)
+	std::string				dirPath = _fullPath;
+	bool					autoindex = false;
+
+	if (index.empty())
+		return false;
+	for (size_t i = 0; i < index.size(); i++)
 	{
-		std::string testPath =_fullPath = dirPath + index[i];
+		std::string testPath = dirPath + index[i];
 		if (access(_fullPath.c_str(), R_OK) == 0)
 		{
 			_fullPath = testPath;
 			return true;
 		}
 	}
+	if (autoindex)
+	{
+		// NGINX will automatically generate and display a directory listing
+		// adapt _fullPath;
+		return true;
+	}
+	// _statusCode = ??
 	return false;
 }
 
@@ -227,14 +259,14 @@ std::string RequestHandler::getContentType(const std::string& path)
     std::string ext = path.substr(dotPos + 1);
     
     if (ext == "html" || ext == "htm")return "text/html";
-    if (ext == "css") return "text/css";
-    if (ext == "js") return "application/javascript";
-    if (ext == "json") return "application/json";
-    if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
-    if (ext == "png") return "image/png";
-    if (ext == "gif") return "image/gif";
-    if (ext == "txt") return "text/plain";
-    if (ext == "pdf") return "application/pdf";
+    else if (ext == "css") return "text/css";
+    else if (ext == "js") return "application/javascript";
+    else if (ext == "json") return "application/json";
+    else if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
+    else if (ext == "png") return "image/png";
+    else if (ext == "gif") return "image/gif";
+    else if (ext == "txt") return "text/plain";
+    else if (ext == "pdf") return "application/pdf";
     
     return "application/octet-stream";
 }

@@ -2,7 +2,7 @@
 # define	RESPONSE_HPP
 
 /*INCLUDES*/
-#include <Request.hpp>
+#include "Request.hpp"
 
 class	Response
 {
@@ -10,7 +10,7 @@ class	Response
 	/*Constructor - Copy Constructor - Destructor*/
 		Response();
 		Response(std::string const& Response);
-		~Response() {std::cout << "Destructor called: Response" << std::endl;};
+		~Response();
 	
 	enum	state {
 		SEND_HEADER,
