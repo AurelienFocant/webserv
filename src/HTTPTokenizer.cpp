@@ -47,8 +47,8 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 				new_token._tkType = WORD;
 				new_token._lexeme = getWord(" \r");
 				_token_list.push_back(new_token);
+				_tokenizing++;
 		}
-		_tokenizing++;
 	}
 	nbr_eol = 0;
 	//Tokenizing Header
@@ -90,7 +90,10 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 			default:
 				nbr_eol = 0;
 				new_token._tkType = WORD;
-				new_token._lexeme = getWord(":,\r");
+				if (_token_list.back()._tkType == COLON || _token_list.back()._tkType == COMA)
+					new_token._lexeme = getWord(",\r");
+				else
+					new_token._lexeme = getWord(":,\r");
 				_token_list.push_back(new_token);
 		}
 	}
@@ -114,8 +117,11 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 }
 
 std::string	HTTPTokenizer::getWord(std::string delim_list) {
-	while (*_it == ' ' || *_it == '\t')
-		advance();
+	//std::string::const_iterator	it_start = _it;
+	while (*_it == ' ' || *_it == '\t') {
+		_input.erase(0, 1);
+//		advance();
+	}
 	std::string::const_iterator	end_word = _it;
 	while (end_word != _input.end() && delim_list.find(*end_word) == std::numeric_limits<unsigned long>::max())
 		end_word++;
