@@ -139,7 +139,7 @@ std::string	HTTPTokenizer::extractInput(size_t len) {
 std::string	HTTPTokenizer::extractInput(char character) {
 	size_t	pos	= _input.find(character);
 	std::string	tmp = _input.substr(0, pos);
-	_input.erase(0, pos);
+	_input.erase(0, pos + 1);
 	return (tmp);
 }
 

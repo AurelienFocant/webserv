@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/22 16:38:34 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/23 15:35:27 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
 						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
 const char*			Request::important_argument[] = {
-	"content-length", "content-type", "content-encoding"
+	"content-length", "content-type", "transfert-encoding"
 	};
 
 /*Constructor - Copy Constructor - Destructor*/
@@ -87,7 +87,7 @@ bool	Request::parseRequest() {
 			break ;
 		case (BODY_HANDLING):
 			if (_status_code == INIT_STATE) {
-				if (_body_handler) {
+				if ((this->*_body_handler)()) {
 					// SOMETHING
 				}
 			}
@@ -162,13 +162,13 @@ bool	Request::handleBody() {
 
 bool	Request::defineBodyExtractionHandler() {
 	if (_content_encoding) {
-		_body_handler = Request::bodyHandlerTransfertEncoding;
+		_body_handler = &Request::bodyHandlerTransfertEncoding;
 	}
 	else if (_content_length != std::numeric_limits<unsigned long>::max()) {
-		_body_handler = Request::bodyHandlerContentLength; 
+		_body_handler = &Request::bodyHandlerContentLength; 
 	}
 	else if (_content_type == "multipart") {
-		_body_handler = Request::bodyHandlerMultipart; 
+		_body_handler = &Request::bodyHandlerMultipart; 
 	}
 	else {
 		_progress = DONE;
@@ -182,12 +182,14 @@ bool	Request::defineBodyExtractionHandler() {
 
 bool	Request::bodyHandlerTransfertEncoding() {
 	if (_content_length == 0 
-		|| _content_length != std::numeric_limits<unsigned long>::max()) {
+		|| _content_length == std::numeric_limits<unsigned long>::max()) {
 		std::string	dft = extractInput('\n');
 		dft.erase(dft.find('\r'));
 		std::stringstream	ss;
-		ss << dft;
+		ss << std::hex << dft;
 		ss >> _content_length; 
+		if (_content_length)
+			_content_length += 2;
 	}
 	if (_content_length == 0) {
 		_progress = DONE;
@@ -229,6 +231,7 @@ bool	Request::bodyHandlerMultipart() {
 		_complete = true;
 		_status_code = OK;
 	}
+	return (_complete);
 }
 
 bool	Request::parseHeader() {
