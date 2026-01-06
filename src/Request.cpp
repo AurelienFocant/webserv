@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/23 15:35:27 by stempels         ###   ########.fr       */
+/*   Updated: 2025/12/23 16:48:26 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -238,7 +238,7 @@ bool	Request::parseHeader() {
 	if (_list_it == _token_list.end() || _list_it->_tkType == EOC)
 		return (true);
 	int	nbr_eol = 0;
-	while (_list_it->_tkType != EOC && nbr_eol != 2) {
+	while (_progress != PARSER_ERROR && _list_it->_tkType != EOC && nbr_eol != 2) {
 		switch (_list_it->_tkType) {
 			case (WORD):
 				nbr_eol = 0;
