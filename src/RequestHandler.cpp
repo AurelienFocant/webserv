@@ -10,6 +10,10 @@ RequestHandler::RequestHandler(const Request& request, Response& response)
 	: _request(request)
 	, _response(response)
 	, _root("/www/html")
+	, _path("")
+	, _fullPath("")
+	, _matchedLocation(NULL)
+	, _isDirectory(false)
 	, _statusCode(request.getStatusCode())
 	, _hasError(false)
 {
@@ -39,34 +43,61 @@ bool RequestHandler::extractPath()
 	return true;
 }
 
+void RequestHandler::findLocation()
+{
+	size_t		longest_match = 0;
+
+	for (std::map<std::string, Location>::iterator it = _routes.begin(); it != _routes.end(); it++)
+	{
+		const std::string&	route_path = it->first;
+		const Location*		location = &(it->second);
+
+		if (_path.find(route_path, 0) == 0)
+		{
+			if (route_path.length() > longest_match)
+			{
+				longest_match = route_path.length();
+				_matchedLocation = location;
+			}
+		}
+	}
+}
+
 bool RequestHandler::resolvePath()
 {
 	//definir which hostname + if location
 	// + test allowed methods (exists only in locations)
 
-	std::string	root = _root;
-	size_t		longest_match = 0;
+	findLocation();
 
-	for (	std::map<std::string, Location>::iterator it = _routes.begin(); it != _routes.end(); it++)
+	if (_matchedLocation)
 	{
-		if (_path.find(it->first, 0) == 0)
+		if (!_matchedLocation->getAlias().empty())
 		{
-			if (it->first.length() > longest_match)
-			{
-				longest_match = it->first.length();
-				if (!it->second.getRoot().empty())
-		 			root = it->second.getRoot();
-			}
+			std::string	location_path = _matchedLocation->getName();
+			std::string	remaining_path = _path.substr(location_path.length());
+			_fullPath = _matchedLocation->getAlias() + remaining_path;
+		}
+		else if (!_matchedLocation->getRoot().empty())
+		{
+			_root = _matchedLocation->getRoot();
+			_fullPath = _root + _path;
+		}
+		else
+		{
+			_fullPath = _root + _path;
 		}
 	}
+	else
+		_fullPath = _root + _path;
 
-	if (root.empty() || _path.empty())
+/* 	if (root.empty() || _path.empty())
 	{
 		_statusCode = BAD_REQUEST;
 		return false;
-	}
+	} */
 
-	_fullPath = root + _path;
+
 	std::cout << "Full Path: " << _fullPath << std::endl;
 
 	if (!validatePath())
@@ -154,7 +185,7 @@ void	RequestHandler::processGetMethod()
 
 void RequestHandler::handleRequest()
 {
-	if (_request.getStatusCode() != OK || extractPath() || !resolvePath() || !processMethods())
+	if (_request.getStatusCode() != OK || !extractPath() || !resolvePath() || !processMethods())
 	{
 		_hasError = true;
 		return;
@@ -217,7 +248,7 @@ bool RequestHandler::resolveIndex()
 	for (size_t i = 0; i < index.size(); i++)
 	{
 		std::string testPath = dirPath + index[i];
-		if (access(_fullPath.c_str(), R_OK) == 0)
+		if (access(testPath.c_str(), R_OK) == 0)
 		{
 			_fullPath = testPath;
 			return true;
@@ -245,7 +276,7 @@ size_t RequestHandler::fileSize(const std::string& path)
 {
 	struct stat statBuf;
 	if (stat(path.c_str(), &statBuf) != 0)
-		return false;
+		return 0;
 	return statBuf.st_size;
 }
 

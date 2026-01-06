@@ -52,6 +52,7 @@ class RequestHandler
 	std::string			_path; // request_uri sans query
 	std::string			_fullPath; //defnitive path (after alias or override)
 	//std::string			_index; //define file(s)to search when URI point to a dir
+	const Location*			_matchedLocation;
 	bool				_isDirectory;
 	int					_statusCode;
 	bool				_hasError;
@@ -62,6 +63,7 @@ class RequestHandler
 	bool			extractPath();
 	bool			resolvePath();
 	bool			validatePath();
+	void			findLocation();
 	bool			processMethods();
 	void			processGetMethod();
 	std::string 	getContentType(const std::string& path);
