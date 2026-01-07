@@ -164,6 +164,8 @@ void	RequestHandler::processGetMethod()
 	file_size = fileSize(_fullPath); // enregistrer dans Response
 	content_type = getContentType(_fullPath);
 
+	(void) file_size;
+
 /* 	
 	// RESPONSABILITE de Connection -> Send Response au fur et a mesure
 

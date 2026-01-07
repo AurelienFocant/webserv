@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
+/*                                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/23 16:48:26 by stempels         ###   ########.fr       */
+/*   Updated: 2026/01/07 16:23:08 by afocant          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,7 @@ bool	Request::parseRequest() {
 		case (FIRST_LINE):
 			if (!parseHeader())
 				break ;
+		    /* FALLTHRU */
 			//else fall_through;
 /*		case (PARSED):
 			if (parseHeader())
