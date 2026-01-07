@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/23 14:36:51 by stempels         ###   ########.fr       */
+/*   Updated: 2026/01/07 18:08:41 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,72 +22,11 @@
 # include <utility>
 
 # include "HTTPTokenizer.hpp"
-/*MACROS*/
 
 /*ENUM*/
-typedef	enum
-{
-	NOT_SET = -1,
-	GET = 0,
-	POST,
-	DELETE,
-	UNKNOWN,
-}		t_Method;
+# include "enum.hpp" // Moved enum to their own .hpp, was getting out of hand
 
-typedef enum // ERROR_TYPE = Error_code	http version
-{
-	INIT_STATE						= -1,
-
-    // 1xx — Informational
-    CONTINUE                        = 100,	 // 1.1
-    SWITCHING_PROTOCOLS            	= 101,	 // 1.1
-
-    // 2xx — Successful
-    OK                              = 200,   // 1.0
-    CREATED                         = 201,   // 1.0
-    ACCEPTED                        = 202,   // 1.0
-    NON_AUTHORITATIVE_INFORMATION   = 203,   // 1.1
-    NO_CONTENT                      = 204,   // 1.0
-    RESET_CONTENT                   = 205,   // 1.1
-    PARTIAL_CONTENT                 = 206,   // 1.1
-
-    // 3xx — Redirection
-    MULTIPLE_CHOICES                = 300,   // 1.0
-    MOVED_PERMANENTLY               = 301,   // 1.0
-    FOUND                           = 302,   // 1.0
-    SEE_OTHER                       = 303,   // 1.0
-    NOT_MODIFIED                    = 304,   // 1.0
-    USE_PROXY                       = 305,   // 1.0
-    TEMPORARY_REDIRECT              = 307,   // 1.1
-
-    // 4xx — Client Error
-    BAD_REQUEST                     = 400,   // 1.0
-    UNAUTHORIZED                    = 401,   // 1.0
-    PAYMENT_REQUIRED                = 402,   // 1.0
-    FORBIDDEN                       = 403,   // 1.0
-    NOT_FOUND                       = 404,   // 1.0
-    METHOD_NOT_ALLOWED              = 405,   // 1.1
-    NOT_ACCEPTABLE                  = 406,   // 1.1
-    PROXY_AUTHENTICATION_REQUIRED   = 407,   // 1.1
-    REQUEST_TIMEOUT                 = 408,   // 1.1
-    CONFLICT                        = 409,   // 1.1
-    GONE                            = 410,   // 1.1
-    LENGTH_REQUIRED                 = 411,   // 1.1
-    PRECONDITION_FAILED             = 412,   // 1.1
-    REQUEST_ENTITY_TOO_LARGE        = 413,   // 1.1
-    REQUEST_URI_TOO_LONG            = 414,   // 1.1
-    UNSUPPORTED_MEDIA_TYPE          = 415,   // 1.1
-    REQUESTED_RANGE_NOT_SATISFIABLE = 416,   // 1.1
-    EXPECTATION_FAILED              = 417,   // 1.1
-
-    // 5xx — Server Error
-    INTERNAL_SERVER_ERROR           = 500,   // 1.0
-    NOT_IMPLEMENTED                 = 501,   // 1.0
-    BAD_GATEWAY                     = 502,   // 1.0
-    SERVICE_UNAVAILABLE             = 503,   // 1.0
-    GATEWAY_TIMEOUT                 = 504,   // 1.1
-    HTTP_VERSION_NOT_SUPPORTED      = 505    // 1.1
-}									t_HttpCode;
+/*MACROS*/
 
 class	Request	: private HTTPTokenizer {
 	public:
@@ -106,7 +45,7 @@ class	Request	: private HTTPTokenizer {
 		bool			addInput(std::string input) ;
 
 	/*Setters - Getters*/
-		t_Method		getMethod() const { return(_method);}
+		t_method		getMethod() const { return(_method);}
 		std::string		getRequestUri() const { return(_request_uri);}
 		std::string		getHttpVersion() const { return(_http_version);}
 		std::string		getBody() const ;
@@ -124,7 +63,7 @@ class	Request	: private HTTPTokenizer {
 		bool									(Request::*_body_handler)( void );
 
 		//Request informations
-		t_Method								_method;
+		t_method								_method;
 		std::string								_request_uri;
 		std::string								_http_version;
 		std::string								_body;
@@ -145,7 +84,7 @@ class	Request	: private HTTPTokenizer {
 		//std::vector<t_Token>::const_iterator	_list_it;
 
 	/*Private Methods*/
-		t_Method	idMethod(std::string& method) ;
+//		t_method	idMethod(std::string& method) ;
 		bool	setMethod() ;
 		bool	setRequestUri() ;
 		bool	setHttpVersion() ;
@@ -163,88 +102,9 @@ class	Request	: private HTTPTokenizer {
 		void	safeInsertion(const std::string& key, const std::string& value) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
 
-		enum	progress {
-			PARSER_ERROR = -1,
-			START = 0,
-			METHOD,
-			URI,
-			VERSION,
-			FIRST_LINE,
-			PARSED,
-			BODY_HANDLING,
-			DONE,
-		};
 };
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
 std::ostream&	operator<<(std::ostream& ostream, std::vector<t_Token>& other) ;
-std::string		httpStatusToString(t_HttpCode code) ;
-t_HttpCode httpStatusFromString(const std::string& s) ;
 
 #endif
-
-// #ifndef REQUEST_HPP
-// #define REQUEST_HPP
-//
-// #include <iostream>
-//
-// class Request
-// {
-// 	private:
-//
-// 	int _state; // complete, incomplete, error
-// 	bool _connection;
-// 	int	_statusCode; //if state = error (431, 411, 413 400...);
-//
-// 	/* request line */
-// 	std::string _method; 
-// 	std::string _requestUri;
-// 	std::string _version;
-//
-// 	public:
-//
-// 	void	hasError(); //
-// 	void	isComplete(); //-> change to EPOLLOUT->processRequest()->buildResponse();
-//
-// 	const std::string&	getState() const;
-// 	const std::string&	getStatusCode() const;
-//
-// 	void	setStatusCode(int code);
-//
-//
-// 	const std::string& getMethod() const;
-// 	const std::string& getRequestUri() const;
-//
-//
-//
-// };
-//
-// processRequest()
-// 	-> validMethod
-// 	-> validLocations
-// 	-> methodHandlers
-//
-// std::string statusText;
-//
-//
-// class Response
-// {
-// 	private:
-//
-// 	buildStatusLine(const Request& Request);
-// 	buildHeader(const Request& Request);
-// 		Server:
-// 		Date:
-// 		Content-Lenght:
-// 		Content-Type:
-// 		Connection:
-// 	buildContent();
-//
-// 	public: 
-//
-// 	buildResponse();
-//
-// };
-//
-//
-// #endif
