@@ -22,9 +22,11 @@
 #include <cerrno>
 
 #include "Request.hpp"
+#include "Response.hpp"
 #include "VirtualServer.hpp"
 
 class Request;
+class Response;
 
 class Connection
 {
@@ -37,6 +39,7 @@ class Connection
 		std::string			response;
 		struct epoll_event	epollEvent;
 		Request				request_message;
+		Response			response_message;
 		VirtualServer		*virtual_server;
 
 
