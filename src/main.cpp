@@ -93,8 +93,11 @@ void	main_loop(int epollFd, int listenSocket)
 		if (efd_count < 0)
 			perror("ERROR! epoll_wait: ");
 
+		std::cout << "COUNT: " << efd_count << std::endl;
+
 		for (int i = 0; i < efd_count; i++) {
 			int	fd = ready_events[i].data.fd;
+
 
 			if (fd == listenSocket) {
 				Connection* newConnection = add_clientFD_to_epoll(epollFd, listenSocket);
@@ -117,6 +120,10 @@ void	main_loop(int epollFd, int listenSocket)
 
 					// If socket is ready for reading
 					if (ready_events[i].events & EPOLLIN) {
+						std::cout << "COUCOU" << std::endl;
+					}
+
+					if (ready_events[i].events & EPOLLIN) {
 						currConn->receiveRequest();
 
 						// Close Connection if needed
@@ -126,14 +133,12 @@ void	main_loop(int epollFd, int listenSocket)
 							connections.erase(it);
 							continue ;
 						}
+						// We'll need to do loads of stuff in here
+						currConn->request_message.addInput(currConn->request);
+						currConn->request_message.parseRequest();
+						currConn->request.clear();
+						std::cout << "main_loop -l129: "<< currConn->request_message << std::endl;
 					}
-
-
-					// We'll need to do loads of stuff in here
-					currConn->request_message.addInput(currConn->request);
-					currConn->request_message.parseRequest();
-					currConn->request.clear();
-					std::cout << "main_loop -l129: "<< currConn->request_message << std::endl;
 
 
 					// If request is complete and response 
@@ -163,10 +168,10 @@ void	main_loop(int epollFd, int listenSocket)
 						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn->clientFd, &ev);
 						//currConn->response = currConn->build_response();
 						currConn->request_message.cleanRequest();
-
-						currConn->sendResponse(epollFd);
 					}
 
+					int ret2 = ready_events[i].events & EPOLLOUT;
+					std::cout << "RET EPOLLOUT: " << ret2 << std::endl;
 
 					// If the socket is ready for writing
 					if (ready_events[i].events & EPOLLOUT) {
