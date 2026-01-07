@@ -64,7 +64,7 @@ bool ConfigTokenizer::isDelimiter(char c) const
 t_Token ConfigTokenizer::_buildToken(e_tokenType type, const std::string& lexeme)
 {
 	t_Token token;
-	token.type   = type;
+	token.tkType   = type;
 	token.lexeme = lexeme;
 	token.line   = _line;
 	return token;

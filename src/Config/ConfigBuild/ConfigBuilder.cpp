@@ -72,8 +72,8 @@ void ConfigBuilder::visit(const BlockNode& node)
         ConfigContext &locCtx = _getCurrentCtxt();
 
         Location loc;
-        loc.root = locCtx.getRoot();
-		// loc.alias = locCtx.getAlias ???
+        loc.setRoot(locCtx.getRoot());
+		// loc.alias ???
         
         _popContext();
         _getCurrentCtxt().addLocation(locCtx.getLocationName(), loc);

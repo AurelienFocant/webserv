@@ -3,15 +3,17 @@
 #include <string>
 #include <vector>
 
-enum e_tokenType {
-	ERROR, WORD, SEMICOLON, LBRACE, RBRACE
-};
+#include "Tokenizer.hpp"
 
-typedef struct {
-	e_tokenType		type;
-	std::string		lexeme;
-	unsigned int	line;
-}	t_Token;
+// enum e_tokenType {
+// 	ERROR, WORD, SEMICOLON, LBRACE, RBRACE
+// };
+
+// typedef struct {
+// 	e_tokenType		type;
+// 	std::string		lexeme;
+// 	unsigned int	line;
+// }	t_Token;
 
 class ConfigTokenizer
 {

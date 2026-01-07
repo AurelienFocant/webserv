@@ -53,7 +53,7 @@ bool	Tokenizer::match(char c)
 }
 
 std::string	Tokenizer::getTokenType(t_Token token) {
-	switch (token._tkType) {
+	switch (token.tkType) {
 		case (ERROR):
 			return ("ERROR");	
 		case (WORD):
@@ -66,6 +66,7 @@ std::string	Tokenizer::getTokenType(t_Token token) {
 			return ("EOL");	
 		case (EOC):
 			return ("EOC");	
+		default:
+			return ("\0");
 	}
-	return ("\0");
 }

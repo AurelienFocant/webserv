@@ -30,7 +30,7 @@ bool ConfigParser::_atEnd() const
 
 void ConfigParser::_expect(e_tokenType type)
 {
-	if (_peek().type != type) {
+	if (_peek().tkType != type) {
 		std::ostringstream ss;
 		ss << _peek().line;
 		std::cerr << "Syntax error on line " << ss.str() << '\n';
@@ -61,10 +61,10 @@ ConfigNode* ConfigParser::_parseStatement()
 	t_Token first = _advance();
 
 	size_t look = _pos;
-	while (look < _tokens.size() && _tokens[look].type == WORD)
+	while (look < _tokens.size() && _tokens[look].tkType == WORD)
 		look++;
 
-	if (look < _tokens.size() && _tokens[look].type == LBRACE) {
+	if (look < _tokens.size() && _tokens[look].tkType == LBRACE) {
 		_pos--;
 		return _parseBlock();
 	}
@@ -77,13 +77,13 @@ BlockNode* ConfigParser::_parseBlock()
 	BlockNode* block = new BlockNode(name.lexeme);
 
 	block->line = name.line;
-	while (!_atEnd() && _peek().type == WORD)
+	while (!_atEnd() && _peek().tkType == WORD)
 		block->args.push_back(_advance().lexeme);
 
 	_expect(LBRACE);
 	_advance();
 
-	while (!_atEnd() && _peek().type != RBRACE)
+	while (!_atEnd() && _peek().tkType != RBRACE)
 		block->children.push_back(_parseStatement());
 
 	_expect(RBRACE);
@@ -98,7 +98,7 @@ DirectiveNode* ConfigParser::_parseDirective(const t_Token& first)
 
 	// first or name ? Dir or block ??
 	dir->line = first.line;
-	while (!_atEnd() && _peek().type == WORD)
+	while (!_atEnd() && _peek().tkType == WORD)
 		dir->args.push_back(_advance().lexeme);
 
 	_expect(SEMICOLON);

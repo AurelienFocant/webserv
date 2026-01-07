@@ -4,13 +4,15 @@
 #include <string>
 #include <vector>
 
-typedef enum {
-	ERROR, WORD, COLON, COMA, EOL, EOC
+typedef enum e_tokenType{
+	ERROR, WORD, COLON, COMA, EOL, EOC, SEMICOLON, LBRACE, RBRACE
+
 }	t_tokenType;
 
 typedef struct {
-	t_tokenType	_tkType;
-	std::string	_lexeme;
+	t_tokenType		tkType;
+	std::string		lexeme;
+	unsigned int	line;
 }	t_Token;
 
 class Tokenizer

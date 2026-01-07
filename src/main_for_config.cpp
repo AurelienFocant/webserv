@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include "Webserv.hpp"
 
-int	main(int ac, char **av)
+int	notmain(int ac, char **av)
 {
 	if (ac > 2) {
 		std::cerr << "Usage: ./webserv [config_file]\n";
@@ -19,4 +19,5 @@ int	main(int ac, char **av)
 		std::cerr << "Exception caught: " << e.what() << '\n';
 		return (2);
 	}
+	return (0);
 }
