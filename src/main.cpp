@@ -27,6 +27,7 @@
 #include "Tokenizer.hpp"
 #include "VirtualServer.hpp"
 #include "RequestHandler.hpp"
+#include "Webserv.hpp"
 
 int	setUpServer()
 {
@@ -193,8 +194,13 @@ void	main_loop(int epollFd, int listenSocket)
 	}
 }
 
-int	main()
+int	main(int ac, char **av)
 {
+	if (ac > 2) {
+		std::cerr << "Usage: ./webserv [config_file]\n";
+		return (1);
+	}
+
 	int	listenSocket;
 	struct epoll_event	ev_hints;
 
@@ -212,11 +218,15 @@ int	main()
 	ev_hints.data.fd = listenSocket;
 	epoll_ctl(epollFd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
+	Webserv	webserv(av[1]);
 	try {
+		webserv.readConfig();
+		webserv.initWebServer();
 		main_loop(epollFd, listenSocket);
 	}
 	catch (std::exception &e) {
 		std::cerr << "Exception happened: " << e.what() << std::endl;
+		return (2);
 	}
 
 	return (0);
