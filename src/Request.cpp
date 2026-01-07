@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2025/12/23 16:48:26 by stempels         ###   ########.fr       */
+/*   Updated: 2026/01/07 16:40:28 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,9 +167,11 @@ bool	Request::defineBodyExtractionHandler() {
 	else if (_content_length != std::numeric_limits<unsigned long>::max()) {
 		_body_handler = &Request::bodyHandlerContentLength; 
 	}
+	/*
 	else if (_content_type == "multipart") {
 		_body_handler = &Request::bodyHandlerMultipart; 
 	}
+	*/
 	else {
 		_progress = DONE;
 		_complete = true;
