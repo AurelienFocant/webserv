@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2026/01/07 17:52:13 by stempels         ###   ########.fr       */
+/*   Updated: 2026/01/07 18:08:41 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,5 @@ class	Request	: private HTTPTokenizer {
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
 std::ostream&	operator<<(std::ostream& ostream, std::vector<t_Token>& other) ;
-std::string		httpStatusToString(t_HttpCode code) ;
-t_HttpCode httpStatusFromString(const std::string& s) ;
 
 #endif
