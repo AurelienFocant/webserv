@@ -31,7 +31,7 @@ bool	Connection::receiveRequest()
 
 
 	while ((bytesRecvd = recv(clientFd, buf, sizeof(buf), 0)) > 0) {
-		request.append(buf, bytesRecvd);
+		request_str.append(buf, bytesRecvd);
 	}
 
 	if (bytesRecvd == 0 && epollEvent.events & EPOLLRDHUP) {
@@ -50,14 +50,14 @@ bool	Connection::receiveRequest()
 void	Connection::sendResponse(int epollFd)
 {
 	ssize_t bytesSent = send(clientFd,
-			response.c_str() + respOffset,
-			response.length() - respOffset,
+			response_str.c_str() + respOffset,
+			response_str.length() - respOffset,
 			MSG_NOSIGNAL);
 
 	if (bytesSent > 0) {
 		respOffset += bytesSent;
 
-		if (respOffset >= (int)response.length()) {
+		if (respOffset >= (int)response_str.length()) {
 			// full response sent --> stop watching EPOLLOUT
 			struct epoll_event	ev;
 
@@ -68,7 +68,7 @@ void	Connection::sendResponse(int epollFd)
 				connClosed = true;
 			}
 
-			response.clear();
+			response_str.clear();
 			respOffset = 0;
 		}
 	}
