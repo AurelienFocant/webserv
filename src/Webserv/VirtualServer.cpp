@@ -83,3 +83,15 @@ std::string		VirtualServer::getServName(void) const
 {
 	return (_server_name);
 }
+
+void	VirtualServer::_initDefaultErrorPages(void)
+{
+	std::string	root = "./data/error_pages/";
+	this->error_pages[400] = root + "400.html";
+	this->error_pages[404] = root + "404.html";
+}
+
+void	VirtualServer::initDefaultConfig(void)
+{
+	_initDefaultErrorPages();
+}

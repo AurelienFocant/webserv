@@ -5,10 +5,12 @@
 #include <vector>
 #include <map>
 
-struct Location {
-	std::string		root;
-	std::string		alias;
-};
+#include "RequestHandler.hpp"
+
+// struct Location {
+// 	std::string		root;
+// 	std::string		alias;
+// };
 
 class VirtualServer
 {
@@ -19,11 +21,11 @@ class VirtualServer
 
 		std::map<std::string, Location>	_locations;
 
+		void	_initDefaultErrorPages(void);
+
 	public:
-		VirtualServer	( void );
-		VirtualServer	( const VirtualServer& src );
-		VirtualServer&	operator= ( const VirtualServer& rhs );
-		~VirtualServer	( void );
+		void	initDefaultConfig(void);
+		std::map<int, std::string>	error_pages;
 
 		const std::map<std::string, Location>	&getLocations(void) const;
 		void									setLocations(const std::map<std::string, Location> &locs);
@@ -37,6 +39,11 @@ class VirtualServer
 		void			setServName(std::string name);
 		std::string		getServName(void) const;
 
+
+		VirtualServer	( void );
+		VirtualServer	( const VirtualServer& src );
+		VirtualServer&	operator= ( const VirtualServer& rhs );
+		~VirtualServer	( void );
 };
 
 #endif // VIRTUALSERVER_HPP

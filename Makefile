@@ -73,7 +73,8 @@ CPPFLAGS						:=	-MMD -MP
 
 #--------------------------HEADER FILES-----------------------#
 INC_DIR							:=	include
-CPPFLAGS						+=	-I$(INC_DIR) -I$(SRC_DIR) -I$(SRC_SUBDIRS)
+CPPFLAGS						+=	-I$(INC_DIR) -I$(SRC_DIR)
+CPPFLAGS						+=	$(addprefix -I, $(SRC_SUBDIRS))
 
 
 #----------------------------LINKING--------------------------#
