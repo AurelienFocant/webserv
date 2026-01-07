@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 18:50:20 by stempels          #+#    #+#             */
-/*   Updated: 2026/01/07 17:03:09 by stempels         ###   ########.fr       */
+/*   Updated: 2026/01/07 17:52:13 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 # include <utility>
 
 # include "HTTPTokenizer.hpp"
+
 /*ENUM*/
 # include "enum.hpp" // Moved enum to their own .hpp, was getting out of hand
 
@@ -44,7 +45,7 @@ class	Request	: private HTTPTokenizer {
 		bool			addInput(std::string input) ;
 
 	/*Setters - Getters*/
-		t_Method		getMethod() const { return(_method);}
+		t_method		getMethod() const { return(_method);}
 		std::string		getRequestUri() const { return(_request_uri);}
 		std::string		getHttpVersion() const { return(_http_version);}
 		std::string		getBody() const ;
@@ -62,7 +63,7 @@ class	Request	: private HTTPTokenizer {
 		bool									(Request::*_body_handler)( void );
 
 		//Request informations
-		t_Method								_method;
+		t_method								_method;
 		std::string								_request_uri;
 		std::string								_http_version;
 		std::string								_body;
@@ -83,7 +84,7 @@ class	Request	: private HTTPTokenizer {
 		//std::vector<t_Token>::const_iterator	_list_it;
 
 	/*Private Methods*/
-		t_Method	idMethod(std::string& method) ;
+//		t_method	idMethod(std::string& method) ;
 		bool	setMethod() ;
 		bool	setRequestUri() ;
 		bool	setHttpVersion() ;
@@ -101,17 +102,6 @@ class	Request	: private HTTPTokenizer {
 		void	safeInsertion(const std::string& key, const std::string& value) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
 
-		enum	progress {
-			PARSER_ERROR = -1,
-			START = 0,
-			METHOD,
-			URI,
-			VERSION,
-			FIRST_LINE,
-			PARSED,
-			BODY_HANDLING,
-			DONE,
-		};
 };
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) ;
@@ -120,69 +110,3 @@ std::string		httpStatusToString(t_HttpCode code) ;
 t_HttpCode httpStatusFromString(const std::string& s) ;
 
 #endif
-
-// #ifndef REQUEST_HPP
-// #define REQUEST_HPP
-//
-// #include <iostream>
-//
-// class Request
-// {
-// 	private:
-//
-// 	int _state; // complete, incomplete, error
-// 	bool _connection;
-// 	int	_statusCode; //if state = error (431, 411, 413 400...);
-//
-// 	/* request line */
-// 	std::string _method; 
-// 	std::string _requestUri;
-// 	std::string _version;
-//
-// 	public:
-//
-// 	void	hasError(); //
-// 	void	isComplete(); //-> change to EPOLLOUT->processRequest()->buildResponse();
-//
-// 	const std::string&	getState() const;
-// 	const std::string&	getStatusCode() const;
-//
-// 	void	setStatusCode(int code);
-//
-//
-// 	const std::string& getMethod() const;
-// 	const std::string& getRequestUri() const;
-//
-//
-//
-// };
-//
-// processRequest()
-// 	-> validMethod
-// 	-> validLocations
-// 	-> methodHandlers
-//
-// std::string statusText;
-//
-//
-// class Response
-// {
-// 	private:
-//
-// 	buildStatusLine(const Request& Request);
-// 	buildHeader(const Request& Request);
-// 		Server:
-// 		Date:
-// 		Content-Lenght:
-// 		Content-Type:
-// 		Connection:
-// 	buildContent();
-//
-// 	public: 
-//
-// 	buildResponse();
-//
-// };
-//
-//
-// #endif

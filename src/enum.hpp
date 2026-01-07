@@ -6,22 +6,27 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/07 16:59:07 by stempels          #+#    #+#             */
-/*   Updated: 2026/01/07 17:06:50 by stempels         ###   ########.fr       */
+/*   Updated: 2026/01/07 17:49:24 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef		ENUM_HPP
 # define	ENUM_HPP
 
-typedef	enum s_method {		//Enum for HTTP METHOD
+/*Includes*/
+# include <string>
+
+// Enum handling function at the end of this document, add them with the others
+
+typedef	enum s_method {		//Enum for HTTP METHOD -> UNKNOWN must be the last one
 	NOT_SET = -1,
 	GET = 0,
 	POST,
 	DELETE,
-	UNKNOWN,
-}		t_Method;
+	UNKNOWN
+}		t_method;
 
-typedef	enum s_progress {	//Enum for request traitment progression
+typedef	enum s_progress {	//Enum for request traitment progression -> UNKNOWN_STATE must be the last one
 			PARSER_ERROR = -1,
 			START = 0,
 			METHOD,
@@ -31,6 +36,7 @@ typedef	enum s_progress {	//Enum for request traitment progression
 			PARSED,
 			BODY_HANDLING,
 			DONE,
+			UNKNOWN_STATE
 }		t_progress;
 
 typedef enum s_httpCode {	//Enum for HTTP Status codes
@@ -87,5 +93,17 @@ typedef enum s_httpCode {	//Enum for HTTP Status codes
     GATEWAY_TIMEOUT                 = 504,   // 1.1
     HTTP_VERSION_NOT_SUPPORTED      = 505    // 1.1
 }									t_HttpCode;
+
+//t_method enum
+std::string	methodToString(t_method code) ;
+t_method	methodFromString(const std::string&	string) ;
+
+//t_progress enum
+std::string	progressToString(t_progress code) ;
+t_progress	progressFromString(const std::string& string) ;
+
+//t_httpCode enum
+std::string httpStatusToString(t_HttpCode code)  ;
+t_HttpCode httpStatusFromString(const std::string& string) ;
 
 #endif
