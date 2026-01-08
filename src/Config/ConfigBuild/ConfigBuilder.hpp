@@ -17,19 +17,23 @@ class ConfigBuilder
 		void visit(const BlockNode &node);
 		void visit(const DirectiveNode &node);
 
+		ConfigBuilder();
+		~ConfigBuilder();
+
 	private:
+		bool	_has_root;
 
 		std::stack<ConfigContext>	_contextStack;
 		std::vector<VirtualServer>	_servers;
 
 
 		/* Handlers */
-		void _initHandlers();
 		typedef void (ConfigBuilder::*DirectiveHandler)(const DirectiveNode &);
-		std::map<std::string, DirectiveHandler> _handlers;
-		void _handleListen(const DirectiveNode &);
-		void _handleRoot(const DirectiveNode &);
-		void _handleServerName(const DirectiveNode &);
+		std::map<std::string, DirectiveHandler>	_handlers;
+		void _initHandlers();
+		void _handleListen		(const DirectiveNode &);
+		void _handleRoot   		(const DirectiveNode &);
+		void _handleServerName	(const DirectiveNode &);
 
 		/* Helpers */
 		ConfigContext &_getCurrentCtxt();
