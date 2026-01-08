@@ -54,7 +54,7 @@ void	Connection::sendResponse(int epollFd)
 			response_str.length() - respOffset,
 			MSG_NOSIGNAL);
 
-	if (bytesSent > 0) {
+	if (bytesSent >= 0) { // >= || > ??
 		respOffset += bytesSent;
 
 		if (respOffset >= (int)response_str.length()) {
