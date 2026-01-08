@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/03 15:00:18 by stempels          #+#    #+#             */
-/*   Updated: 2026/01/07 17:51:48 by stempels         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Request.hpp"
 
 const std::string	Request::authorized_method = "GET POST";
@@ -75,6 +63,7 @@ bool	Request::parseRequest() {
 		case (FIRST_LINE):
 			if (!parseHeader())
 				break ;
+		    /* FALLTHRU */
 			//else fall_through;
 /*		case (PARSED):
 			if (parseHeader())
@@ -125,7 +114,7 @@ bool	Request::parseFirstLine() {
 					break ;
 				//else fall-through
 			case (VERSION):
-				if ((*_list_it)._tkType == EOL) {
+				if ((*_list_it).tkType == EOL) {
 					_progress = FIRST_LINE;
 					break ;
 				}
@@ -237,18 +226,18 @@ bool	Request::bodyHandlerMultipart() {
 }
 
 bool	Request::parseHeader() {
-	if (_list_it == _token_list.end() || _list_it->_tkType == EOC)
+	if (_list_it == _token_list.end() || _list_it->tkType == EOC)
 		return (true);
 	int	nbr_eol = 0;
-	while (_progress != PARSER_ERROR && _list_it->_tkType != EOC && nbr_eol != 2) {
-		switch (_list_it->_tkType) {
+	while (_progress != PARSER_ERROR && _list_it->tkType != EOC && nbr_eol != 2) {
+		switch (_list_it->tkType) {
 			case (WORD):
 				nbr_eol = 0;
-				if ((++_list_it)->_tkType == COLON && (++_list_it)->_tkType == WORD) {
-					while (_list_it->_tkType == WORD) {
+				if ((++_list_it)->tkType == COLON && (++_list_it)->tkType == WORD) {
+					while (_list_it->tkType == WORD) {
 						_list_it++;
 						_nbr_headers++;
-						if (_list_it->_tkType == COMA)
+						if (_list_it->tkType == COMA)
 							_list_it++;
 						else
 							break ;
@@ -282,17 +271,17 @@ bool	Request::extractHeadersInformations() {
 	std::string								options_name;
 //	_headers.reserve(_nbr_headers);
 	while (it != _token_list.end()) {
-		switch (it->_tkType) {
+		switch (it->tkType) {
 			case (WORD):
-				options_name = normalizeHeadersKey(it->_lexeme);
+				options_name = normalizeHeadersKey(it->lexeme);
 				break ;
 			case (EOL):
 				options_name.clear();
 				break ;
 			default: //COLON, COMA
 				it++;
-				detectImportantValue(options_name, it->_lexeme);
-				safeInsertion(options_name, it->_lexeme);
+				detectImportantValue(options_name, it->lexeme);
+				safeInsertion(options_name, it->lexeme);
 		}
 		it++;
 	}
@@ -351,11 +340,11 @@ bool	Request::setMethod() {
 	if (_progress == PARSER_ERROR)
 		return (false);
 	t_Token	token = *_list_it;
-	if (token._tkType != WORD) {
+	if (token.tkType != WORD) {
 		_progress = PARSER_ERROR;
 		return (false);
 	}
-	_method = methodFromString(token._lexeme);
+	_method = methodFromString(token.lexeme);
 	_list_it++;
 	_progress = METHOD;
 	return (true);
@@ -365,11 +354,11 @@ bool	Request::setRequestUri() {
 	if (_progress == PARSER_ERROR)
 		return (false);
 	t_Token	token = *_list_it;
-	switch (token._tkType) {
+	switch (token.tkType) {
 		case (EOC):
 			break ;
 		case (WORD):
-			_request_uri = token._lexeme;
+			_request_uri = token.lexeme;
 			_list_it++;
 			_progress = URI;
 			break ;
@@ -384,11 +373,11 @@ bool	Request::setHttpVersion() {
 	if (_progress == PARSER_ERROR)
 		return (false);
 	t_Token	token = *_list_it;
-	switch (token._tkType) {
+	switch (token.tkType) {
 		case (EOC):
 			break ;
 		case (WORD):
-			_http_version = token._lexeme;
+			_http_version = token.lexeme;
 			_list_it++;
 			_progress = VERSION;
 			break ;
@@ -430,7 +419,7 @@ std::ostream&	operator<<(std::ostream& ostream, Request& other) {
 std::ostream&	operator<<(std::ostream& ostream, std::vector<t_Token>& token_list) {
 	ostream << "\n----------------------------------------" << std::endl;
 	for (std::vector<t_Token>::const_iterator it = token_list.begin(); it != token_list.end(); it++) {
-		ostream << HTTPTokenizer::getTokenType(*it) << '\t' << (*it)._lexeme << std::endl;
+		ostream << HTTPTokenizer::getTokenType(*it) << '\t' << (*it).lexeme << std::endl;
 	}
 	ostream << "----------------------------------------" << std::endl;
 	return (ostream);

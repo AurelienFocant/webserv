@@ -35,11 +35,11 @@ class Connection
 		struct sockaddr_in	clientAddr;
 		int					respOffset;
 		bool				connClosed;
-		std::string			request;
-		std::string			response;
+		std::string			request_str;
+		std::string			response_str;
 		struct epoll_event	epollEvent;
-		Request				request_message;
-		Response			response_message;
+		Request				request;
+		Response			response;
 		VirtualServer		*virtual_server;
 
 

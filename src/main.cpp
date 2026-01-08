@@ -27,6 +27,7 @@
 #include "Tokenizer.hpp"
 #include "VirtualServer.hpp"
 #include "RequestHandler.hpp"
+#include "Webserv.hpp"
 
 int	setUpServer()
 {
@@ -134,24 +135,30 @@ void	main_loop(int epollFd, int listenSocket)
 							continue ;
 						}
 						// We'll need to do loads of stuff in here
-						currConn->request_message.addInput(currConn->request);
-						currConn->request_message.parseRequest();
-						currConn->request.clear();
-						std::cout << "main_loop -l129: "<< currConn->request_message << std::endl;
+						currConn->request.addInput(currConn->request_str);
+						currConn->request.parseRequest();
+						currConn->request_str.clear();
+						std::cout << "main_loop -l129: "<< currConn->request << std::endl;
 					}
 
+
+					// We'll need to do loads of stuff in here
+					currConn->request.addInput(currConn->request_str);
+					currConn->request.parseRequest();
+					currConn->request_str.clear();
+					std::cout << "main_loop -l129: "<< currConn->request << std::endl;
 
 					// If request is complete and response 
 					// is empty --> build it
 					// and tell epoll we want it to tell us
 					// when the socket is ready for writing
-					if (currConn->request_message.getCompleted()
-							&& currConn->response.empty()) {
+					if (currConn->request.getCompleted()
+							&& currConn->response_str.empty()) {
 						
 						/* TEST REQUEST HANDLER */
 						std::cout << "Main 147: Request Handler" << std::endl;
-						std::cout << "Status Code: " << currConn->request_message.getStatusCode() << std::endl;
-						RequestHandler rHandler(currConn->request_message, currConn->response_message);
+						std::cout << "Status Code: " << currConn->request.getStatusCode() << std::endl;
+						RequestHandler rHandler(currConn->request, currConn->response);
 						rHandler.handleRequest();
 						if (rHandler.hasError())
 						{
@@ -167,7 +174,8 @@ void	main_loop(int epollFd, int listenSocket)
 						ev.data.fd = currConn->clientFd;
 						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn->clientFd, &ev);
 						//currConn->response = currConn->build_response();
-						currConn->request_message.cleanRequest();
+						currConn->request.cleanRequest();
+						currConn->sendResponse(epollFd);
 					}
 
 					int ret2 = ready_events[i].events & EPOLLOUT;
@@ -198,8 +206,13 @@ void	main_loop(int epollFd, int listenSocket)
 	}
 }
 
-int	main()
+int	main(int ac, char **av)
 {
+	if (ac > 2) {
+		std::cerr << "Usage: ./webserv [config_file]\n";
+		return (1);
+	}
+
 	int	listenSocket;
 	struct epoll_event	ev_hints;
 
@@ -217,11 +230,15 @@ int	main()
 	ev_hints.data.fd = listenSocket;
 	epoll_ctl(epollFd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
+	Webserv	webserv(av[1]);
 	try {
+		webserv.readConfig();
+		webserv.initWebServer();
 		main_loop(epollFd, listenSocket);
 	}
 	catch (std::exception &e) {
 		std::cerr << "Exception happened: " << e.what() << std::endl;
+		return (2);
 	}
 
 	return (0);
