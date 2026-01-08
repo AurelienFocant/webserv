@@ -4,12 +4,14 @@
 #include <string>
 #include <vector>
 
-typedef enum e_tokenType{
+typedef enum e_tokenType
+{
 	ERROR, WORD, COLON, COMA, EOL, EOC, SEMICOLON, LBRACE, RBRACE
 
 }	t_tokenType;
 
-typedef struct {
+typedef struct
+{
 	t_tokenType		tkType;
 	std::string		lexeme;
 	unsigned int	line;
