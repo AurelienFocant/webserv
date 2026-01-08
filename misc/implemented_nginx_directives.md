@@ -31,7 +31,7 @@ toc: false
 - index                 --> http, server, location 
 - autoindex             --> http, server, location (show as directory listing)
 ### - limit_except           --> location
-### - server_name
+- server_name
 - keepalive_time
     - (absolute time of a open connection)
     - (default 1h)
