@@ -1,9 +1,8 @@
 #include "VirtualServer.hpp"
 
-#include <iostream>
-
 VirtualServer::VirtualServer( void )
-	: _port(0)
+	: _port(80)
+	, _index("index.html")
 	, _root("")
 	, _server_name("")
 	, _locations()
@@ -12,6 +11,7 @@ VirtualServer::VirtualServer( void )
 
 VirtualServer::VirtualServer(const VirtualServer& src)
 	: _port(src._port)
+	, _index(src._index)
 	, _root(src._root)
 	, _server_name(src._server_name)
 	, _locations(src._locations)
@@ -22,6 +22,7 @@ VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
 {
 	if (this != &rhs) {
 		_port = rhs._port;
+		_index = rhs._index;
 		_root = rhs._root;
 		_server_name = rhs._server_name;
 		_locations = rhs._locations;

@@ -16,6 +16,7 @@ class VirtualServer
 {
 	private:
 		unsigned int	_port;
+		std::string		_index;
 		std::string		_root;
 		std::string		_server_name;
 

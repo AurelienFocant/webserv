@@ -109,10 +109,11 @@ void ConfigBuilder::visit(const DirectiveNode& node)
 
 void ConfigBuilder::_initHandlers()
 {
-	_handlers["listen"]			= &ConfigBuilder::_handleListen;
-	_handlers["root"]			= &ConfigBuilder::_handleRoot;
-	_handlers["server_name"]	= &ConfigBuilder::_handleServerName;
-	// _handlers["autoindex"]		= blabla
+	_handlers["listen"]		= &ConfigBuilder::_handleListen;
+	_handlers["root"]		= &ConfigBuilder::_handleRoot;
+	_handlers["server_name"]= &ConfigBuilder::_handleServerName;
+	// _handlers["index"]		= &ConfigBuilder::_handleIndex;
+	// _handlers["autoindex"]	= &ConfigBuilder::_handleAutoIndex;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)

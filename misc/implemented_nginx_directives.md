@@ -25,13 +25,13 @@ toc: false
     - !! has to implement port AND ip address ?
 - root    --> http, server, location
     - (cannot be duplicated)
+- server_name
 
 
 ## Should be implemented
-- index                 --> http, server, location 
+- index                 --> http, server, location (default to index.html)
 - autoindex             --> http, server, location (show as directory listing)
 ### - limit_except           --> location
-- server_name
 - keepalive_time
     - (absolute time of a open connection)
     - (default 1h)
