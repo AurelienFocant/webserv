@@ -111,6 +111,9 @@ void	ConfigBuilder::_validateDirective(DirectiveNode const& node)
 	std::map<std::string, DirectiveSpecs>::iterator it = _direcSpecs.find(node.name);
 	if (it == _direcSpecs.end())
 		_error(node.line ,std::string("Unknown directive: ") + node.name);
+
+	if (!(it->second.allowedCtxts & _getCurrentCtxt().getType()))
+		_error(node.line, std::string("Directive ") + node.name + std::string(" forbidden in this context"));
 }
 
 void ConfigBuilder::_initHandlers()
@@ -124,8 +127,8 @@ void ConfigBuilder::_initHandlers()
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
 {
-	if (_getCurrentCtxt().getType() != SERVER)
-		_error(d.line, "listen only allowed in server");
+	// if (_getCurrentCtxt().getType() != SERVER)
+	// 	_error(d.line, "listen only allowed in server");
 
 	if (d.args.size() != 1)
 		_error(d.line, "listen expects 1 argument");
@@ -199,9 +202,12 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 ConfigBuilder::ConfigBuilder()
 	: _has_root(0)
 {
-	struct DirectiveSpecs listen = {0,0,0};
+	struct DirectiveSpecs listen = { SERVER, 0, 0 };
 	_direcSpecs["listen"] = listen;
-	_direcSpecs["listen"] = DirectivesSpecs(0,0,0);
+	struct DirectiveSpecs root = { SERVER | LOCATION, 0, 0 };
+	_direcSpecs["root"] = root;
+	struct DirectiveSpecs server_name = { SERVER, 0, 0 };
+	_direcSpecs["server_name"] = server_name;
 }
 
 ConfigBuilder::~ConfigBuilder()

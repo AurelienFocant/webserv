@@ -3,13 +3,12 @@
 #include <map>
 #include <stack>
 #include <vector>
-#include <stdexcept>
 
 #include "VirtualServer.hpp"
 #include "ConfigContext.hpp"
 #include "ConfigNode.hpp"
 
-class DirectiveSpecs
+struct DirectiveSpecs
 {
 	int	allowedCtxts;
 	int	min_args;
