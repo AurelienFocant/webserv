@@ -3,7 +3,6 @@
 #include <stdexcept>
 #include <sstream>
 
-#include <stdio.h>
 std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 {
     const BlockNode* block =
@@ -95,16 +94,23 @@ void ConfigBuilder::visit(const BlockNode& node)
 // Visit DIRECTIVE
 void ConfigBuilder::visit(const DirectiveNode& node)
 {
-	const std::string& name = node.name;
-	std::map<std::string, DirectiveHandler>::iterator it = _handlers.find(name);
+	_validateDirective(node);
 
+	std::map<std::string, DirectiveHandler>::iterator it = _handlers.find(node.name);
 	if (it != _handlers.end()) {
 		DirectiveHandler handler = it->second;
 		(this->*handler)(node);
 	}
 	else {
-		_error(node.line ,std::string("Unknown directive: ") + name);
+		_error(node.line ,std::string("Unknown directive: ") + node.name);
 	}
+}
+
+void	ConfigBuilder::_validateDirective(DirectiveNode const& node)
+{
+	std::map<std::string, DirectiveSpecs>::iterator it = _direcSpecs.find(node.name);
+	if (it == _direcSpecs.end())
+		_error(node.line ,std::string("Unknown directive: ") + node.name);
 }
 
 void ConfigBuilder::_initHandlers()
@@ -193,6 +199,9 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 ConfigBuilder::ConfigBuilder()
 	: _has_root(0)
 {
+	struct DirectiveSpecs listen = {0,0,0};
+	_direcSpecs["listen"] = listen;
+	_direcSpecs["listen"] = DirectivesSpecs(0,0,0);
 }
 
 ConfigBuilder::~ConfigBuilder()

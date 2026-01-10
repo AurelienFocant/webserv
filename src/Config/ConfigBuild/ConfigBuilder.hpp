@@ -4,30 +4,36 @@
 #include <stack>
 #include <vector>
 #include <stdexcept>
+
 #include "VirtualServer.hpp"
 #include "ConfigContext.hpp"
 #include "ConfigNode.hpp"
 
+class DirectiveSpecs
+{
+	int	allowedCtxts;
+	int	min_args;
+	int	max_args;
+};
+
 class ConfigBuilder
 {
 	public:
-		// MISSING constructors etc
 		std::vector<VirtualServer> build(const ConfigNode *root);
 
 		void visit(const BlockNode &node);
 		void visit(const DirectiveNode &node);
 
+		// MISSING constructors etc
 		ConfigBuilder();
 		~ConfigBuilder();
 
 	private:
-		bool	_has_root;
-
-		std::stack<ConfigContext>	_contextStack;
 		std::vector<VirtualServer>	_servers;
 
+		std::map<std::string, DirectiveSpecs>	_direcSpecs;
+		void	_validateDirective(DirectiveNode const& node);
 
-		/* Handlers */
 		typedef void (ConfigBuilder::*DirectiveHandler)(const DirectiveNode &);
 		std::map<std::string, DirectiveHandler>	_handlers;
 		void _initHandlers();
@@ -35,9 +41,11 @@ class ConfigBuilder
 		void _handleRoot   		(const DirectiveNode &);
 		void _handleServerName	(const DirectiveNode &);
 
-		/* Helpers */
-		ConfigContext &_getCurrentCtxt();
+		std::stack<ConfigContext>	_contextStack;
+		ConfigContext&				_getCurrentCtxt(void);
 		void _pushContext(ContextType type);
-		void _popContext();
+		void _popContext (void);
 		void _error(int line, const std::string &);
+
+		bool	_has_root;
 };

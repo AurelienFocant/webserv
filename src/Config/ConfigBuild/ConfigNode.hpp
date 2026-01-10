@@ -5,6 +5,8 @@
 #include <vector>
 #include <iostream>
 
+
+// SHOULD BE IT's own CPP file
 struct ConfigNode {
 	int			line;
 	std::string	name;
