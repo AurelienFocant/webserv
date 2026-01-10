@@ -1,4 +1,4 @@
-#include "enum.hpp"
+#include "HTTPenum.hpp"
 
 std::string methodToString(t_method code)  {
 	switch (code) {

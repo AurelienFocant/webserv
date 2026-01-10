@@ -12,7 +12,7 @@
 # include "HTTPTokenizer.hpp"
 
 /*ENUM*/
-# include "enum.hpp" // Moved enum to their own .hpp, was getting out of hand
+# include "HTTPenum.hpp" // Moved enum to their own .hpp, was getting out of hand
 
 /*MACROS*/
 
