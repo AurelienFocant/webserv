@@ -22,4 +22,5 @@ It includes :
 - there is no general http context
 - locations do not support regex pattern matching
 - listen can only do so on a port
-
+- only one server name can be specified
+- root can only be an absolute path

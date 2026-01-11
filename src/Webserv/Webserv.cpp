@@ -64,6 +64,8 @@ void	Webserv::_parseConfig(void)
 	ConfigParser	parser(tokenizer.getTokenVec());
 	parser.parseConfig();
 
+	// both tokenizer and parser are constructed with what they need,
+	// but builder takes it as argument to main fct ?
 	ConfigBuilder	builder;
 	_servers = builder.build(parser.getRoot());
 }

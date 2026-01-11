@@ -7,13 +7,7 @@
 #include "VirtualServer.hpp"
 #include "ConfigContext.hpp"
 #include "ConfigNode.hpp"
-
-struct DirectiveSpecs
-{
-	int	allowedCtxts;
-	int	min_args;
-	int	max_args;
-};
+#include "DirectiveSpecs.hpp"
 
 class ConfigBuilder
 {
@@ -30,6 +24,7 @@ class ConfigBuilder
 	private:
 		std::vector<VirtualServer>	_servers;
 
+		void	_initDirectiveSpecs(void);
 		std::map<std::string, DirectiveSpecs>	_direcSpecs;
 		void	_validateDirective(DirectiveNode const& node);
 

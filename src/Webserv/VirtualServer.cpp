@@ -3,7 +3,7 @@
 VirtualServer::VirtualServer( void )
 	: _port(80)
 	, _index("index.html")
-	, _root("")
+	, _root("/html")
 	, _server_name("")
 	, _locations()
 {

@@ -1,7 +1,9 @@
-#include "ConfigBuilder.hpp"
 #include <cstdlib>
 #include <stdexcept>
 #include <sstream>
+
+#include "ConfigBuilder.hpp"
+#include "DirectiveSpecs.hpp"
 
 std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 {
@@ -29,9 +31,8 @@ void ConfigBuilder::visit(const BlockNode& node)
 
 	// set current BlockContext
 	if (name == "server") {
-		if (node.args.size() != 0) {
+		if (node.args.size() != 0)
 			_error(node.line, std::string("Server block shouldn't have arguments"));
-		}
 		_pushContext(SERVER);
 	}
 	else if (name == "location") {
@@ -97,13 +98,8 @@ void ConfigBuilder::visit(const DirectiveNode& node)
 	_validateDirective(node);
 
 	std::map<std::string, DirectiveHandler>::iterator it = _handlers.find(node.name);
-	if (it != _handlers.end()) {
-		DirectiveHandler handler = it->second;
-		(this->*handler)(node);
-	}
-	else {
-		_error(node.line ,std::string("Unknown directive: ") + node.name);
-	}
+	DirectiveHandler handler = it->second;
+	(this->*handler)(node);
 }
 
 void	ConfigBuilder::_validateDirective(DirectiveNode const& node)
@@ -112,8 +108,22 @@ void	ConfigBuilder::_validateDirective(DirectiveNode const& node)
 	if (it == _direcSpecs.end())
 		_error(node.line ,std::string("Unknown directive: ") + node.name);
 
-	if (!(it->second.allowedCtxts & _getCurrentCtxt().getType()))
+	DirectiveSpecs spec = it->second;
+	if (!(_getCurrentCtxt().getType() & spec.allowedCtxts))
 		_error(node.line, std::string("Directive ") + node.name + std::string(" forbidden in this context"));
+	if (node.args.size() < (size_t) spec.min_args)
+		_error(node.line, std::string("Directive ") + node.name + std::string(" doesn't have enough arguments"));
+	if (node.args.size() > (size_t) spec.max_args)
+		_error(node.line, std::string("Directive ") + node.name + std::string(" has too many arguments"));
+}
+
+void ConfigBuilder::_initDirectiveSpecs()
+{
+	_direcSpecs["listen"]		= DirectiveSpecs(SERVER, 1, 1);
+	_direcSpecs["root"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["server_name"]	= DirectiveSpecs(SERVER, 1, 1);
+	// _direcSpecs["index"]		= DirectiveSpecs(SERVER|LOCATION, 1, 10);
+	// _direcSpecs["autoindex"]		= DirectiveSpecs(SERVER|LOCATION, 0, 0);
 }
 
 void ConfigBuilder::_initHandlers()
@@ -127,12 +137,6 @@ void ConfigBuilder::_initHandlers()
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
 {
-	// if (_getCurrentCtxt().getType() != SERVER)
-	// 	_error(d.line, "listen only allowed in server");
-
-	if (d.args.size() != 1)
-		_error(d.line, "listen expects 1 argument");
-
 	std::stringstream ss(d.args[0]);
 	int port;
 	char c;
@@ -147,12 +151,6 @@ void ConfigBuilder::_handleListen(const DirectiveNode& d)
 
 void ConfigBuilder::_handleRoot(const DirectiveNode& d)
 {
-	if (_getCurrentCtxt().getType() == MAIN)
-		_error(d.line, "root not allowed in main context");
-
-	if (d.args.size() != 1)
-		_error(d.line, "root expects 1 argument");
-
 	if (_has_root)
 		_error(d.line, "root directive is a duplicate");
 
@@ -162,12 +160,6 @@ void ConfigBuilder::_handleRoot(const DirectiveNode& d)
 
 void ConfigBuilder::_handleServerName(const DirectiveNode& d)
 {
-	if (_getCurrentCtxt().getType() != SERVER)
-		_error(d.line, "server_name only allowed in server");
-
-	if (d.args.size() != 1)
-		_error(d.line, "server_name expects 1 argument");
-
 	_getCurrentCtxt().setServerName(d.args[0]);
 }
 
@@ -202,12 +194,7 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 ConfigBuilder::ConfigBuilder()
 	: _has_root(0)
 {
-	struct DirectiveSpecs listen = { SERVER, 0, 0 };
-	_direcSpecs["listen"] = listen;
-	struct DirectiveSpecs root = { SERVER | LOCATION, 0, 0 };
-	_direcSpecs["root"] = root;
-	struct DirectiveSpecs server_name = { SERVER, 0, 0 };
-	_direcSpecs["server_name"] = server_name;
+	_initDirectiveSpecs();
 }
 
 ConfigBuilder::~ConfigBuilder()
