@@ -31,9 +31,10 @@ class ConfigBuilder
 		typedef void (ConfigBuilder::*DirectiveHandler)(const DirectiveNode &);
 		std::map<std::string, DirectiveHandler>	_handlers;
 		void _initHandlers();
-		void _handleListen		(const DirectiveNode &);
-		void _handleRoot   		(const DirectiveNode &);
-		void _handleServerName	(const DirectiveNode &);
+		void _handleListen		(const DirectiveNode& d);
+		void _handleRoot   		(const DirectiveNode& d);
+		void _handleServerName	(const DirectiveNode& d);
+		void _handleIndex		(const DirectiveNode& d);
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&				_getCurrentCtxt(void);

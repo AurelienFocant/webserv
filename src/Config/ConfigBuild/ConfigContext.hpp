@@ -17,6 +17,7 @@ class ConfigContext {
 		std::string _root;
 		std::string _serverName;
 		std::string _locationName;
+		std::vector<std::string>		_indexes;
 		std::map<std::string, Location> _locations;
 
 	public:
@@ -30,13 +31,16 @@ class ConfigContext {
 
 		ContextType getType(void) const;
 		int         getPort(void) const;
-		std::string getRoot(void) const;
-		std::string getServerName(void) const;
-		std::string getLocationName(void) const;
-		const std::map<std::string, Location> &getLocations(void) const;
 		void        setPort(int port);
+		std::string getRoot(void) const;
 		void        setRoot(const std::string &root);
+		std::string getServerName(void) const;
 		void        setServerName(const std::string &serverName);
+		std::string getLocationName(void) const;
 		void		setLocationName(const std::string &locationName);
-		void        addLocation(const std::string &name, const Location &loc);
+		const std::map<std::string, Location>&	getLocations(void) const;
+		void									addLocation(const std::string &name, const Location &loc);
+		void						setIndexes(std::vector<std::string> const& src);
+		std::vector<std::string>&	getIndexes(void);
+
 };

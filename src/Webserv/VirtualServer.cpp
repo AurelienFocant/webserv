@@ -2,27 +2,27 @@
 
 VirtualServer::VirtualServer( void )
 	: _port(80)
-	, _index("index.html")
 	, _root("/html")
 	, _server_name("")
 	, _locations()
 {
+	_indexes.push_back("index.html");
 }
 
 VirtualServer::VirtualServer(const VirtualServer& src)
 	: _port(src._port)
-	, _index(src._index)
 	, _root(src._root)
 	, _server_name(src._server_name)
 	, _locations(src._locations)
 {
+	this->setIndexes(src.getIndexes());
 }
 
 VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
 {
 	if (this != &rhs) {
 		_port = rhs._port;
-		_index = rhs._index;
+		_indexes = rhs.getIndexes();
 		_root = rhs._root;
 		_server_name = rhs._server_name;
 		_locations = rhs._locations;
@@ -83,6 +83,16 @@ void			VirtualServer::setServName(std::string name)
 std::string		VirtualServer::getServName(void) const
 {
 	return (_server_name);
+}
+
+std::vector<std::string> const&	VirtualServer::getIndexes(void) const
+{
+	return _indexes;
+}
+
+void	VirtualServer::setIndexes(std::vector<std::string> const& src)
+{
+	_indexes.assign(src.begin(), src.end());
 }
 
 void	VirtualServer::_initDefaultErrorPages(void)

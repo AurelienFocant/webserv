@@ -27,8 +27,8 @@ ConfigContext::~ConfigContext(void)
 {
 }
 
-
-void ConfigContext::inheritFrom(const ConfigContext &parent) {
+void ConfigContext::inheritFrom(const ConfigContext &parent)
+{
     if (parent._port != -1)
         _port = parent._port;
     if (!parent._root.empty())
@@ -36,7 +36,6 @@ void ConfigContext::inheritFrom(const ConfigContext &parent) {
     if (!parent._serverName.empty())
         _serverName = parent._serverName;
 }
-
 
 ContextType ConfigContext::getType(void) const
 {
@@ -91,4 +90,14 @@ void ConfigContext::setLocationName(const std::string &name)
 void ConfigContext::addLocation(const std::string &name, const Location &loc)
 {
 	_locations[name] = loc;
+}
+
+void ConfigContext::setIndexes(std::vector<std::string> const& src)
+{
+	_indexes.assign(src.begin(), src.end());
+}
+
+std::vector<std::string>&	ConfigContext::getIndexes(void)
+{
+	return (_indexes);
 }

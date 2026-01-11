@@ -16,7 +16,7 @@ class VirtualServer
 {
 	private:
 		unsigned int	_port;
-		std::string		_index;
+		std::vector<std::string>		_indexes;
 		std::string		_root;
 		std::string		_server_name;
 
@@ -33,12 +33,15 @@ class VirtualServer
 		void								 	setLocationsAt(std::string key, Location &loc);
 		const Location							&getLocationAt(std::string key) const;
 
+		// getReferences or getValues ??
 		void			setPort(unsigned int port);
 		unsigned int	getPort(void) const;
 		void			setRoot(std::string root);
 		std::string		getRoot(void) const;
 		void			setServName(std::string name);
 		std::string		getServName(void) const;
+		void							setIndexes(std::vector<std::string> const& src);
+		std::vector<std::string> const&	getIndexes(void) const;
 
 
 		VirtualServer	( void );

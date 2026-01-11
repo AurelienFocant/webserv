@@ -14,6 +14,7 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 	}
 
     _initHandlers();
+	_initDirectiveSpecs();
 
 	_pushContext(MAIN);
     visit(*block);
@@ -68,14 +69,19 @@ void ConfigBuilder::visit(const BlockNode& node)
 	if (name == "server") {
 		ConfigContext& ctx = _getCurrentCtxt();
 
+		// shouldn't port be set to 80 by default ?
+		// I think nginx does that but still complains if you dont put any listen
+		// to be tested
 		if (ctx.getPort() == -1)
 			_error(node.line, "server missing listen directive");
 
 		VirtualServer server;
+		// should make a constructor taking a context as arg
 		server.setPort(ctx.getPort());
 		server.setRoot(ctx.getRoot());
 		server.setServName(ctx.getServerName());
 		server.setLocations(ctx.getLocations());
+		server.setIndexes(ctx.getIndexes());
 
 		_servers.push_back(server);
 		_popContext();
@@ -85,6 +91,7 @@ void ConfigBuilder::visit(const BlockNode& node)
 
 		Location loc;
 		loc.setRoot(locCtx.getRoot());
+		// loc.setIndexes(ctx.getIndexes());
 		// loc.alias ???
 
 		_popContext();
@@ -122,7 +129,7 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["listen"]		= DirectiveSpecs(SERVER, 1, 1);
 	_direcSpecs["root"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["server_name"]	= DirectiveSpecs(SERVER, 1, 1);
-	// _direcSpecs["index"]		= DirectiveSpecs(SERVER|LOCATION, 1, 10);
+	_direcSpecs["index"]		= DirectiveSpecs(SERVER|LOCATION, 1, 10);
 	// _direcSpecs["autoindex"]		= DirectiveSpecs(SERVER|LOCATION, 0, 0);
 }
 
@@ -131,7 +138,7 @@ void ConfigBuilder::_initHandlers()
 	_handlers["listen"]		= &ConfigBuilder::_handleListen;
 	_handlers["root"]		= &ConfigBuilder::_handleRoot;
 	_handlers["server_name"]= &ConfigBuilder::_handleServerName;
-	// _handlers["index"]		= &ConfigBuilder::_handleIndex;
+	_handlers["index"]		= &ConfigBuilder::_handleIndex;
 	// _handlers["autoindex"]	= &ConfigBuilder::_handleAutoIndex;
 }
 
@@ -156,6 +163,11 @@ void ConfigBuilder::_handleRoot(const DirectiveNode& d)
 
 	_getCurrentCtxt().setRoot(d.args[0]);
 	_has_root = 1;
+}
+
+void ConfigBuilder::_handleIndex(const DirectiveNode& d)
+{
+	_getCurrentCtxt().setIndexes(d.args);
 }
 
 void ConfigBuilder::_handleServerName(const DirectiveNode& d)
@@ -194,7 +206,6 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 ConfigBuilder::ConfigBuilder()
 	: _has_root(0)
 {
-	_initDirectiveSpecs();
 }
 
 ConfigBuilder::~ConfigBuilder()
