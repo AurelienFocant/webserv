@@ -4,43 +4,15 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include "Request.hpp"
-#include "Response.hpp"
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
 
-class Location 
-{
-	private:
-
-	/* Private Attributes */
-	std::string _name;
-	std::string _root;
-	std::string _alias;
-	std::vector<std::string>	_indexes;
-	bool		_autoindex;
-
-	public:
-
-	/* Constructors / Destructors */
-	Location	();
-	Location	(const Location& other);
-	Location&	operator= (const Location& rhs);
-	~Location	();
-
-	/* Getters */
-	std::string	getName() const {return _name;}
-	std::string	getRoot() const {return _root;}
-	std::string	getAlias() const {return _alias;}
-
-	/* Setters */
-	void	setName(const std::string& name) {_name = name;}
-	void	setRoot(const std::string& root) {_root = root;}
-	void	setAlias(const std::string& alias) {_alias = alias;}
-};
+#include "Request.hpp"
+#include "Response.hpp"
+#include "VirtualServer.hpp"
+#include "Location.hpp"
 
 class RequestHandler
 {
@@ -95,25 +67,5 @@ class RequestHandler
 	void			handleRequest();
 	std::string		buildResponse();
 };
-
-/* class ServerConfig 
-{
-	public: 
-
-	ServerConfig	();
-	ServerConfig	(const ServerConfig& other);
-	ServerConfig&	operator= (const ServerConfig& rhs );
-	~ServerConfig	();
-
-	std::string _root;
-	std::map<std::string, Location> routes;
-	std::map<int, std::string> errors_pages;
-
-	//std::string	getRoot() const {return _root;}
-	//std::string	getLocation() const {return _root;}
-};
-
-ServerConfig::ServerConfig () {}
-ServerConfig::~ServerConfig () {} */
 
 #endif
