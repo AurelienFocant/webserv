@@ -98,6 +98,16 @@ void	VirtualServer::setIndexes(std::vector<std::string> const& src)
 	_indexes.assign(src.begin(), src.end());
 }
 
+bool	VirtualServer::getAutoindex(void) const
+{
+	return (_autoindex);
+}
+
+void	VirtualServer::setAutoindex(bool b)
+{
+	_autoindex = b;
+}
+
 void	VirtualServer::_initDefaultErrorPages(void)
 {
 	std::string	root = "./data/error_pages/";
@@ -110,12 +120,3 @@ void	VirtualServer::initDefaultConfig(void)
 	_initDefaultErrorPages();
 }
 
-bool	VirtualServer::getAutoindex(void) const
-{
-	return (_autoindex);
-}
-
-void	VirtualServer::setAutoindex(bool b)
-{
-	_autoindex = b;
-}

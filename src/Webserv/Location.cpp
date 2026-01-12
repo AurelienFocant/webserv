@@ -2,16 +2,13 @@
 
 #include <iostream>
 
-
-
-/* ///////////LOCATION/////////////////// */
-
 Location::Location()
 	: _name("")
 	, _root("")
 	, _alias("")
 	, _autoindex(false)
 {
+	_indexes.push_back("index.html");
 }
 
 Location::Location(const Location& src)
@@ -20,6 +17,7 @@ Location::Location(const Location& src)
 	, _alias(src._alias)
 	, _autoindex(src._autoindex)
 {
+	// this->setIndexes(src.getIndexes());
 }
 
 Location&	Location::operator= (const Location& rhs)

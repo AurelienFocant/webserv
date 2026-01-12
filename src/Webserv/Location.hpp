@@ -12,16 +12,10 @@ class Location
 	std::string _name;
 	std::string _root;
 	std::string _alias;
-	std::vector<std::string>	_indexes;
 	bool		_autoindex;
+	std::vector<std::string>	_indexes;
 
 	public:
-
-	/* Constructors / Destructors */
-	Location	();
-	Location	(const Location& other);
-	Location&	operator= (const Location& rhs);
-	~Location	();
 
 	/* Getters */
 	std::string	getName() const {return _name;}
@@ -32,6 +26,11 @@ class Location
 	void	setName(const std::string& name) {_name = name;}
 	void	setRoot(const std::string& root) {_root = root;}
 	void	setAlias(const std::string& alias) {_alias = alias;}
+
+	Location	();
+	Location	(const Location& other);
+	Location&	operator= (const Location& rhs);
+	~Location	();
 };
 
 #endif // LOCATION_HPP
