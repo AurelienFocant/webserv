@@ -21,6 +21,7 @@ class Location
 	std::string _root;
 	std::string _alias;
 	std::vector<std::string>	_indexes;
+	bool		_autoindex;
 
 	public:
 

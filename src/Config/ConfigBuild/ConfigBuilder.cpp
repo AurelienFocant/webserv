@@ -9,9 +9,8 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 {
     const BlockNode* block =
         dynamic_cast<const BlockNode*>(root);
-    if (!block) {
+    if (!block)
         _error(0, "Config root must be a block");
-	}
 
     _initHandlers();
 	_initDirectiveSpecs();

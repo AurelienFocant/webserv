@@ -16,9 +16,10 @@ class VirtualServer
 {
 	private:
 		unsigned int	_port;
-		std::vector<std::string>		_indexes;
 		std::string		_root;
-		std::string		_server_name;
+	 	std::string		_server_name;
+		bool			_autoindex;
+		std::vector<std::string>		_indexes;
 
 		std::map<std::string, Location>	_locations;
 

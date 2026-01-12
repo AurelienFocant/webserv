@@ -4,6 +4,7 @@ VirtualServer::VirtualServer( void )
 	: _port(80)
 	, _root("/html")
 	, _server_name("")
+	, _autoindex(false)
 	, _locations()
 {
 	_indexes.push_back("index.html");
@@ -13,6 +14,7 @@ VirtualServer::VirtualServer(const VirtualServer& src)
 	: _port(src._port)
 	, _root(src._root)
 	, _server_name(src._server_name)
+	, _autoindex(src._autoindex)
 	, _locations(src._locations)
 {
 	this->setIndexes(src.getIndexes());
@@ -25,6 +27,7 @@ VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
 		_indexes = rhs.getIndexes();
 		_root = rhs._root;
 		_server_name = rhs._server_name;
+		_autoindex = rhs._autoindex;
 		_locations = rhs._locations;
 	}
 	return (*this);
