@@ -336,21 +336,3 @@ void	RequestHandler::printRoutes()
 }
 
 
-/* ///////////LOCATION/////////////////// */
-
-Location::Location	() : _name(""), _root(""), _alias(""), _autoindex(false) {}
-
-Location::Location	(const Location& other) : _name(other._name), _root(other._root), _alias(other._alias), _autoindex(other._autoindex) {}
-
-Location&	Location::operator= (const Location& rhs)
-{
-	if (this != &rhs)
-	{
-		_name = rhs._name;
-		_root = rhs._root;
-		_alias = rhs._alias;
-	}
-	return *this;
-}
-
-Location::~Location	() {}

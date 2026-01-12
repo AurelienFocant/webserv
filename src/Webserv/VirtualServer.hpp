@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-#include "RequestHandler.hpp"
+#include "Location.hpp"
 
 class VirtualServer
 {
