@@ -51,6 +51,7 @@ void ConfigBuilder::visit(const BlockNode& node)
 	// visit all children of current BLOCK;
 	_has_root = 0;
 	for (size_t i = 0; i < node.children.size(); ++i) {
+		// _visitChild(node);
 		const ConfigNode* child = node.children[i];
 		if (const BlockNode* bn = dynamic_cast<const BlockNode*>(child)) {
 			visit(*bn);
@@ -75,12 +76,13 @@ void ConfigBuilder::visit(const BlockNode& node)
 			_error(node.line, "server missing listen directive");
 
 		VirtualServer server;
-		// should make a constructor taking a context as arg
+		// should make a constructor taking a context as arg ??
 		server.setPort(ctx.getPort());
 		server.setRoot(ctx.getRoot());
 		server.setServName(ctx.getServerName());
 		server.setLocations(ctx.getLocations());
 		server.setIndexes(ctx.getIndexes());
+		server.setAutoindex(ctx.getAutoindex());
 
 		_servers.push_back(server);
 		_popContext();

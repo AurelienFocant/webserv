@@ -17,6 +17,7 @@ class ConfigContext {
 		std::string _root;
 		std::string _serverName;
 		std::string _locationName;
+		bool		_autoindex;
 		std::vector<std::string>		_indexes;
 		std::map<std::string, Location> _locations;
 
@@ -42,5 +43,7 @@ class ConfigContext {
 		void									addLocation(const std::string &name, const Location &loc);
 		void						setIndexes(std::vector<std::string> const& src);
 		std::vector<std::string>&	getIndexes(void);
+		bool		getAutoindex(void) const;
+		void		setAutoindex(bool b);
 
 };

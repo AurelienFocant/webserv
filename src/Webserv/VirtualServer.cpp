@@ -109,3 +109,13 @@ void	VirtualServer::initDefaultConfig(void)
 {
 	_initDefaultErrorPages();
 }
+
+bool	VirtualServer::getAutoindex(void) const
+{
+	return (_autoindex);
+}
+
+void	VirtualServer::setAutoindex(bool b)
+{
+	_autoindex = b;
+}

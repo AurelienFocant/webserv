@@ -7,11 +7,6 @@
 
 #include "RequestHandler.hpp"
 
-// struct Location {
-// 	std::string		root;
-// 	std::string		alias;
-// };
-
 class VirtualServer
 {
 	private:
@@ -43,6 +38,8 @@ class VirtualServer
 		std::string		getServName(void) const;
 		void							setIndexes(std::vector<std::string> const& src);
 		std::vector<std::string> const&	getIndexes(void) const;
+		bool			getAutoindex(void) const;
+		void	   	 	setAutoindex(bool b);
 
 
 		VirtualServer	( void );

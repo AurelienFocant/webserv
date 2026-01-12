@@ -19,7 +19,7 @@ It includes :
 
 
 ### shortcomings:
-- there is no general http context
+- there is no main or http context
 - locations do not support regex pattern matching
 - listen can only do so on a port
 - only one server name can be specified

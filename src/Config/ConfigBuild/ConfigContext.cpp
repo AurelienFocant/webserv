@@ -101,3 +101,13 @@ std::vector<std::string>&	ConfigContext::getIndexes(void)
 {
 	return (_indexes);
 }
+
+bool	ConfigContext::getAutoindex(void) const
+{
+	return (_autoindex);
+}
+
+void	ConfigContext::setAutoindex(bool b)
+{
+	_autoindex = b;
+}
