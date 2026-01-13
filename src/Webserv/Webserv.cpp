@@ -89,7 +89,12 @@ void	Webserv::initWebServer()
 	// already connection structs that would have the right handler in them ?
 }
 
-std::vector<VirtualServer>	Webserv::getServers(void)
+std::vector<VirtualServer>&	Webserv::getServers(void)
 {
 	return (_servers);
+}
+
+VirtualServer&	Webserv::getValidServer(int idx)
+{
+	return (_servers.at(idx));
 }

@@ -26,7 +26,8 @@ class Webserv
 		Webserv& operator=(const Webserv& rhs);
 		~Webserv();
 
-		std::vector<VirtualServer>	getServers(void);
+		std::vector<VirtualServer>&	getServers(void);
+		VirtualServer&	getValidServer(int idx);
 		void	readConfig();
 		void	initWebServer();
 };
