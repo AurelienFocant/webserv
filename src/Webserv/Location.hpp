@@ -18,14 +18,25 @@ class Location
 	public:
 
 	/* Getters */
-	std::string	getName() const {return _name;}
-	std::string	getRoot() const {return _root;}
-	std::string	getAlias() const {return _alias;}
+	std::string					getName() const {return _name;}
+	std::string					getRoot() const {return _root;}
+	std::string					getAlias() const {return _alias;}
+	// std::string					getRedirect() const {return _redirect;}
+	// int							getRedirectCode() const {return _redirect_code;}
+	std::vector<std::string>	getIndex() const {return _indexes;}
+	bool						getAutoIndex() const {return _autoindex;}
+
 
 	/* Setters */
 	void	setName(const std::string& name) {_name = name;}
 	void	setRoot(const std::string& root) {_root = root;}
 	void	setAlias(const std::string& alias) {_alias = alias;}
+	// void	setRedirect(const std::string& redirect) {_redirect = redirect;}
+	// void	setRedirectCode(const int& redirect_code) {_redirect_code = redirect_code;}
+	void	setIndex(const std::vector<std::string>& indexes) {_indexes = indexes;}
+	void	setAutoIndex(bool autoindex) {_autoindex = autoindex;}
+
+	void	addIndexFile(const std::string& file) {_indexes.push_back(file);}
 
 	Location	();
 	Location	(const Location& other);
