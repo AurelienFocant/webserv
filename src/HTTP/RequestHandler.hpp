@@ -65,15 +65,15 @@ class RequestHandler
 	Response&				_response;
 	//const VirtualServer&	_virtual_server;
 
-	std::string			_root; // default root from config
+	std::string			_root; // default root from _virtual_server -> a supprimer
 	std::string			_request_path; // request_uri sans query
-	std::string			_full_path; //defnitive path (after alias or override)
+	std::string			_resolved_path; //defnitive path (after alias or override)
 
 	const Location*		_matched_location;
 	bool				_is_directory;
 
-	int					_status_code;
-	bool				_has_error;
+	int					_status_code; // -> plutot dans Response
+	bool				_has_error; // redondant
 
 	std::map<std::string, Location> _routes; //devrait etre dans config, juste pour tests
 
@@ -104,7 +104,6 @@ class RequestHandler
 	public:
 
 	/* Constructors / Destructors */
-	//RequestHandler	();
 	RequestHandler	(const Request& request, Response& response);
 	~RequestHandler	();
 
@@ -115,7 +114,6 @@ class RequestHandler
 
 	/* Public Methods */
 	void			handleRequest();
-	std::string		buildResponse();
 };
 
 #endif

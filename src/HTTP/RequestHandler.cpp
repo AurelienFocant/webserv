@@ -7,7 +7,7 @@
 /* RequestHandler::RequestHandler()
 	: _root("/www/html")
 	, _request_path("")
-	, _full_path("")
+	, _resolved_path("")
 	, _matched_location(NULL)
 	, _is_directory(false)
 	, _status_code(OK)
@@ -19,7 +19,7 @@ RequestHandler::RequestHandler(const Request& request, Response& response)
 	, _response(response)
 	, _root("/www/html")
 	, _request_path("")
-	, _full_path("")
+	, _resolved_path("")
 	, _matched_location(NULL)
 	, _is_directory(false)
 	, _status_code(request.getStatusCode())
@@ -41,7 +41,7 @@ void	RequestHandler::handleRequest()
 		return;
 	}
 
-	if (_request.getStatusCode() != OK || !extractPath() || !resolvePath() || !processMethods())
+	if (!extractPath() || !resolvePath() || !processMethods())
 	{
 		_has_error = true;
 		return;
@@ -88,22 +88,22 @@ bool	RequestHandler::resolvePath()
 		{
 			std::string	location_path = _matched_location->getName();
 			std::string	remaining_path = _request_path.substr(location_path.length());
-			_full_path = _matched_location->getAlias() + remaining_path;
+			_resolved_path = _matched_location->getAlias() + remaining_path;
 		}
 		else if (!_matched_location->getRoot().empty())
 		{
 			_root = _matched_location->getRoot();
-			_full_path = _root + _request_path;
+			_resolved_path = _root + _request_path;
 		}
 		else
 		{
-			_full_path = _root + _request_path;
+			_resolved_path = _root + _request_path;
 		}
 	}
 	else
-		_full_path = _root + _request_path;
+		_resolved_path = _root + _request_path;
 
-	std::cout << "[DEBUG] Full Path: " << _full_path << std::endl;
+	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
 	if (!validatePath())
 		return false;
@@ -136,7 +136,7 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
-	if (stat(_full_path.c_str(), &statBuf) != 0)
+	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
 		if (errno == ENOENT)
 			_status_code = NOT_FOUND;
@@ -194,13 +194,13 @@ void	RequestHandler::processGetMethod()
 		}
 	}
 
-	int	fd = openReadFile(_full_path);
+	int	fd = openReadFile(_resolved_path);
 	if (fd < 0)
 		return;
 
-	file_size = fileSize(_full_path); // enregistrer dans Response
+	file_size = fileSize(_resolved_path); // enregistrer dans Response
 	(void) file_size;
-	content_type = getContentType(_full_path);
+	content_type = getContentType(_resolved_path);
 
 /* 	_response.setStatusCode(OK);
 	_response.setContentType(content_type);
@@ -235,7 +235,7 @@ bool	RequestHandler::resolveIndex()
 	if (index.empty())
 		return false;
 
-	std::string	dir_path = _full_path;
+	std::string	dir_path = _resolved_path;
 	if	(dir_path[dir_path.length() -1] != '/')
 		dir_path += "/";
 
@@ -244,9 +244,9 @@ bool	RequestHandler::resolveIndex()
 		std::string test_path = dir_path + index[i];
 		if (access(test_path.c_str(), R_OK) == 0)
 		{
-			_full_path = test_path;
+			_resolved_path = test_path;
 			_is_directory = false;
-			std::cout << "[DEBUG] index found: " << _full_path << std::endl;
+			std::cout << "[DEBUG] index found: " << _resolved_path << std::endl;
 			return true;
 		}
 	}
