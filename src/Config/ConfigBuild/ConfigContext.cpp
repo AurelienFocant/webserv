@@ -33,8 +33,14 @@ void ConfigContext::inheritFrom(const ConfigContext &parent)
         _port = parent._port;
     if (!parent._root.empty())
         _root = parent._root;
-    if (!parent._serverName.empty())
+    if (!parent._serverName.empty()) {
         _serverName = parent._serverName;
+	}
+	if (!(parent._indexes.empty()))
+		_indexes.assign(parent._indexes.begin(), parent._indexes.end());
+	if (parent._autoindex)
+		_autoindex = parent._autoindex;
+
 }
 
 ContextType ConfigContext::getType(void) const
