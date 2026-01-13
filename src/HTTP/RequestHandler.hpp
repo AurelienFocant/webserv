@@ -6,6 +6,7 @@
 #include <string>
 #include "Request.hpp"
 #include "Response.hpp"
+//#include "../Webserv/VirtualServer.hpp"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -17,9 +18,13 @@ class Location
 	private:
 
 	/* Private Attributes */
-	std::string _name;
-	std::string _root;
-	std::string _alias;
+	std::string					_name;
+	std::string					_root;
+	std::string					_alias;
+	std::string					_redirect;
+	int							_redirect_code;
+	std::vector<std::string>	_index;
+	bool						_autoindex;
 
 	public:
 
@@ -30,14 +35,25 @@ class Location
 	~Location	();
 
 	/* Getters */
-	std::string	getName() const {return _name;}
-	std::string	getRoot() const {return _root;}
-	std::string	getAlias() const {return _alias;}
+	std::string					getName() const {return _name;}
+	std::string					getRoot() const {return _root;}
+	std::string					getAlias() const {return _alias;}
+	std::string					getRedirect() const {return _redirect;}
+	int							getRedirectCode() const {return _redirect_code;}
+	std::vector<std::string>	getIndex() const {return _index;}
+	bool						getAutoIndex() const {return _autoindex;}
+
 
 	/* Setters */
 	void	setName(const std::string& name) {_name = name;}
 	void	setRoot(const std::string& root) {_root = root;}
 	void	setAlias(const std::string& alias) {_alias = alias;}
+	void	setRedirect(const std::string& redirect) {_redirect = redirect;}
+	void	setRedirectCode(const int& redirect_code) {_redirect_code = redirect_code;}
+	void	setIndex(const std::vector<std::string>& index) {_index = index;}
+	void	setAutoIndex(bool autoindex) {_autoindex = autoindex;}
+
+	void	addIndexFile(const std::string& file) {_index.push_back(file);}
 };
 
 class RequestHandler
@@ -45,17 +61,19 @@ class RequestHandler
 	private:
 
 	/* Private Attributes */
-	const Request&		_request;
-	Response&			_response;
-	//const ServerConfig& _config; -> findServer() = identifier le bon serveur grace a son port/ip et hostname si besoin
+	const Request&			_request;
+	Response&				_response;
+	//const VirtualServer&	_virtual_server;
+
 	std::string			_root; // default root from config
-	std::string			_path; // request_uri sans query
-	std::string			_fullPath; //defnitive path (after alias or override)
-	//std::string			_index; //define file(s)to search when URI point to a dir
-	const Location*			_matchedLocation;
-	bool				_isDirectory;
-	int					_statusCode;
-	bool				_hasError;
+	std::string			_request_path; // request_uri sans query
+	std::string			_full_path; //defnitive path (after alias or override)
+
+	const Location*		_matched_location;
+	bool				_is_directory;
+
+	int					_status_code;
+	bool				_has_error;
 
 	std::map<std::string, Location> _routes; //devrait etre dans config, juste pour tests
 
@@ -64,14 +82,20 @@ class RequestHandler
 	bool			resolvePath();
 	bool			validatePath();
 	void			findLocation();
+
 	bool			processMethods();
 	void			processGetMethod();
-	std::string 	getContentType(const std::string& path);
+
+	bool			resolveIndex();
+	bool			hasAutoIndex();
+	void			generateAutoIndex();
+	//void			generateAutoIndex();
+
 	int				openReadFile(const std::string& path);
 	int				openWriteFile(const std::string& path);
-	bool			resolveIndex();
 	bool 			isDirectory(const std::string& path);
 	size_t			fileSize(const std::string& path);
+	std::string 	getContentType(const std::string& path);
 
 	/* For testing */
 	void 			initRoutes();
@@ -86,32 +110,12 @@ class RequestHandler
 
 	/* Getters */
 	std::string		getRoot() const {return _root;}
-	int				getStatusCode() const {return _statusCode;}
-	bool			hasError() const {return _hasError;}
+	int				getStatusCode() const {return _status_code;}
+	bool			hasError() const {return _has_error;}
 
 	/* Public Methods */
 	void			handleRequest();
 	std::string		buildResponse();
 };
-
-/* class ServerConfig 
-{
-	public: 
-
-	ServerConfig	();
-	ServerConfig	(const ServerConfig& other);
-	ServerConfig&	operator= (const ServerConfig& rhs );
-	~ServerConfig	();
-
-	std::string _root;
-	std::map<std::string, Location> routes;
-	std::map<int, std::string> errors_pages;
-
-	//std::string	getRoot() const {return _root;}
-	//std::string	getLocation() const {return _root;}
-};
-
-ServerConfig::ServerConfig () {}
-ServerConfig::~ServerConfig () {} */
 
 #endif
