@@ -84,7 +84,7 @@ Connection*	add_clientFD_to_epoll(int epollFd, int listenSocket)
 	return (res);
 }
 
-void	main_loop(int epollFd, int listenSocket)
+void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 {
 	struct epoll_event			ready_events[MAX_EVENTS];
 	std::map<int, Connection*>	connections;
@@ -114,9 +114,6 @@ void	main_loop(int epollFd, int listenSocket)
 				if (it != connections.end()) {			// check before dereference
 					Connection* currConn = it->second;	// currConn is the value of <key, value>
 
-					VirtualServer	virtualServer;
-					virtualServer.initDefaultConfig();
-					currConn->virtual_server = &virtualServer;
 
 
 					// If socket is ready for reading
@@ -142,19 +139,12 @@ void	main_loop(int epollFd, int listenSocket)
 					}
 
 
-					// We'll need to do loads of stuff in here
-					currConn->request.addInput(currConn->request_str);
-					currConn->request.parseRequest();
-					currConn->request_str.clear();
-					std::cout << "main_loop -l129: "<< currConn->request << std::endl;
-
-					// If request is complete and response 
 					// is empty --> build it
 					// and tell epoll we want it to tell us
 					// when the socket is ready for writing
-					if (currConn->request.getCompleted()
-							&& currConn->response_str.empty()) {
+					if (currConn->request.getCompleted() && currConn->response_str.empty()) {
 						
+						currConn->virtual_server = webserv.getValidServer(0);
 						/* TEST REQUEST HANDLER */
 						std::cout << "Main 147: Request Handler" << std::endl;
 						std::cout << "Status Code: " << currConn->request.getStatusCode() << std::endl;
@@ -234,7 +224,7 @@ int	main(int ac, char **av)
 	try {
 		webserv.readConfig();
 		webserv.initWebServer();
-		main_loop(epollFd, listenSocket);
+		main_loop(webserv, epollFd, listenSocket);
 	}
 	catch (std::exception &e) {
 		std::cerr << "Exception happened: " << e.what() << std::endl;

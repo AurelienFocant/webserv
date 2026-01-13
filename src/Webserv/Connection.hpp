@@ -40,7 +40,7 @@ class Connection
 		struct epoll_event	epollEvent;
 		Request				request;
 		Response			response;
-		VirtualServer		*virtual_server;
+		VirtualServer		virtual_server;
 
 
 

@@ -3,37 +3,44 @@
 #include <map>
 #include <stack>
 #include <vector>
-#include <stdexcept>
+
 #include "VirtualServer.hpp"
 #include "ConfigContext.hpp"
 #include "ConfigNode.hpp"
+#include "DirectiveSpecs.hpp"
 
 class ConfigBuilder
 {
 	public:
-		// MISSING constructors etc
 		std::vector<VirtualServer> build(const ConfigNode *root);
 
 		void visit(const BlockNode &node);
 		void visit(const DirectiveNode &node);
 
-	private:
+		// MISSING constructors etc
+		ConfigBuilder();
+		~ConfigBuilder();
 
-		std::stack<ConfigContext>	_contextStack;
+	private:
 		std::vector<VirtualServer>	_servers;
 
+		void	_initDirectiveSpecs(void);
+		std::map<std::string, DirectiveSpecs>	_direcSpecs;
+		void	_validateDirective(DirectiveNode const& node);
 
-		/* Handlers */
-		void _initHandlers();
 		typedef void (ConfigBuilder::*DirectiveHandler)(const DirectiveNode &);
-		std::map<std::string, DirectiveHandler> _handlers;
-		void _handleListen(const DirectiveNode &);
-		void _handleRoot(const DirectiveNode &);
-		void _handleServerName(const DirectiveNode &);
+		std::map<std::string, DirectiveHandler>	_handlers;
+		void _initHandlers();
+		void _handleListen		(const DirectiveNode& d);
+		void _handleRoot   		(const DirectiveNode& d);
+		void _handleServerName	(const DirectiveNode& d);
+		void _handleIndex		(const DirectiveNode& d);
 
-		/* Helpers */
-		ConfigContext &_getCurrentCtxt();
+		std::stack<ConfigContext>	_contextStack;
+		ConfigContext&				_getCurrentCtxt(void);
 		void _pushContext(ContextType type);
-		void _popContext();
+		void _popContext (void);
 		void _error(int line, const std::string &);
+
+		bool	_has_root;
 };

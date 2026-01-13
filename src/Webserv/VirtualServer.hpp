@@ -5,19 +5,16 @@
 #include <vector>
 #include <map>
 
-#include "RequestHandler.hpp"
-
-// struct Location {
-// 	std::string		root;
-// 	std::string		alias;
-// };
+#include "Location.hpp"
 
 class VirtualServer
 {
 	private:
 		unsigned int	_port;
 		std::string		_root;
-		std::string		_server_name;
+	 	std::string		_server_name;
+		bool			_autoindex;
+		std::vector<std::string>		_indexes;
 
 		std::map<std::string, Location>	_locations;
 
@@ -32,12 +29,17 @@ class VirtualServer
 		void								 	setLocationsAt(std::string key, Location &loc);
 		const Location							&getLocationAt(std::string key) const;
 
+		// getReferences or getValues ??
 		void			setPort(unsigned int port);
 		unsigned int	getPort(void) const;
 		void			setRoot(std::string root);
 		std::string		getRoot(void) const;
 		void			setServName(std::string name);
 		std::string		getServName(void) const;
+		void							setIndexes(std::vector<std::string> const& src);
+		std::vector<std::string> const&	getIndexes(void) const;
+		bool			getAutoindex(void) const;
+		void	   	 	setAutoindex(bool b);
 
 
 		VirtualServer	( void );

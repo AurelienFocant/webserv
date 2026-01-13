@@ -4,18 +4,26 @@
 /* ////////////REQUEST HANDLER////////////////// */
 
 
-//RequestHandler::RequestHandler() : _root("/www/html"), _path(""), _fullPath(""), _statusCode(200) {}
+/* RequestHandler::RequestHandler()
+	: _root("/www/html")
+	, _request_path("")
+	, _resolved_path("")
+	, _matched_location(NULL)
+	, _is_directory(false)
+	, _status_code(OK)
+	, _has_error(false)
+{} */
 
 RequestHandler::RequestHandler(const Request& request, Response& response) 
 	: _request(request)
 	, _response(response)
 	, _root("/www/html")
-	, _path("")
-	, _fullPath("")
-	, _matchedLocation(NULL)
-	, _isDirectory(false)
-	, _statusCode(request.getStatusCode())
-	, _hasError(false)
+	, _request_path("")
+	, _resolved_path("")
+	, _matched_location(NULL)
+	, _is_directory(false)
+	, _status_code(request.getStatusCode())
+	, _has_error(false)
 {
 	initRoutes();
 	printRoutes();
@@ -24,81 +32,78 @@ RequestHandler::RequestHandler(const Request& request, Response& response)
 RequestHandler::~RequestHandler() {}
 
 
-bool RequestHandler::extractPath()
+void	RequestHandler::handleRequest()
+{
+	if (_request.getStatusCode() != OK)
+	{
+		_status_code = _request.getStatusCode();
+		_has_error = true;
+		return;
+	}
+
+	if (!extractPath() || !resolvePath() || !processMethods())
+	{
+		_has_error = true;
+		return;
+	}
+
+	_status_code = OK;
+}
+
+/* PATH PROCESSING */
+
+bool	RequestHandler::extractPath()
 {
 	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
 	{
-		_statusCode = BAD_REQUEST;
+		_status_code = BAD_REQUEST;
 		return false;
 	}
 
-	_path = _request.getRequestUri();
-	std::cout << "RequestUri: " << _request.getRequestUri() << std::endl;
-	std::cout << "PATH: " << _path << std::endl;
+	_request_path = _request.getRequestUri();
+	std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
+	std::cout << "[DEBUG] Path " << _request_path << std::endl;
 
-	size_t queryPos = _path.find("?");
+	size_t queryPos = _request_path.find("?");
 	if (queryPos != std::string::npos)
-		_path = _path.substr(0, queryPos);
+		_request_path = _request_path.substr(0, queryPos);
 	
 	return true;
 }
 
-void RequestHandler::findLocation()
+bool	RequestHandler::resolvePath()
 {
-	size_t		longest_match = 0;
-
-	for (std::map<std::string, Location>::iterator it = _routes.begin(); it != _routes.end(); it++)
-	{
-		const std::string&	route_path = it->first;
-		const Location*		location = &(it->second);
-
-		if (_path.find(route_path, 0) == 0)
-		{
-			if (route_path.length() > longest_match)
-			{
-				longest_match = route_path.length();
-				_matchedLocation = location;
-			}
-		}
-	}
-}
-
-bool RequestHandler::resolvePath()
-{
-	//definir which hostname + if location
-	// + test allowed methods (exists only in locations)
-
 	findLocation();
 
-	if (_matchedLocation)
+/* 	if (_matched_location && !_matched_location->getRedirect().empty())
 	{
-		if (!_matchedLocation->getAlias().empty())
+		handleRedirect(); //ex: location /old_page { return 301 /new_page;} ou error_pages
+		return true;
+	} */
+ 
+	if (_matched_location)
+	{
+		// Alias prioritaire sur root
+		if (!_matched_location->getAlias().empty())
 		{
-			std::string	location_path = _matchedLocation->getName();
-			std::string	remaining_path = _path.substr(location_path.length());
-			_fullPath = _matchedLocation->getAlias() + remaining_path;
+			std::string	location_path = _matched_location->getName();
+			std::string	remaining_path = _request_path.substr(location_path.length());
+			_resolved_path = _matched_location->getAlias() + remaining_path;
 		}
-		else if (!_matchedLocation->getRoot().empty())
+		else if (!_matched_location->getRoot().empty())
 		{
-			_root = _matchedLocation->getRoot();
-			_fullPath = _root + _path;
+			_root = _matched_location->getRoot();
+			_resolved_path = _root + _request_path;
 		}
 		else
 		{
-			_fullPath = _root + _path;
+			_resolved_path = _root + _request_path;
 		}
 	}
 	else
-		_fullPath = _root + _path;
+		_resolved_path = _root + _request_path;
 
-/* 	if (root.empty() || _path.empty())
-	{
-		_statusCode = BAD_REQUEST;
-		return false;
-	} */
-
-
-	std::cout << "Full Path: " << _fullPath << std::endl;
+	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
 	if (!validatePath())
 		return false;
@@ -107,26 +112,49 @@ bool RequestHandler::resolvePath()
 
 }
 
-bool RequestHandler::validatePath()
+void	RequestHandler::findLocation()
+{
+	size_t		longest_match = 0;
+
+	for (std::map<std::string, Location>::iterator it = _routes.begin(); it != _routes.end(); it++)
+	{
+		const std::string&	route_path = it->first;
+		const Location*		location = &(it->second);
+
+		if (_request_path.find(route_path, 0) == 0)
+		{
+			if (route_path.length() > longest_match)
+			{
+				longest_match = route_path.length();
+				_matched_location = location;
+			}
+		}
+	}
+}
+
+bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
-	if (stat(_fullPath.c_str(), &statBuf) != 0)
+
+	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
 		if (errno == ENOENT)
-			_statusCode = NOT_FOUND;
+			_status_code = NOT_FOUND;
 		else if (errno == EACCES)
-			_statusCode = FORBIDDEN;
+			_status_code = FORBIDDEN;
 		else
-			_statusCode = INTERNAL_SERVER_ERROR;
+			_status_code = INTERNAL_SERVER_ERROR;
 		return false;
 	}
 
-	_isDirectory = S_ISDIR(statBuf.st_mode);
+	_is_directory = S_ISDIR(statBuf.st_mode);
 
 	return true;
 }
 
-bool RequestHandler::processMethods()
+/* METHODS PROCESSING */
+
+bool	RequestHandler::processMethods()
 {
 	switch(_request.getMethod())
 	{
@@ -140,7 +168,7 @@ bool RequestHandler::processMethods()
 			processDeleteMethod(); */
 			break ;
 		default: 
-			_statusCode = METHOD_NOT_ALLOWED; // ? 
+			_status_code = METHOD_NOT_ALLOWED; // ? 
 			return false;
 	}
 	return true;
@@ -151,20 +179,33 @@ void	RequestHandler::processGetMethod()
 	size_t		file_size;
 	std::string content_type ;
 
-	if (_isDirectory)
+	if (_is_directory)
 	{
 		if (!resolveIndex())
+		{
+			if (hasAutoIndex())
+			{
+				generateAutoIndex();
+				_status_code = OK;
+			}
+			else
+				_status_code = FORBIDDEN; //Directory listing forbidden
 			return;
+		}
 	}
 
-	int	fd = openReadFile(_fullPath);
+	int	fd = openReadFile(_resolved_path);
 	if (fd < 0)
 		return;
 
-	file_size = fileSize(_fullPath); // enregistrer dans Response
-	content_type = getContentType(_fullPath);
-
+	file_size = fileSize(_resolved_path); // enregistrer dans Response
 	(void) file_size;
+	content_type = getContentType(_resolved_path);
+
+/* 	_response.setStatusCode(OK);
+	_response.setContentType(content_type);
+	_response.setContentLenght(file_size);
+	_response.setBodyFd(fd); */
 
 /* 	
 	// RESPONSABILITE de Connection -> Send Response au fur et a mesure
@@ -177,109 +218,63 @@ void	RequestHandler::processGetMethod()
 	close(fd);
 	if (bytesRead < 0)
 	{
-		_statusCode = INTERNAL_SERVER_ERROR;
+		_status_code = INTERNAL_SERVER_ERROR;
 		return;
 	} */
-
-
-	_statusCode = OK;
+	_status_code = OK;
 }
 
-void RequestHandler::handleRequest()
+/* INDEX/DIRECTORY HANDLING */
+
+bool	RequestHandler::resolveIndex()
 {
-	if (_request.getStatusCode() != OK || !extractPath() || !resolvePath() || !processMethods())
-	{
-		_hasError = true;
-		return;
-	}
-
-	_statusCode = OK;
-}
-
-int RequestHandler::openReadFile(const std::string& path)
-{
-	int	fd = open(path.c_str(), O_RDONLY);
-	if (fd < 0)
-	{
-		switch (errno) {
-		case EACCES:
-			_statusCode = FORBIDDEN;
-			break;
-		case ENOENT:
-			_statusCode = NOT_FOUND;
-			break;
-		default:
-			_statusCode = INTERNAL_SERVER_ERROR;
-			break;
-		}
-	}
-	return fd;
-}
-
-int RequestHandler::openWriteFile(const std::string& path)
-{
-	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644); // CHECK FLAGS -> APPEND?
-	if (fd < 0)
-	{
-		switch (errno) {
-		case EACCES:
-			_statusCode = FORBIDDEN;
-			break;
-		case ENOENT:
-			_statusCode = NOT_FOUND;
-			break;
-		default:
-			_statusCode = INTERNAL_SERVER_ERROR;
-			break;
-		}
-	}
-	return fd;
-}
-
-bool RequestHandler::resolveIndex()
-{
-	std::vector<std::string>index;
-	index.push_back("index.html");
-	index.push_back("index.htm"); //see storing type in ServerConfig
-
-	std::string				dirPath = _fullPath;
-	bool					autoindex = false;
+	std::vector<std::string>	index; //
+	index.push_back("index.html"); //
+	index.push_back("index.php"); //see storing type in ServerConfig
 
 	if (index.empty())
 		return false;
+
+	std::string	dir_path = _resolved_path;
+	if	(dir_path[dir_path.length() -1] != '/')
+		dir_path += "/";
+
 	for (size_t i = 0; i < index.size(); i++)
 	{
-		std::string testPath = dirPath + index[i];
-		if (access(testPath.c_str(), R_OK) == 0)
+		std::string test_path = dir_path + index[i];
+		if (access(test_path.c_str(), R_OK) == 0)
 		{
-			_fullPath = testPath;
+			_resolved_path = test_path;
+			_is_directory = false;
+			std::cout << "[DEBUG] index found: " << _resolved_path << std::endl;
 			return true;
 		}
 	}
-	if (autoindex)
-	{
-		// NGINX will automatically generate and display a directory listing
-		// adapt _fullPath;
-		return true;
-	}
-	// _statusCode = ??
 	return false;
 }
 
-bool RequestHandler::isDirectory(const std::string& path)
+bool	RequestHandler::hasAutoIndex()
+{
+	if (_matched_location)
+		return (_matched_location->getAutoIndex());
+	// ! a completer: autoindex pourrait aussi se trouver dans server
+	return false;
+}
+
+void	RequestHandler::generateAutoIndex()
+{
+	// a implementer
+	return;
+}
+
+/* UTILS */
+
+bool	RequestHandler::isDirectory(const std::string& path)
 {
 	struct stat statBuf;
 	if (stat(path.c_str(), &statBuf) != 0)
 		return false;
 	return S_ISDIR(statBuf.st_mode);
-}
-
-size_t RequestHandler::fileSize(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return 0;
-	return statBuf.st_size;
 }
 
 std::string RequestHandler::getContentType(const std::string& path)
@@ -303,6 +298,58 @@ std::string RequestHandler::getContentType(const std::string& path)
     
     return "application/octet-stream";
 }
+
+/* FILE OPERATIONS */
+
+int	RequestHandler::openReadFile(const std::string& path)
+{
+	int	fd = open(path.c_str(), O_RDONLY);
+	if (fd < 0)
+	{
+		switch (errno) {
+		case EACCES:
+			_status_code = FORBIDDEN;
+			break;
+		case ENOENT:
+			_status_code = NOT_FOUND;
+			break;
+		default:
+			_status_code = INTERNAL_SERVER_ERROR;
+			break;
+		}
+	}
+	return fd;
+}
+
+int	RequestHandler::openWriteFile(const std::string& path)
+{
+	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644); // CHECK FLAGS -> APPEND?
+	if (fd < 0)
+	{
+		switch (errno) {
+		case EACCES:
+			_status_code = FORBIDDEN;
+			break;
+		case ENOENT:
+			_status_code = NOT_FOUND;
+			break;
+		default:
+			_status_code = INTERNAL_SERVER_ERROR;
+			break;
+		}
+	}
+	return fd;
+}
+
+size_t RequestHandler::fileSize(const std::string& path)
+{
+	struct stat statBuf;
+	if (stat(path.c_str(), &statBuf) != 0)
+		return 0;
+	return statBuf.st_size;
+}
+
+/* TESTS/DEBUG */
 
 void RequestHandler::initRoutes()
 {
@@ -334,23 +381,3 @@ void	RequestHandler::printRoutes()
 	std::cout << "---------------------------"<< std::endl;
 
 }
-
-
-/* ///////////LOCATION/////////////////// */
-
-Location::Location	() : _name(""), _root(""), _alias("") {}
-
-Location::Location	(const Location& other) : _name(other._name), _root(other._root), _alias(other._alias) {}
-
-Location&	Location::operator= (const Location& rhs)
-{
-	if (this != &rhs)
-	{
-		_name = rhs._name;
-		_root = rhs._root;
-		_alias = rhs._alias;
-	}
-	return *this;
-}
-
-Location::~Location	() {}
