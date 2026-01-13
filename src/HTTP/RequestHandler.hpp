@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+#include "Connection.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "VirtualServer.hpp"
@@ -20,18 +21,18 @@ class RequestHandler
 
 	/* Private Attributes */
 	const Request&			_request;
-	Response&			_response;
-	//const VirtualServer&	_virtual_server;
+	Response&				_response;
+	VirtualServer			_server;
 
-	std::string			_root; // default root from _virtual_server -> a supprimer
-	std::string			_request_path; // request_uri sans query
-	std::string			_resolved_path; //defnitive path (after alias or override)
+	std::string				_root; // default root from _virtual_server -> a supprimer
+	std::string				_request_path; // request_uri sans query
+	std::string				_resolved_path; //defnitive path (after alias or override)
 
 	const Location*			_matched_location;
-	bool				_is_directory;
+	bool					_is_directory;
 
-	int				_status_code; // -> plutot dans Response
-	bool				_has_error; // redondant
+	int						_status_code; // -> plutot dans Response
+	bool					_has_error; // redondant
 
 	std::map<std::string, Location> _routes; //devrait etre dans config, juste pour tests
 
@@ -62,7 +63,7 @@ class RequestHandler
 	public:
 
 	/* Constructors / Destructors */
-	RequestHandler	(const Request& request, Response& response);
+	RequestHandler	(Connection* currConn); // en const ref ou pointeur?
 	~RequestHandler	();
 
 	/* Getters */

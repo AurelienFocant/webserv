@@ -14,15 +14,16 @@
 	, _has_error(false)
 {} */
 
-RequestHandler::RequestHandler(const Request& request, Response& response) 
-	: _request(request)
-	, _response(response)
+RequestHandler::RequestHandler(Connection* currConn) 
+	: _request(currConn->request)
+	, _response(currConn->response)
+	, _server(currConn->virtual_server)
 	, _root("/www/html")
 	, _request_path("")
 	, _resolved_path("")
 	, _matched_location(NULL)
 	, _is_directory(false)
-	, _status_code(request.getStatusCode())
+	, _status_code(currConn->request.getStatusCode())
 	, _has_error(false)
 {
 	initRoutes();
@@ -34,6 +35,8 @@ RequestHandler::~RequestHandler() {}
 
 void	RequestHandler::handleRequest()
 {
+	std::cout << "Just here to use _response: " <<_response.SEND_HEADER << std::endl; 
+
 	if (_request.getStatusCode() != OK)
 	{
 		_status_code = _request.getStatusCode();

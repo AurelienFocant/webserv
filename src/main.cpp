@@ -114,13 +114,7 @@ void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 				if (it != connections.end()) {			// check before dereference
 					Connection* currConn = it->second;	// currConn is the value of <key, value>
 
-
-
 					// If socket is ready for reading
-					if (ready_events[i].events & EPOLLIN) {
-						std::cout << "COUCOU" << std::endl;
-					}
-
 					if (ready_events[i].events & EPOLLIN) {
 						currConn->receiveRequest();
 
@@ -148,11 +142,11 @@ void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 						/* TEST REQUEST HANDLER */
 						std::cout << "Main 147: Request Handler" << std::endl;
 						std::cout << "Status Code: " << currConn->request.getStatusCode() << std::endl;
-						RequestHandler rHandler(currConn->request, currConn->response);
-						rHandler.handleRequest();
-						if (rHandler.hasError())
+						RequestHandler requestHandler(currConn);
+						requestHandler.handleRequest();
+						if (requestHandler.hasError())
 						{
-							std::cerr << "Error: " << rHandler.getStatusCode() << std::endl;
+							std::cerr << "Error: " << requestHandler.getStatusCode() << std::endl;
 							// build error response
 						}
 /* 						else 
@@ -167,9 +161,6 @@ void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 						currConn->request.cleanRequest();
 						currConn->sendResponse(epollFd);
 					}
-
-					int ret2 = ready_events[i].events & EPOLLOUT;
-					std::cout << "RET EPOLLOUT: " << ret2 << std::endl;
 
 					// If the socket is ready for writing
 					if (ready_events[i].events & EPOLLOUT) {
