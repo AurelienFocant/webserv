@@ -18,7 +18,7 @@ RequestHandler::RequestHandler(Connection* currConn)
 	: _request(currConn->request)
 	, _response(currConn->response)
 	, _server(currConn->virtual_server)
-	, _root("/www/html")
+	, _root(currConn->virtual_server.getRoot())
 	, _request_path("")
 	, _resolved_path("")
 	, _matched_location(NULL)
@@ -26,7 +26,6 @@ RequestHandler::RequestHandler(Connection* currConn)
 	, _status_code(currConn->request.getStatusCode())
 	, _has_error(false)
 {
-	initRoutes();
 	printRoutes();
 }
 
@@ -119,7 +118,7 @@ void	RequestHandler::findLocation()
 {
 	size_t		longest_match = 0;
 
-	for (std::map<std::string, Location>::iterator it = _routes.begin(); it != _routes.end(); it++)
+	for (std::map<std::string, Location>::const_iterator it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
 	{
 		const std::string&	route_path = it->first;
 		const Location*		location = &(it->second);
@@ -354,27 +353,12 @@ size_t RequestHandler::fileSize(const std::string& path)
 
 /* TESTS/DEBUG */
 
-void RequestHandler::initRoutes()
-{
-	Location rootLoc;
-	rootLoc.setName("/");
-	rootLoc.setRoot("/var/www/html");
-	rootLoc.setAlias("");
-	_routes["/"] = rootLoc;
-
-	Location imageLoc;
-	imageLoc.setName("/images");
-	imageLoc.setAlias("/var/www/assets/images");
-	imageLoc.setRoot("");
-	_routes["/images"] = imageLoc;
-}
-
 void	RequestHandler::printRoutes()
 {
-	std::map<std::string, Location>::iterator it;
+	std::map<std::string, Location>::const_iterator it;
 
 	std::cout << "---------Print routes---------"<< std::endl;
-	for (it = _routes.begin(); it != _routes.end(); it++)
+	for (it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
 	{
 		std::cout << "Key: " << it->first
 		<< "\nName-> " << it->second.getName()

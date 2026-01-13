@@ -34,8 +34,6 @@ class RequestHandler
 	int						_status_code; // -> plutot dans Response
 	bool					_has_error; // redondant
 
-	std::map<std::string, Location> _routes; //devrait etre dans config, juste pour tests
-
 	/* Private Methods */
 	bool			extractPath();
 	bool			resolvePath();
@@ -48,7 +46,6 @@ class RequestHandler
 	bool			resolveIndex();
 	bool			hasAutoIndex();
 	void			generateAutoIndex();
-	//void			generateAutoIndex();
 
 	int				openReadFile(const std::string& path);
 	int				openWriteFile(const std::string& path);
@@ -57,7 +54,6 @@ class RequestHandler
 	std::string 	getContentType(const std::string& path);
 
 	/* For testing */
-	void 			initRoutes();
 	void			printRoutes();
 
 	public:
