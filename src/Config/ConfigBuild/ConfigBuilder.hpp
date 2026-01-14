@@ -42,5 +42,6 @@ class ConfigBuilder
 		void _popContext (void);
 		void _error(int line, const std::string &);
 
+		void	_visitChild(ConfigNode const* node);
 		bool	_has_root;
 };

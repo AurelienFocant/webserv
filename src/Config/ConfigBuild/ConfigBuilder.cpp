@@ -50,20 +50,8 @@ void ConfigBuilder::visit(const BlockNode& node)
 
 	// visit all children of current BLOCK;
 	_has_root = 0;
-	for (size_t i = 0; i < node.children.size(); ++i) {
-		// _visitChild(node);
-		const ConfigNode* child = node.children[i];
-		if (const BlockNode* bn = dynamic_cast<const BlockNode*>(child)) {
-			visit(*bn);
-		}
-		else if (const DirectiveNode* dn = dynamic_cast<const DirectiveNode*>(child)) {
-			visit(*dn);
-		}
-		else {
-			_error(node.line, "Unknown node type in config tree");
-		}
-	}
-
+	for (size_t i = 0; i < node.children.size(); ++i)
+		_visitChild((node.children[i]));
 
 	// manage finished block
 	if (name == "server") {
@@ -109,6 +97,19 @@ void ConfigBuilder::visit(const DirectiveNode& node)
 	std::map<std::string, DirectiveHandler>::iterator it = _handlers.find(node.name);
 	DirectiveHandler handler = it->second;
 	(this->*handler)(node);
+}
+
+void	ConfigBuilder::_visitChild(ConfigNode const* child) 
+{
+		if (const BlockNode* bn = dynamic_cast<const BlockNode*>(child)) {
+			visit(*bn);
+		}
+		else if (const DirectiveNode* dn = dynamic_cast<const DirectiveNode*>(child)) {
+			visit(*dn);
+		}
+		else {
+			_error(child->line, "Unknown node type in config tree");
+		}
 }
 
 void	ConfigBuilder::_validateDirective(DirectiveNode const& node)
