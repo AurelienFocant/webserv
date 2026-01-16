@@ -31,9 +31,6 @@ class RequestHandler
 	const Location*			_matched_location;
 	bool					_is_directory;
 
-	int						_status_code; // -> plutot dans Response
-	bool					_has_error; // redondant
-
 	/* Private Methods */
 	bool			extractPath();
 	bool			resolvePath();
@@ -64,11 +61,12 @@ class RequestHandler
 
 	/* Getters */
 	std::string		getRoot() const {return _root;}
-	int				getStatusCode() const {return _status_code;}
-	bool			hasError() const {return _has_error;}
 
 	/* Public Methods */
 	void			handleRequest();
 };
+
+std::string			intToString(size_t value);
+
 
 #endif

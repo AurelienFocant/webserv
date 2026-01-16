@@ -3,17 +3,6 @@
 
 /* ////////////REQUEST HANDLER////////////////// */
 
-
-/* RequestHandler::RequestHandler()
-	: _root("/www/html")
-	, _request_path("")
-	, _resolved_path("")
-	, _matched_location(NULL)
-	, _is_directory(false)
-	, _status_code(OK)
-	, _has_error(false)
-{} */
-
 RequestHandler::RequestHandler(Connection* currConn) 
 	: _request(currConn->request)
 	, _response(currConn->response)
@@ -23,10 +12,9 @@ RequestHandler::RequestHandler(Connection* currConn)
 	, _resolved_path("")
 	, _matched_location(NULL)
 	, _is_directory(false)
-	, _status_code(currConn->request.getStatusCode())
-	, _has_error(false)
 {
-	printRoutes();
+	_response.setStatusCode(_request.getStatusCode());
+	//printRoutes();
 }
 
 RequestHandler::~RequestHandler() {}
@@ -34,22 +22,15 @@ RequestHandler::~RequestHandler() {}
 
 void	RequestHandler::handleRequest()
 {
-	std::cout << "Just here to use _response: " <<_response.SEND_HEADER << std::endl; 
+	//std::cout << "Just here to use _response: " <<_response.SEND_HEADER << std::endl; 
 
-	if (_request.getStatusCode() != OK)
-	{
-		_status_code = _request.getStatusCode();
-		_has_error = true;
+	if (_response.getStatusCode() != OK)
 		return;
-	}
 
 	if (!extractPath() || !resolvePath() || !processMethods())
-	{
-		_has_error = true;
 		return;
-	}
 
-	_status_code = OK;
+	_response.setStatusCode(OK);
 }
 
 /* PATH PROCESSING */
@@ -58,7 +39,7 @@ bool	RequestHandler::extractPath()
 {
 	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
 	{
-		_status_code = BAD_REQUEST;
+		_response.setStatusCode(BAD_REQUEST);
 		return false;
 	}
 
@@ -125,10 +106,14 @@ void	RequestHandler::findLocation()
 
 		if (_request_path.find(route_path, 0) == 0)
 		{
-			if (route_path.length() > longest_match)
+			size_t route_len = route_path.length();
+			if (_request_path.length() == route_len || _request_path[route_len] == '/')
 			{
-				longest_match = route_path.length();
-				_matched_location = location;
+				if (route_len > longest_match)
+				{
+					longest_match = route_path.length();
+					_matched_location = location;
+				}
 			}
 		}
 	}
@@ -141,11 +126,11 @@ bool	RequestHandler::validatePath()
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
 		if (errno == ENOENT)
-			_status_code = NOT_FOUND;
+			 _response.setStatusCode(NOT_FOUND);
 		else if (errno == EACCES)
-			_status_code = FORBIDDEN;
+			_response.setStatusCode(FORBIDDEN);
 		else
-			_status_code = INTERNAL_SERVER_ERROR;
+			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return false;
 	}
 
@@ -170,7 +155,7 @@ bool	RequestHandler::processMethods()
 			processDeleteMethod(); */
 			break ;
 		default: 
-			_status_code = METHOD_NOT_ALLOWED; // ? 
+			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
 			return false;
 	}
 	return true;
@@ -178,20 +163,24 @@ bool	RequestHandler::processMethods()
 
 void	RequestHandler::processGetMethod()
 {
-	size_t		file_size;
-	std::string content_type ;
-
 	if (_is_directory)
 	{
+		if	(_resolved_path[_resolved_path.length() -1] != '/') //Le serveur n'a pas le droit de modifier l'url en "silence. soit redirect /dir/ soit 404"
+		{
+			_response.setStatusCode(MOVED_PERMANENTLY);
+			// set response header Location: request_path + "/";
+			return;
+		}
 		if (!resolveIndex())
 		{
 			if (hasAutoIndex())
 			{
 				generateAutoIndex();
-				_status_code = OK;
+				_response.setStatusCode(OK);
+				return; // listing HTML genere directement enregistre dans le body de response?
 			}
 			else
-				_status_code = FORBIDDEN; //Directory listing forbidden
+				_response.setStatusCode(FORBIDDEN); //Directory listing forbidden
 			return;
 		}
 	}
@@ -200,14 +189,11 @@ void	RequestHandler::processGetMethod()
 	if (fd < 0)
 		return;
 
-	file_size = fileSize(_resolved_path); // enregistrer dans Response
-	(void) file_size;
-	content_type = getContentType(_resolved_path);
-
-/* 	_response.setStatusCode(OK);
-	_response.setContentType(content_type);
-	_response.setContentLenght(file_size);
-	_response.setBodyFd(fd); */
+	_response.setStatusCode(OK);
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setHeader("Content-Type:", getContentType(_resolved_path));
+	_response.setHeader("Content-Lenght:", intToString(fileSize(_resolved_path)));
+	_response.setBodyFd(fd);
 
 /* 	
 	// RESPONSABILITE de Connection -> Send Response au fur et a mesure
@@ -223,27 +209,23 @@ void	RequestHandler::processGetMethod()
 		_status_code = INTERNAL_SERVER_ERROR;
 		return;
 	} */
-	_status_code = OK;
+	_response.setStatusCode(OK);
 }
 
 /* INDEX/DIRECTORY HANDLING */
 
 bool	RequestHandler::resolveIndex()
 {
-	std::vector<std::string>	index; //
-	index.push_back("index.html"); //
-	index.push_back("index.php"); //see storing type in ServerConfig
+	std::vector<std::string> indexes =_server.getIndexes();
 
-	if (index.empty())
+	if (indexes.empty())
 		return false;
 
 	std::string	dir_path = _resolved_path;
-	if	(dir_path[dir_path.length() -1] != '/')
-		dir_path += "/";
 
-	for (size_t i = 0; i < index.size(); i++)
+	for (size_t i = 0; i < indexes.size(); i++)
 	{
-		std::string test_path = dir_path + index[i];
+		std::string test_path = dir_path + indexes[i];
 		if (access(test_path.c_str(), R_OK) == 0)
 		{
 			_resolved_path = test_path;
@@ -259,8 +241,7 @@ bool	RequestHandler::hasAutoIndex()
 {
 	if (_matched_location)
 		return (_matched_location->getAutoIndex());
-	// ! a completer: autoindex pourrait aussi se trouver dans server
-	return false;
+	return _server.getAutoindex();
 }
 
 void	RequestHandler::generateAutoIndex()
@@ -310,13 +291,13 @@ int	RequestHandler::openReadFile(const std::string& path)
 	{
 		switch (errno) {
 		case EACCES:
-			_status_code = FORBIDDEN;
+			_response.setStatusCode(FORBIDDEN);
 			break;
 		case ENOENT:
-			_status_code = NOT_FOUND;
+			_response.setStatusCode(NOT_FOUND);
 			break;
 		default:
-			_status_code = INTERNAL_SERVER_ERROR;
+			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 			break;
 		}
 	}
@@ -330,13 +311,13 @@ int	RequestHandler::openWriteFile(const std::string& path)
 	{
 		switch (errno) {
 		case EACCES:
-			_status_code = FORBIDDEN;
+			_response.setStatusCode(FORBIDDEN);
 			break;
 		case ENOENT:
-			_status_code = NOT_FOUND;
+			_response.setStatusCode(NOT_FOUND);
 			break;
 		default:
-			_status_code = INTERNAL_SERVER_ERROR;
+			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 			break;
 		}
 	}
@@ -350,6 +331,16 @@ size_t RequestHandler::fileSize(const std::string& path)
 		return 0;
 	return statBuf.st_size;
 }
+
+/* Utils */
+
+std::string intToString(size_t value)
+{
+    std::stringstream ss;
+    ss << value;
+    return ss.str();
+}
+
 
 /* TESTS/DEBUG */
 

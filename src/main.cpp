@@ -141,17 +141,17 @@ void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 						currConn->virtual_server = webserv.getValidServer(0);
 						/* TEST REQUEST HANDLER */
 						std::cout << "Main 147: Request Handler" << std::endl;
-						std::cout << "Status Code: " << currConn->request.getStatusCode() << std::endl;
+						std::cout << "[DEBUG] Status Code: " << currConn->request.getStatusCode() << std::endl;
 						RequestHandler requestHandler(currConn);
 						requestHandler.handleRequest();
-						if (requestHandler.hasError())
+						std::cout << currConn->response << std::endl;
+						if (currConn->response.getStatusCode() != OK)
 						{
-							std::cerr << "Error: " << requestHandler.getStatusCode() << std::endl;
-							// build error response
+							std::cerr << "[ERROR] " << currConn->request.getMethod() 
+									<< " " << currConn->request.getRequestUri()
+									<< " - Status: " << currConn->response.getStatusCode() << std::endl;
 						}
-/* 						else 
-							currConn->response = rHandler.buildResponse(); */
-						/* --------------------- */
+		  				/* --------------------- */
 
 						struct epoll_event	ev;
 						ev.events = EPOLLOUT | EPOLLRDHUP;
