@@ -189,11 +189,14 @@ void	RequestHandler::processGetMethod()
 	if (fd < 0)
 		return;
 
+	int target_size = fileSize(_resolved_path);
+	
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Type:", getContentType(_resolved_path));
-	_response.setHeader("Content-Lenght:", intToString(fileSize(_resolved_path)));
+	_response.setHeader("Content-Type", getContentType(_resolved_path));
+	_response.setHeader("Content-Lenght", intToString(target_size));
 	_response.setBodyFd(fd);
+	_response.setBodySize(target_size);
 
 /* 	
 	// RESPONSABILITE de Connection -> Send Response au fur et a mesure

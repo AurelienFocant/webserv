@@ -7,6 +7,10 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <unistd.h>
+#include <cstring>
+
+#define BUFFER_SIZE 8192
 
 class	Response
 {
@@ -30,10 +34,19 @@ class	Response
 	};
 
 	/*Publics Methods*/
+
+	void				formatResponse();
+	std::string			buildHttpResponse();
+	//void				eraseBytesSent();
+	void				resetBuffer();
+	void				cleanResponse();
+
+
 	/*Setters - Getters*/
 	void				setState(int state);
 	void				setStatusCode(int status_code);
 	void				setBodyFd(int fd);
+	void				setBodySize(int size);
 	void				setHttpVersion(const std::string& version);
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBodyContent(const std::string& content); // for autoindex
@@ -41,6 +54,7 @@ class	Response
 	int					getState() const;
 	int					getStatusCode() const;
 	int					getBodyFd() const;
+	int					getBodySize() const;
 	std::string			getHttpVersion() const;
 	std::string			getHeader(const std::string& key) const;
 	//std::string			getBodyContent() const;
@@ -50,12 +64,13 @@ class	Response
 	/*Private Attributes*/
 
 	int									_state;
-	int									_body_type;
+	bodyType							_body_type;
 	int									_status_code;
 	std::string							_http_version;
 
 	std::map<std::string, std::string>	_headers;
 	//std::string						_headers;
+	size_t								_headers_size;
 	size_t								_header_sent;
 	
 	int				_fd;
@@ -63,13 +78,11 @@ class	Response
 	size_t			_body_sent;
 	std::string		_body_content;
 
-	char			_buffer[8192]; // or std::vector<char> ? for CGI?
+	char			_buffer[BUFFER_SIZE]; // sert pour header et body | or std::vector<char> ? for CGI?
 	size_t			_buffer_size;
 	size_t			_buffer_sent;
 
 	/*Private Methods*/
-
-	std::string		buildHttpResponse();
 
 
 

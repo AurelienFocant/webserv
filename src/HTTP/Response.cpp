@@ -11,11 +11,45 @@ Response::Response()
 , _body_sent (0)
 , _buffer_size(0)
 , _buffer_sent(0)
-{}
+{
+	std::memset(_buffer, 0, BUFFER_SIZE);
+}
 
 Response::~Response()
 {
-	std::cout << "Destructor called: Response" << std::endl; }
+	if (_fd != -1)
+		close(_fd);
+	std::cout << "Destructor called: Response" << std::endl;
+}
+
+void	Response::formatResponse()
+{
+	std::string	formatted = buildHttpResponse();
+
+	if (formatted.size() > BUFFER_SIZE)
+	{
+		//Doc NGINX: A request header field cannot exceed the size of one buffer as well
+		//, or the 400 (Bad Request) error is returned to the client. Buffers are allocated only on demand.
+		//By default, the buffer size is equal to 8K bytes.
+
+		_status_code = INTERNAL_SERVER_ERROR;
+
+		std::cerr << "[Error] Response header size exceed buffer size " << formatted.size() << " bytes" << std::endl;
+		formatted = "HTTP/1.1 500 Internal Server Error\r\n"
+					"Content-Lenght: 0\r\n"  //Content-lenght = error file size
+					"Connection: close\r\n"
+					"\r\n";
+		return;
+	}
+
+	std::memcpy(_buffer, formatted.c_str(), formatted.size());
+
+	_buffer_size = formatted.size();
+	_buffer_sent = 0;
+	_state = SEND_HEADER;
+
+}
+
 
 std::string	Response::buildHttpResponse()
 {
@@ -27,7 +61,7 @@ std::string	Response::buildHttpResponse()
 
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
 	it != _headers.end(); it++)
-		response << it->first << " " << it->second << "\r\n";
+		response << it->first << ": " << it->second << "\r\n";
 	response << "\r\n";
 
 	return response.str();
@@ -90,6 +124,17 @@ void	Response::setBodyFd(int fd)
 	_fd = fd;
 }
 
+int	Response::getBodySize() const
+{
+	return _body_size;
+}
+
+void	Response::setBodySize(int size)
+{
+	_body_size = size;
+}
+
+
 /* std::string	Response::getBodyContent() const
 {
 	return _content;
@@ -99,6 +144,34 @@ void	Response::setBodyContent(const std::string& content)
 {
 	_body_content = content;
 }
+
+void	Response::resetBuffer()
+{
+	_buffer_size = 0;
+	_buffer_sent = 0;
+}
+
+void	Response::cleanResponse()
+{
+
+	_state = SEND_HEADER;
+	_body_type = STATIC;
+	_status_code = OK;
+	_http_version = "";
+
+	_header_sent = 0;
+	if (_fd != -1)
+	{
+		close(_fd);
+		_fd = -1;
+	}
+	_body_size = 0;
+	_body_sent = 0;
+	_buffer_size = 0;
+	_buffer_sent = 0;
+	std::memset(_buffer, 0, BUFFER_SIZE);
+}
+
 
 std::ostream& operator<<(std::ostream& os, const Response& response)
 {
