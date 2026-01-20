@@ -2,16 +2,13 @@
 
 HTTPTokenizer::HTTPTokenizer() : Tokenizer() {
 	_tokenizing = 0;
-	std::cout << "Defaul constructor called: HTTPTokenizer" << std::endl;
 }
 
 HTTPTokenizer::HTTPTokenizer(std::string const& input) : Tokenizer(input) {
 	_tokenizing = 0;
-	std::cout << "String constructor called: HTTPTokenizer" << std::endl;
 }
 
 HTTPTokenizer::~HTTPTokenizer() {
-	std::cout << "Destructor called: HTTPTokenizer" << std::endl;
 }
 
 std::vector<t_Token>	HTTPTokenizer::scanTokens() {

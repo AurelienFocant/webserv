@@ -26,7 +26,7 @@ class ConfigBuilder
 
 		void	_initDirectiveSpecs(void);
 		std::map<std::string, DirectiveSpecs>	_direcSpecs;
-		void	_validateDirective(DirectiveNode const& node);
+		void	_validateStatement(ConfigNode const& node);
 
 		typedef void (ConfigBuilder::*DirectiveHandler)(const DirectiveNode &);
 		std::map<std::string, DirectiveHandler>	_handlers;
@@ -42,5 +42,6 @@ class ConfigBuilder
 		void _popContext (void);
 		void _error(int line, const std::string &);
 
+		void	_visitChild(ConfigNode const* node);
 		bool	_has_root;
 };
