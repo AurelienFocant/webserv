@@ -41,6 +41,10 @@ class Connection
 		Request		request;
 		Response	response;
 
+		void	sendResponse(int epollFd);
+
+		bool	connClosed;
+
 
 
 		// struct sockaddr_in	clientAddr;

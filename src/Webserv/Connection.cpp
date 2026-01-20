@@ -5,18 +5,21 @@
 Connection::Connection()
 	: _fd(-1)
 	, handler(NULL)
+	, connClosed(false)
 {
 }
 
 Connection::Connection(int fd, bool (Webserv::*f)(Connection & conn))
 	: _fd(fd)
 	, handler(f)
+	, connClosed(false)
 {
 }
 
 Connection::Connection( const Connection& src )
 	: _fd(src._fd)
 	, handler(src.handler)
+	, connClosed(src.connClosed)
 {
 	(void) src;
 }
@@ -26,6 +29,7 @@ Connection&	Connection::operator= ( const Connection& rhs )
 	if (this != &rhs) {
 		_fd = rhs._fd;
 		handler = rhs.handler;
+		connClosed = rhs.connClosed;
 	}
 	return (*this);
 }
@@ -38,6 +42,48 @@ void	Connection::setEvent(uint32_t event)
 {
 	_event = event;
 }
+
+void	Connection::sendResponse(int epollFd)
+{
+	size_t data_size = 0; 
+	const char *data = response.getDataToSend(data_size);
+
+	if (!data || !data_size)
+	{
+		if (response.isDone())
+		{
+			if (response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
+			{
+				connClosed = true;
+				response.cleanResponse();
+				return;
+			}
+
+			// full response sent --> stop watching EPOLLOUT
+			struct epoll_event	ev;
+			ev.events = EPOLLIN | EPOLLRDHUP; // keep listening for reads
+			ev.data.fd = _fd;
+
+			if (epoll_ctl(epollFd, EPOLL_CTL_MOD, _fd, &ev) < 0) {
+				perror("epoll_ctl MOD");
+				connClosed = true;
+			}
+		}
+		else
+		{
+			std::cout << "[Error] No data to send but response not done" << std::endl;
+			connClosed = true;
+		}
+		return ;
+	}
+
+	ssize_t bytesSent = send(_fd, data, data_size, MSG_NOSIGNAL);
+
+	if (bytesSent > 0)
+		response.updateBytesSend(bytesSent);
+	else if (bytesSent < 0)
+		return;
+};
 
 uint32_t	Connection::getEvent(void) const
 {
