@@ -160,14 +160,18 @@ bool	Webserv::listenHandler(Connection & conn)
 	if ((clientSocket = accept(_epoll_fd, NULL, 0) < 0))
 		return (false);
 		// ?????????? //
-	fcntl(clientSocket, F_SETFL, O_NONBLOCK);
-	// ?? verify return value ??
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) < 0) {
+		close(clientSocket);
+		return (false);
+	}
 
 	struct epoll_event ev_hints;
 	ev_hints.events = EPOLLIN | EPOLLRDHUP;
 	ev_hints.data.fd = clientSocket;
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, clientSocket, &ev_hints);
-	// ?? verify return value ??
+	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, clientSocket, &ev_hints) < 0) {
+		close(clientSocket);
+		return (false);
+	}
 
 	(void) conn;
 	_connections[clientSocket] = Connection(clientSocket, &Webserv::clientHandler);
