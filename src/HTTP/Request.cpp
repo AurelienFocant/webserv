@@ -8,14 +8,14 @@ const char*			Request::important_argument[] = {
 	};
 
 /*Constructor - Copy Constructor - Destructor*/
-Request::Request() : HTTPTokenizer() {
+Request::Request() : HTTPTokenizer()
+{
 	cleanRequest();
-	std::cout << "Default constructor called: Request" << std::endl;
 }
 
-Request::Request(std::string const& request) : HTTPTokenizer(request) {
+Request::Request(std::string const& request) : HTTPTokenizer(request)
+{
 	cleanRequest();
-	std::cout << "String constructor called: Request" << std::endl;
 	if (!parseRequest()) {}
 }
 
@@ -332,10 +332,31 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 }
 
 /*Getter*/
-std::string	Request::getBody() const {
+t_method		Request::getMethod() const {
+	return(_method);
+}
+
+std::string		Request::getRequestUri() const {
+	return(_request_uri);
+}
+
+std::string		Request::getHttpVersion() const {
+	return(_http_version);
+}
+
+std::string	Request::Request::getBody() const {
 	return (_body);
 }
-	
+
+bool			Request::getCompleted() const {
+	return(_complete);
+}
+
+t_HttpCode		Request::getStatusCode() const {
+	return(_status_code);
+}
+
+/*Setters*/
 bool	Request::setMethod() {
 	if (_progress == PARSER_ERROR)
 		return (false);
@@ -389,15 +410,15 @@ bool	Request::setHttpVersion() {
 }
 
 /*
-t_method	Request::idMethod(std::string& method) {
-	if (method.find("GET") == 0)
-		return (GET);
-	else if (method.find("POST") == 0)
-		return (POST);
-	else
-		return (UNKNOWN);
-}
-*/
+   t_method	Request::idMethod(std::string& method) {
+   if (method.find("GET") == 0)
+   return (GET);
+   else if (method.find("POST") == 0)
+   return (POST);
+   else
+   return (UNKNOWN);
+   }
+ */
 
 bool	Request::addInput(std::string input) {
 	HTTPTokenizer::addInput(input);

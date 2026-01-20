@@ -1,10 +1,14 @@
 #include "Webserv.hpp"
-#include "ConfigNode.hpp"
 #include "ConfigParser.hpp"
 #include "ConfigBuilder.hpp"
 
 #include <iostream>
 #include <fstream>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+
+#define MAX_EVENTS	1024
+#define BUFFER_SIZE	1024
 
 Webserv::Webserv( void )
 	: _configPath(defaultConfigPath)
@@ -78,15 +82,77 @@ void	Webserv::readConfig()
 
 void	Webserv::initWebServer()
 {
-	// create epoll fd
+	_epoll_fd = epoll_create(1);
+	if (_epoll_fd < 0)
+		throw (std::runtime_error("epoll_create failed"));
+	// ?? put epoll fd non blocking ?
 
-	// iterate through virtual servers and create listen fd;
+	for (std::vector<VirtualServer>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 
-	// modify fd ?? fcntl ?
+		int	listenSocket;
+		if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0)
+			throw (std::runtime_error("listen socket opening failed"));
 
-	// add fd to epoll ?
+		int	enable = 1;
+		if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
+			throw (std::runtime_error("socket options failed"));
+		// ?? see more options ?
 
-	// already connection structs that would have the right handler in them ?
+		struct sockaddr_in server_addr;
+		server_addr.sin_family = AF_INET;
+		server_addr.sin_addr.s_addr = INADDR_ANY;
+		server_addr.sin_port = htons(it->getPort());
+		if (bind(listenSocket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
+			throw (std::runtime_error("bind failed"));
+
+		if (listen(listenSocket, SOMAXCONN) < 0)
+			throw (std::runtime_error("listen failed"));
+		// ?? listen options ?
+
+
+		_connections[listenSocket] = Connection(listenSocket, &Webserv::listenHandler);
+		// Connection &conn = _connections[listenSocket];
+		// (this->*(conn.handler))(conn);
+
+
+		struct epoll_event	ev_hints;
+		ev_hints.events = EPOLLIN;
+		ev_hints.data.fd = listenSocket;
+		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
+
+
+		// set up signals
+	}
+}
+
+void	Webserv::run()
+{
+	while (1) {
+		// check g_signum
+
+		struct epoll_event	ready_events[MAX_EVENTS];
+		int					event_count;
+		event_count = epoll_wait(_epoll_fd, ready_events, MAX_EVENTS, -1);
+		if (event_count < 0)
+			break ;
+
+		for (int i = 0; i < event_count; i++) {
+
+			std::map<int, Connection>::iterator it = _connections.find(ready_events[i].data.fd);				// find the right key
+			if (it == _connections.end())
+				continue ;
+
+			Connection & currConn = it->second;	// currConn is the value of <key, value>
+			currConn.setEvent(ready_events[i].events);
+			(this->*currConn.handler)(currConn);
+		}
+
+
+		// ?? connection to be closed
+			// ?? epoll_ctl DELETE connection from epoll_wait
+			// close(fd);
+			// delete from _connections map()
+	}
 }
 
 std::vector<VirtualServer>&	Webserv::getServers(void)
@@ -94,7 +160,95 @@ std::vector<VirtualServer>&	Webserv::getServers(void)
 	return (_servers);
 }
 
-VirtualServer&	Webserv::getValidServer(int idx)
+VirtualServer&	Webserv::getServer(int idx)
 {
 	return (_servers.at(idx));
+}
+
+bool	Webserv::listenHandler(Connection & conn)
+{
+	int clientSocket = accept(conn.getFd(), NULL, 0);
+	if (clientSocket < 0)
+		return (false);
+	// ?????????? // should we stop everything or just skip this connection ?
+
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) < 0) {
+		close(clientSocket);
+		return (false);
+	}
+
+	struct epoll_event ev_hints;
+	ev_hints.events = EPOLLIN | EPOLLRDHUP;
+	ev_hints.data.fd = clientSocket;
+	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, clientSocket, &ev_hints) < 0) {
+		close(clientSocket);
+		return (false);
+	}
+
+	_connections[clientSocket] = Connection(clientSocket, &Webserv::clientHandler);
+	return (true);
+}
+
+std::string	_receiveLoop(int fd)
+{
+	// TO BE REDONE !! //
+
+	int		bytes_read; 
+	char	buf[BUFFER_SIZE];
+	std::string	s;
+
+	while ((bytes_read = recv(fd, &buf, BUFFER_SIZE, 0)) > 0) {
+		s.append(buf, bytes_read);
+	}
+	return (s);
+}
+
+
+VirtualServer&	Webserv::_findCorrectServer(Request const& request)
+{
+	// TODO
+	(void) request;
+	return (getServer(0));
+}
+
+bool	Webserv::clientHandler(Connection & conn)
+{
+	// client close gracefully
+	if (conn.getEvent() & EPOLLRDHUP) {
+	}
+	// error
+	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
+	}
+
+
+
+	if (conn.getEvent() & EPOLLIN) {
+
+		std::string request_str = _receiveLoop(conn.getFd());
+
+		// RequestParser request_parser(request_str);
+		// conn.request = request_parser.parseRequest();
+		conn.request.addInput(request_str);
+		conn.request.parseRequest();
+
+		if (conn.request.getCompleted()) {
+			struct epoll_event	ev_hints;
+			ev_hints.events = EPOLLOUT | EPOLLRDHUP;
+			ev_hints.data.fd = conn.getFd();
+			epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, conn.getFd(), &ev_hints);
+		}
+	}
+
+	else if (conn.getEvent() & EPOLLOUT) {
+		conn.virtual_server = _findCorrectServer(conn.request);
+		
+
+		// RequestHandler	reqHandl(conn);
+		// conn.response = reqHandl.handleRequest();
+		// _sendResponse();
+	}
+
+
+
+	return (true);
 }

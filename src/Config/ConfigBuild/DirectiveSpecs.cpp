@@ -35,5 +35,4 @@ StementSpecs&	StementSpecs::operator=( const StementSpecs& rhs )
 
 StementSpecs::~StementSpecs( void )
 {
-	std::cout << "DirectiveSpecs Object Destroyed" << std::endl;
 }
