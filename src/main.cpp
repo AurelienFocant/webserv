@@ -20,36 +20,8 @@
 
 #define MAX_EVENTS 1024
 
-// We need to be able to check every connection independently
-// We put those is a std::map, which is a <key, value> pair
-// with the key being the clientFd of the connection
-#include "Connection.hpp"
-#include "Tokenizer.hpp"
-#include "VirtualServer.hpp"
-#include "RequestHandler.hpp"
 #include "Webserv.hpp"
 
-
-// Connection*	setUpServer(int epollFd, int listenSocket)
-// {
-// 	Connection	*res = new Connection;
-// 	socklen_t	client_addr_len = sizeof(res->clientAddr);
-// 	struct epoll_event	ev;
-//
-// 	res->clientFd = accept(listenSocket, (struct sockaddr *) &res->clientAddr, &client_addr_len);
-// 	if (res->clientFd < 0) {
-// 		perror("ERROR! accept: ");
-// 		throw std::runtime_error("accept socket failed");
-// 	}
-//
-// 	fcntl(res->clientFd, F_SETFL, O_NONBLOCK);
-//
-	// ev.events = EPOLLIN | EPOLLRDHUP;
-	// ev.data.fd = res->clientFd;
-	// epoll_ctl(epollFd, EPOLL_CTL_ADD, res->clientFd, &ev);
-//
-// 	return (res);
-// }
 
 // void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 // {
@@ -181,7 +153,7 @@ int	main(int ac, char **av)
 	try {
 		webserv.readConfig();
 		webserv.initWebServer();
-		// webserv.run();
+		webserv.run();
 	}
 	catch (std::exception &e) {
 		std::cerr << "Exception happened: " << e.what() << std::endl;

@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sys/epoll.h>
 
+#define MAX_EVENTS 1024
+
 Webserv::Webserv( void )
 	: _configPath(defaultConfigPath)
 {
@@ -127,10 +129,24 @@ void	Webserv::run()
 	while (1) {
 		// check g_signum
 
-		// epoll_wait();
+		struct epoll_event	ready_events[MAX_EVENTS];
+		int					event_count;
+		event_count = epoll_wait(_epoll_fd, ready_events, MAX_EVENTS, -1);
+		if (event_count < 0)
+			break ;
+
+		for (int i = 0; i < event_count; i++) {
+
+			std::map<int, Connection>::iterator it = _connections.find(ready_events[i].data.fd);				// find the right key
+			if (it == _connections.end())
+				continue ;
+
+			Connection & currConn = it->second;	// currConn is the value of <key, value>
+			(this->*currConn.handler)(currConn);
+		}
+
 
 		// LOOP ready_events
-			// link ready_events.data.fd to its Connection
 			// call Connection.handler();
 			// --> listenhandler()
 				// create()
@@ -156,10 +172,11 @@ VirtualServer&	Webserv::getServer(int idx)
 
 bool	Webserv::listenHandler(Connection & conn)
 {
-	int clientSocket;
-	if ((clientSocket = accept(_epoll_fd, NULL, 0) < 0))
+	int clientSocket = accept(conn.fd, NULL, 0);
+	if (clientSocket < 0)
 		return (false);
-		// ?????????? //
+	// ?????????? // should we stop everything or just skip this connection ?
+
 	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) < 0) {
 		close(clientSocket);
 		return (false);
@@ -173,7 +190,6 @@ bool	Webserv::listenHandler(Connection & conn)
 		return (false);
 	}
 
-	(void) conn;
 	_connections[clientSocket] = Connection(clientSocket, &Webserv::clientHandler);
 	return (true);
 }
@@ -181,5 +197,6 @@ bool	Webserv::listenHandler(Connection & conn)
 bool	Webserv::clientHandler(Connection & conn)
 {
 	(void) conn;
+	std::cout << "CLIENT HANDLER!\n";
 	return (true);
 }
