@@ -22,7 +22,7 @@ class	Request	: private HTTPTokenizer {
 		Request();
 		Request(std::string const& request);
 //		Request(const Request& copy_from);
-		~Request() {std::cout << "Destructor called: Request" << std::endl;};
+		~Request() {};
 
 	/*Overloaded operators*/
 //		Request&	operator=(const Request& other) ;

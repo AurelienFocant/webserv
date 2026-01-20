@@ -21,6 +21,8 @@ class Webserv
 		void	_openConfig(); 
 		void	_parseConfig();
 
+		VirtualServer&	_findCorrectServer(Request const& request);
+
 		Webserv(void);
 
 	public:

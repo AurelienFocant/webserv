@@ -1,13 +1,14 @@
 #include "Webserv.hpp"
-#include "ConfigNode.hpp"
 #include "ConfigParser.hpp"
 #include "ConfigBuilder.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <sys/epoll.h>
+#include <sys/socket.h>
 
-#define MAX_EVENTS 1024
+#define MAX_EVENTS	1024
+#define BUFFER_SIZE	1024
 
 Webserv::Webserv( void )
 	: _configPath(defaultConfigPath)
@@ -142,16 +143,10 @@ void	Webserv::run()
 				continue ;
 
 			Connection & currConn = it->second;	// currConn is the value of <key, value>
+			currConn.setEvent(ready_events[i].events);
 			(this->*currConn.handler)(currConn);
 		}
 
-
-		// LOOP ready_events
-			// call Connection.handler();
-			// --> listenhandler()
-				// create()
-			// --> clientHandler()
-				// HTTP madness emoji fire
 
 		// ?? connection to be closed
 			// ?? epoll_ctl DELETE connection from epoll_wait
@@ -172,7 +167,7 @@ VirtualServer&	Webserv::getServer(int idx)
 
 bool	Webserv::listenHandler(Connection & conn)
 {
-	int clientSocket = accept(conn.fd, NULL, 0);
+	int clientSocket = accept(conn.getFd(), NULL, 0);
 	if (clientSocket < 0)
 		return (false);
 	// ?????????? // should we stop everything or just skip this connection ?
@@ -194,9 +189,66 @@ bool	Webserv::listenHandler(Connection & conn)
 	return (true);
 }
 
+std::string	_receiveLoop(int fd)
+{
+	// TO BE REDONE !! //
+
+	int		bytes_read; 
+	char	buf[BUFFER_SIZE];
+	std::string	s;
+
+	while ((bytes_read = recv(fd, &buf, BUFFER_SIZE, 0)) > 0) {
+		s.append(buf, bytes_read);
+	}
+	return (s);
+}
+
+
+VirtualServer&	Webserv::_findCorrectServer(Request const& request)
+{
+	// TODO
+	(void) request;
+	return (getServer(0));
+}
+
 bool	Webserv::clientHandler(Connection & conn)
 {
-	(void) conn;
-	std::cout << "CLIENT HANDLER!\n";
+	// client close gracefully
+	if (conn.getEvent() & EPOLLRDHUP) {
+	}
+	// error
+	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
+	}
+
+
+
+	if (conn.getEvent() & EPOLLIN) {
+
+		std::string request_str = _receiveLoop(conn.getFd());
+
+		// RequestParser request_parser(request_str);
+		// conn.request = request_parser.parseRequest();
+		conn.request.addInput(request_str);
+		conn.request.parseRequest();
+
+		if (conn.request.getCompleted()) {
+			struct epoll_event	ev_hints;
+			ev_hints.events = EPOLLOUT | EPOLLRDHUP;
+			ev_hints.data.fd = conn.getFd();
+			epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, conn.getFd(), &ev_hints);
+		}
+	}
+
+	else if (conn.getEvent() & EPOLLOUT) {
+		conn.virtual_server = _findCorrectServer(conn.request);
+		
+
+		// RequestHandler	reqHandl(conn);
+		// conn.response = reqHandl.handleRequest();
+		// _sendResponse();
+	}
+
+
+
 	return (true);
 }

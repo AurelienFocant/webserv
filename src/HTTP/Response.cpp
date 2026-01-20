@@ -8,5 +8,6 @@ Response::Response(std::string const& Response)
 	(void) Response;
 }
 
-Response::~Response() {
-	std::cout << "Destructor called: Response" << std::endl; }
+Response::~Response()
+{
+}

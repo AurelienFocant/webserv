@@ -3,19 +3,19 @@
 #include <iostream>
 
 Connection::Connection()
-	: fd(-1)
+	: _fd(-1)
 	, handler(NULL)
 {
 }
 
 Connection::Connection(int fd, bool (Webserv::*f)(Connection & conn))
-	: fd(fd)
+	: _fd(fd)
 	, handler(f)
 {
 }
 
 Connection::Connection( const Connection& src )
-	: fd(src.fd)
+	: _fd(src._fd)
 	, handler(src.handler)
 {
 	(void) src;
@@ -24,7 +24,7 @@ Connection::Connection( const Connection& src )
 Connection&	Connection::operator= ( const Connection& rhs )
 {
 	if (this != &rhs) {
-		fd = rhs.fd;
+		_fd = rhs._fd;
 		handler = rhs.handler;
 	}
 	return (*this);
@@ -32,4 +32,19 @@ Connection&	Connection::operator= ( const Connection& rhs )
 
 Connection::~Connection( void )
 {
+}
+
+void	Connection::setEvent(uint32_t event)
+{
+	_event = event;
+}
+
+uint32_t	Connection::getEvent(void) const
+{
+	return (_event);
+}
+
+int	Connection::getFd(void) const
+{
+	return (_fd);
 }

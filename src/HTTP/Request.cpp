@@ -8,14 +8,14 @@ const char*			Request::important_argument[] = {
 	};
 
 /*Constructor - Copy Constructor - Destructor*/
-Request::Request() : HTTPTokenizer() {
+Request::Request() : HTTPTokenizer()
+{
 	cleanRequest();
-	std::cout << "Default constructor called: Request" << std::endl;
 }
 
-Request::Request(std::string const& request) : HTTPTokenizer(request) {
+Request::Request(std::string const& request) : HTTPTokenizer(request)
+{
 	cleanRequest();
-	std::cout << "String constructor called: Request" << std::endl;
 	if (!parseRequest()) {}
 }
 

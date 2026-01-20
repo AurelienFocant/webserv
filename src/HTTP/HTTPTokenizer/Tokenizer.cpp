@@ -5,14 +5,13 @@
 Tokenizer::Tokenizer( void )
 	//: _input("default input")
 	//, _it(_input.begin())
-	{
-	std::cout << "Default constructor called: Tokenizer" << std::endl;
+{
 }
 
 Tokenizer::Tokenizer( std::string const& s )
 	: _input(s)
-	, _it(_input.begin()) {
-	std::cout << "String constructor called: Tokenizer" << std::endl;
+	, _it(_input.begin())
+{
 }
 
 Tokenizer::Tokenizer( const Tokenizer& src )
@@ -31,7 +30,6 @@ Tokenizer&	Tokenizer::operator=( const Tokenizer& rhs )
 
 Tokenizer::~Tokenizer( void )
 {
-	std::cout << "Tokenizer Object Destroyed" << std::endl;
 }
 
 char	Tokenizer::peek() const

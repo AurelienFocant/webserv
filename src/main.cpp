@@ -29,42 +29,6 @@
 // 	std::map<int, Connection*>	connections;
 //
 // 	while (1) {
-// 		int efd_count = epoll_wait(epollFd, ready_events, MAX_EVENTS, 100);
-// 		if (efd_count < 0)
-// 			perror("ERROR! epoll_wait: ");
-//
-// 		std::cout << "COUNT: " << efd_count << std::endl;
-//
-// 		for (int i = 0; i < efd_count; i++) {
-// 			int	fd = ready_events[i].data.fd;
-//
-//
-// 			// ready_events[i].data = webserv.connections[0];
-// 			// ready_events[i].data.handler();
-//
-// 			if (fd == listenSocket) {
-// 				Connection* newConnection = setUpServer(epollFd, listenSocket);
-// 				newConnection->epollEvent = ready_events[i];				// Reference epollEvent in its Connection
-// 				connections[newConnection->clientFd] = newConnection;	// Add Connection to map<int, Connection>
-// 				Connection* newConnection2 = new Connection;
-// 				connections[newConnection->clientFd] = newConnection2;	// Add Connection to map<int, Connection>
-// 			}
-// 			else {
-//
-//
-// 				// Find the connection that matches the fd of ready_event[i]
-// 				std::map<int, Connection*>::iterator	it;	// declare iterator
-// 				it = connections.find(fd);				// find the right key
-// 				if (it != connections.end()) {			// check before dereference
-// 					Connection* currConn = it->second;	// currConn is the value of <key, value>
-// 					ready_events[i].data.ptr = (void *) currConn;
-//
-//
-//
-// 					// If socket is ready for reading
-// 					if (ready_events[i].events & EPOLLIN) {
-// 						std::cout << "COUCOU" << std::endl;
-// 					}
 //
 // 					if (ready_events[i].events & EPOLLIN) {
 // 						currConn->receiveRequest();
@@ -77,9 +41,6 @@
 // 							continue ;
 // 						}
 // 						// We'll need to do loads of stuff in here
-// 						currConn->request.addInput(currConn->request_str);
-// 						currConn->request.parseRequest();
-// 						currConn->request_str.clear();
 // 						std::cout << "main_loop -l129: "<< currConn->request << std::endl;
 // 					}
 //

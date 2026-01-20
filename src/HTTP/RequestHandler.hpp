@@ -20,7 +20,7 @@ class RequestHandler
 
 	/* Private Attributes */
 	const Request&			_request;
-	Response&			_response;
+	Response			_response;
 	//const VirtualServer&	_virtual_server;
 
 	std::string			_root; // default root from _virtual_server -> a supprimer
