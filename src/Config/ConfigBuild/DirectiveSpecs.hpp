@@ -1,18 +1,18 @@
 #ifndef DIRECTIVESPECS_HPP
 #define DIRECTIVESPECS_HPP
 
-class DirectiveSpecs
+class StementSpecs
 {
 	public:
 		int	allowedCtxts;
 		int	min_args;
 		int	max_args;
 
-		DirectiveSpecs	( void );
-		DirectiveSpecs	(int ctxt, int min, int max);
-		DirectiveSpecs	( const DirectiveSpecs& src );
-		DirectiveSpecs&	operator= ( const DirectiveSpecs& rhs );
-		~DirectiveSpecs	( void );
+		StementSpecs	( void );
+		StementSpecs	(int ctxt, int min, int max);
+		StementSpecs	( const StementSpecs& src );
+		StementSpecs&	operator= ( const StementSpecs& rhs );
+		~StementSpecs	( void );
 
 };
 

@@ -2,28 +2,28 @@
 
 #include <iostream>
 
-DirectiveSpecs::DirectiveSpecs( void )
+StementSpecs::StementSpecs( void )
 	: allowedCtxts(0)
 	, min_args(0)
 	, max_args(0)
 {
 }
 
-DirectiveSpecs::DirectiveSpecs( const DirectiveSpecs& src )
+StementSpecs::StementSpecs( const StementSpecs& src )
 	: allowedCtxts(src.allowedCtxts)
 	, min_args(src.min_args)
 	, max_args(src.max_args)
 {
 }
 
-DirectiveSpecs::DirectiveSpecs	(int ctxt, int min, int max)
+StementSpecs::StementSpecs	(int ctxt, int min, int max)
 	: allowedCtxts(ctxt)
 	, min_args(min)
 	, max_args(max)
 {
 }
 
-DirectiveSpecs&	DirectiveSpecs::operator=( const DirectiveSpecs& rhs )
+StementSpecs&	StementSpecs::operator=( const StementSpecs& rhs )
 {
 	if (this != &rhs) {
 		allowedCtxts = rhs.allowedCtxts;
@@ -33,7 +33,7 @@ DirectiveSpecs&	DirectiveSpecs::operator=( const DirectiveSpecs& rhs )
 	return (*this);
 }
 
-DirectiveSpecs::~DirectiveSpecs( void )
+StementSpecs::~StementSpecs( void )
 {
 	std::cout << "DirectiveSpecs Object Destroyed" << std::endl;
 }

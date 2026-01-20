@@ -25,21 +25,13 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 // Visit BLOCK
 void ConfigBuilder::visit(const BlockNode& node)
 {
+	_validateStatement(node);
 
     const std::string& name = node.name;
-
-
-	// set current BlockContext
 	if (name == "server") {
-		if (node.args.size() != 0)
-			_error(node.line, std::string("Server block shouldn't have arguments"));
 		_pushContext(SERVER);
 	}
 	else if (name == "location") {
-		// check context in which we are !!
-		if (node.args.size() != 1) {
-			_error(node.line, std::string("Location block should have one argument"));
-		}
 		_pushContext(LOCATION);
 		_getCurrentCtxt().setLocationName(node.args[0]);
 	}
@@ -47,8 +39,6 @@ void ConfigBuilder::visit(const BlockNode& node)
 		_error(node.line, std::string("Unknown block: ") + name);
 	}
 
-
-	// visit all children of current BLOCK;
 	_has_root = 0;
 	for (size_t i = 0; i < node.children.size(); ++i)
 		_visitChild((node.children[i]));
@@ -92,7 +82,7 @@ void ConfigBuilder::visit(const BlockNode& node)
 // Visit DIRECTIVE
 void ConfigBuilder::visit(const DirectiveNode& node)
 {
-	_validateDirective(node);
+	_validateStatement(node);
 
 	std::map<std::string, DirectiveHandler>::iterator it = _handlers.find(node.name);
 	DirectiveHandler handler = it->second;
@@ -101,18 +91,15 @@ void ConfigBuilder::visit(const DirectiveNode& node)
 
 void	ConfigBuilder::_visitChild(ConfigNode const* child) 
 {
-		if (const BlockNode* bn = dynamic_cast<const BlockNode*>(child)) {
+		if (const BlockNode* bn = dynamic_cast<const BlockNode*>(child))
 			visit(*bn);
-		}
-		else if (const DirectiveNode* dn = dynamic_cast<const DirectiveNode*>(child)) {
+		else if (const DirectiveNode* dn = dynamic_cast<const DirectiveNode*>(child))
 			visit(*dn);
-		}
-		else {
+		else
 			_error(child->line, "Unknown node type in config tree");
-		}
 }
 
-void	ConfigBuilder::_validateDirective(DirectiveNode const& node)
+void	ConfigBuilder::_validateStatement(ConfigNode const& node)
 {
 	std::map<std::string, DirectiveSpecs>::iterator it = _direcSpecs.find(node.name);
 	if (it == _direcSpecs.end())
@@ -121,14 +108,21 @@ void	ConfigBuilder::_validateDirective(DirectiveNode const& node)
 	DirectiveSpecs spec = it->second;
 	if (!(_getCurrentCtxt().getType() & spec.allowedCtxts))
 		_error(node.line, std::string("Directive ") + node.name + std::string(" forbidden in this context"));
+
 	if (node.args.size() < (size_t) spec.min_args)
 		_error(node.line, std::string("Directive ") + node.name + std::string(" doesn't have enough arguments"));
+
 	if (node.args.size() > (size_t) spec.max_args)
 		_error(node.line, std::string("Directive ") + node.name + std::string(" has too many arguments"));
+
+
 }
 
 void ConfigBuilder::_initDirectiveSpecs()
 {
+	_direcSpecs["server"]		= DirectiveSpecs(MAIN, 0, 0);
+	_direcSpecs["location"]		= DirectiveSpecs(SERVER, 1, 1);
+
 	_direcSpecs["listen"]		= DirectiveSpecs(SERVER, 1, 1);
 	_direcSpecs["root"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["server_name"]	= DirectiveSpecs(SERVER, 1, 1);
