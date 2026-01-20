@@ -27,32 +27,38 @@
 
 class Request;
 class Response;
+class Webserv;
 
 class Connection
 {
 	public:
-		int					clientFd;
-		struct sockaddr_in	clientAddr;
-		int					respOffset;
-		bool				connClosed;
-		std::string			request_str;
-		std::string			response_str;
-		struct epoll_event	epollEvent;
-		Request				request;
-		Response			response;
-		VirtualServer		virtual_server;
+		int		fd;
+		std::string s;
+		void	(Webserv::*handler)(void);
+		// struct sockaddr_in	clientAddr;
+		// int					respOffset;
+		// bool				connClosed;
+		// std::string			request_str;
+		// std::string			response_str;
+		// struct epoll_event	epollEvent;
+		// Request				request;
+		// Response			response;
+		// VirtualServer		virtual_server;
 
 
 
-		Connection	( void );
+		Connection	();
+		Connection	(int fd, void (Webserv::*f)());
 		Connection	( const Connection& src );
 		Connection&	operator= ( const Connection& rhs );
 		~Connection	( void );
 
-		bool	receiveRequest();
-		void	sendResponse(int epollFd);
-
-		std::string	build_response();
+		// bool	receiveRequest();
+		// void	sendResponse(int epollFd);
+		//
+		// std::string	build_response();
+	
+	private:
 
 };
 

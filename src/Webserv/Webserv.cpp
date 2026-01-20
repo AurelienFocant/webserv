@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sys/epoll.h>
 
 Webserv::Webserv( void )
 	: _configPath(defaultConfigPath)
@@ -78,15 +79,71 @@ void	Webserv::readConfig()
 
 void	Webserv::initWebServer()
 {
-	// create epoll fd
+	_epoll_fd = epoll_create(1);
+	if (_epoll_fd < 0)
+		throw (std::runtime_error("epoll_create failed"));
+	// ?? put epoll fd non blocking ?
 
-	// iterate through virtual servers and create listen fd;
+	for (std::vector<VirtualServer>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 
-	// modify fd ?? fcntl ?
+		int	listen_fd;
+		if ((listen_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0)
+			throw (std::runtime_error("listen socket opening failed"));
 
-	// add fd to epoll ?
+		int	enable = 1;
+		if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
+			throw (std::runtime_error("socket options failed"));
+		// ?? see more options ?
 
-	// already connection structs that would have the right handler in them ?
+		struct sockaddr_in server_addr;
+		server_addr.sin_family = AF_INET;
+		server_addr.sin_addr.s_addr = INADDR_ANY;
+		server_addr.sin_port = htons(it->getPort());
+		if (bind(listen_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
+			throw (std::runtime_error("bind failed"));
+
+		if (listen(listen_fd, SOMAXCONN) < 0)
+			throw (std::runtime_error("listen failed"));
+		// ?? listen options ?
+
+
+		// void (Webserv::*ptr)(void) = &Webserv::listenHandler;
+
+		_connections[listen_fd] = Connection(listen_fd, &Webserv::listenHandler);
+		// _connections[listen_fd].handler = &Webserv::listenHandler;
+		(this->*(_connections[listen_fd].handler))();
+
+
+
+		// create new Connection
+			// put fd of socket inside Connection
+			// put listen handler inside Connection
+	// add listenSock to epoll
+	// set up signals
+
+	}
+}
+
+void	Webserv::run()
+{
+	while (1) {
+		// check g_signum
+
+		// epoll_wait();
+
+		// LOOP ready_events
+			// link ready_events.data.fd to its Connection
+			// call Connection.handler();
+			// --> listenhandler()
+				// create()
+			// --> clientHandler()
+				// HTTP madness emoji fire
+
+		// ?? connection to be closed
+			// ?? epoll_ctl DELETE connection from epoll_wait
+			// close(fd);
+			// delete from _connections map()
+	}
 }
 
 std::vector<VirtualServer>&	Webserv::getServers(void)
@@ -94,7 +151,12 @@ std::vector<VirtualServer>&	Webserv::getServers(void)
 	return (_servers);
 }
 
-VirtualServer&	Webserv::getValidServer(int idx)
+VirtualServer&	Webserv::getServer(int idx)
 {
 	return (_servers.at(idx));
+}
+
+void	Webserv::listenHandler(void)
+{
+	std::cout << "COUCOU";
 }

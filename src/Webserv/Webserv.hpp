@@ -5,31 +5,39 @@
 #include <fstream>
 
 #include "VirtualServer.hpp"
+#include "Connection.hpp"
 
 const std::string defaultConfigPath("./data/webserv.nginx.conf");
 
 class Webserv
 {
 	private:
-		std::vector<VirtualServer> _servers;
+		int	_epoll_fd;
+		std::vector<VirtualServer>	_servers;
+		std::map<int, Connection >	_connections;
 		std::string		_configPath;
 		std::ifstream	_configFile;
 
 		void	_openConfig(); 
 		void	_parseConfig();
 
+		Webserv(void);
 
 	public:
-		Webserv(void);
 		Webserv(char *configPath);
 		Webserv(const Webserv& src);
 		Webserv& operator=(const Webserv& rhs);
 		~Webserv();
 
 		std::vector<VirtualServer>&	getServers(void);
-		VirtualServer&	getValidServer(int idx);
+		VirtualServer&				getServer (int idx);
+
 		void	readConfig();
 		void	initWebServer();
+		void	run();
+
+		void	listenHandler(void);
+
 };
 
 #endif // WEBSERV_HPP

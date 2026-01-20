@@ -35,5 +35,4 @@ DirectiveSpecs&	DirectiveSpecs::operator=( const DirectiveSpecs& rhs )
 
 DirectiveSpecs::~DirectiveSpecs( void )
 {
-	std::cout << "DirectiveSpecs Object Destroyed" << std::endl;
 }
