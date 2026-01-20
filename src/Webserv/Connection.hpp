@@ -34,7 +34,8 @@ class Connection
 	public:
 		int		fd;
 		std::string s;
-		void	(Webserv::*handler)(void);
+		// bool	(Connection::*handler)(void);
+		bool	(Webserv::*handler)(Connection & conn);
 		// struct sockaddr_in	clientAddr;
 		// int					respOffset;
 		// bool				connClosed;
@@ -46,9 +47,11 @@ class Connection
 		// VirtualServer		virtual_server;
 
 
+		// bool	listenHandler(void);
 
 		Connection	();
-		Connection	(int fd, void (Webserv::*f)());
+		Connection	(int fd, bool (Webserv::*f)(Connection & conn));
+		// Connection	(int fd, bool (Connection::*f)());
 		Connection	( const Connection& src );
 		Connection&	operator= ( const Connection& rhs );
 		~Connection	( void );

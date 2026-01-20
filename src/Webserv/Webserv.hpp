@@ -36,8 +36,8 @@ class Webserv
 		void	initWebServer();
 		void	run();
 
-		void	listenHandler(void);
-
+		bool	listenHandler(Connection & conn);
+		bool	clientHandler(Connection & conn);
 };
 
 #endif // WEBSERV_HPP

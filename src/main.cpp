@@ -29,40 +29,6 @@
 #include "RequestHandler.hpp"
 #include "Webserv.hpp"
 
-// int	setUpServer()
-// {
-// 	struct sockaddr_in server_addr;
-// 	int listenSock;
-// 	int ret;
-//
-// 	server_addr.sin_family = AF_INET;
-// 	server_addr.sin_addr.s_addr = INADDR_ANY;
-// 	server_addr.sin_port = htons(8080);
-//
-// 	//serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-// 	listenSock = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0); // atomique, a la place d'utiliser fcntl avec O_NONBLOCK
-// 	if (listenSock < 0) {
-// 		perror("ERROR! serverSocket: ");
-// 		return (-1);
-// 	}
-//
-// 	// Pouvoir retry sans erreur avant 60s (reutiliser 8080):
-// 	int	enable = 1;
-// 	if	(setsockopt(listenSock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0) {
-// 		perror("ERROR! setsockopt: ");
-// 		return -1;
-// 	}
-//
-// 	ret = bind(listenSock, (struct sockaddr *) &server_addr, sizeof(server_addr));
-// 	if (ret < 0)
-// 		perror("ERROR! bind: ");
-//
-// 	ret = listen(listenSock, SOMAXCONN);
-// 	if (ret < 0)
-// 		perror("ERROR! listen: ");
-//
-// 	return (listenSock);
-// }
 
 // Connection*	setUpServer(int epollFd, int listenSocket)
 // {
@@ -78,9 +44,9 @@
 //
 // 	fcntl(res->clientFd, F_SETFL, O_NONBLOCK);
 //
-// 	ev.events = EPOLLIN | EPOLLRDHUP;
-// 	ev.data.fd = res->clientFd;
-// 	epoll_ctl(epollFd, EPOLL_CTL_ADD, res->clientFd, &ev);
+	// ev.events = EPOLLIN | EPOLLRDHUP;
+	// ev.data.fd = res->clientFd;
+	// epoll_ctl(epollFd, EPOLL_CTL_ADD, res->clientFd, &ev);
 //
 // 	return (res);
 // }
@@ -210,15 +176,11 @@ int	main(int ac, char **av)
 		return (1);
 	}
 
-	// ev_hints.events = EPOLLIN;
-	// ev_hints.data.fd = listenSocket;
-	// epoll_ctl(epollFd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
 	Webserv	webserv(av[1]);
 	try {
 		webserv.readConfig();
 		webserv.initWebServer();
-		// main_loop(webserv, epollFd, listenSocket);
 		// webserv.run();
 	}
 	catch (std::exception &e) {

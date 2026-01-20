@@ -8,7 +8,7 @@ Connection::Connection()
 {
 }
 
-Connection::Connection(int fd, void (Webserv::*f)())
+Connection::Connection(int fd, bool (Webserv::*f)(Connection & conn))
 	: fd(fd)
 	, handler(f)
 {

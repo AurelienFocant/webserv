@@ -332,27 +332,27 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 }
 
 /*Getter*/
-t_method		getMethod() const {
+t_method		Request::getMethod() const {
 	return(_method);
 }
 
-std::string		getRequestUri() const {
+std::string		Request::getRequestUri() const {
 	return(_request_uri);
 }
 
-std::string		getHttpVersion() const {
+std::string		Request::getHttpVersion() const {
 	return(_http_version);
 }
 
-std::string	Request::getBody() const {
+std::string	Request::Request::getBody() const {
 	return (_body);
 }
 
-bool			getCompleted() const {
+bool			Request::getCompleted() const {
 	return(_complete);
 }
 
-t_HttpCode		getStatusCode() const {
+t_HttpCode		Request::getStatusCode() const {
 	return(_status_code);
 }
 
