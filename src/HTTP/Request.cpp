@@ -332,10 +332,31 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 }
 
 /*Getter*/
+t_method		getMethod() const {
+	return(_method);
+}
+
+std::string		getRequestUri() const {
+	return(_request_uri);
+}
+
+std::string		getHttpVersion() const {
+	return(_http_version);
+}
+
 std::string	Request::getBody() const {
 	return (_body);
 }
-	
+
+bool			getCompleted() const {
+	return(_complete);
+}
+
+t_HttpCode		getStatusCode() const {
+	return(_status_code);
+}
+
+/*Setters*/
 bool	Request::setMethod() {
 	if (_progress == PARSER_ERROR)
 		return (false);
@@ -389,15 +410,15 @@ bool	Request::setHttpVersion() {
 }
 
 /*
-t_method	Request::idMethod(std::string& method) {
-	if (method.find("GET") == 0)
-		return (GET);
-	else if (method.find("POST") == 0)
-		return (POST);
-	else
-		return (UNKNOWN);
-}
-*/
+   t_method	Request::idMethod(std::string& method) {
+   if (method.find("GET") == 0)
+   return (GET);
+   else if (method.find("POST") == 0)
+   return (POST);
+   else
+   return (UNKNOWN);
+   }
+ */
 
 bool	Request::addInput(std::string input) {
 	HTTPTokenizer::addInput(input);

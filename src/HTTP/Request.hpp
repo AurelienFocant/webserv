@@ -33,12 +33,12 @@ class	Request	: private HTTPTokenizer {
 		bool			addInput(std::string input) ;
 
 	/*Setters - Getters*/
-		t_method		getMethod() const { return(_method);}
-		std::string		getRequestUri() const { return(_request_uri);}
-		std::string		getHttpVersion() const { return(_http_version);}
+		t_method		getMethod() const ;
+		std::string		getRequestUri() const ;
+		std::string		getHttpVersion() const ;
 		std::string		getBody() const ;
-		bool			getCompleted() const { return(_complete);}
-		t_HttpCode		getStatusCode() const { return(_status_code);}
+		bool			getCompleted() const ;
+		t_HttpCode		getStatusCode() const ;
 
 		const std::multimap<std::string, std::string>&	getHeadersValue() const {return (_headers);}
 
