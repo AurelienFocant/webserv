@@ -285,4 +285,3 @@ std::ostream& operator<<(std::ostream& os, const Response& response)
 		_status_code = INTERNAL_SERVER_ERROR;
 		return;
 	} */
->>>>>>> aurore

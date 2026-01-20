@@ -25,7 +25,7 @@ class ConfigBuilder
 		std::vector<VirtualServer>	_servers;
 
 		void	_initDirectiveSpecs(void);
-		std::map<std::string, StementSpecs>	_direcSpecs;
+		std::map<std::string, DirectiveSpecs>	_direcSpecs;
 		void	_validateStatement(ConfigNode const& node);
 
 		typedef void (ConfigBuilder::*DirectiveHandler)(const DirectiveNode &);

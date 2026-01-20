@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 
 #define MAX_EVENTS	1024
-#define BUFFER_SIZE	1024
 
 Webserv::Webserv( void )
 	: _configPath(defaultConfigPath)

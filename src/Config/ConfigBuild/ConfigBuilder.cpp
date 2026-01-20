@@ -25,7 +25,8 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 // Visit BLOCK
 void ConfigBuilder::visit(const BlockNode& node)
 {
-	_validateStatement(node);
+	// if (node.name != "ast_root")
+	// 	_validateStatement(node);
 
     const std::string& name = node.name;
 	if (name == "server") {

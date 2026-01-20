@@ -2,28 +2,28 @@
 
 #include <iostream>
 
-StementSpecs::StementSpecs( void )
+DirectiveSpecs::DirectiveSpecs( void )
 	: allowedCtxts(0)
 	, min_args(0)
 	, max_args(0)
 {
 }
 
-StementSpecs::StementSpecs( const StementSpecs& src )
+DirectiveSpecs::DirectiveSpecs( const DirectiveSpecs& src )
 	: allowedCtxts(src.allowedCtxts)
 	, min_args(src.min_args)
 	, max_args(src.max_args)
 {
 }
 
-StementSpecs::StementSpecs	(int ctxt, int min, int max)
+DirectiveSpecs::DirectiveSpecs	(int ctxt, int min, int max)
 	: allowedCtxts(ctxt)
 	, min_args(min)
 	, max_args(max)
 {
 }
 
-StementSpecs&	StementSpecs::operator=( const StementSpecs& rhs )
+DirectiveSpecs&	DirectiveSpecs::operator=( const DirectiveSpecs& rhs )
 {
 	if (this != &rhs) {
 		allowedCtxts = rhs.allowedCtxts;
@@ -33,6 +33,6 @@ StementSpecs&	StementSpecs::operator=( const StementSpecs& rhs )
 	return (*this);
 }
 
-StementSpecs::~StementSpecs( void )
+DirectiveSpecs::~DirectiveSpecs( void )
 {
 }
