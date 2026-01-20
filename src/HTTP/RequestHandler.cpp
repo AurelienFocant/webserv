@@ -190,28 +190,14 @@ void	RequestHandler::processGetMethod()
 		return;
 
 	int target_size = fileSize(_resolved_path);
-	
+
+	/* Init Response */
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
 	_response.setHeader("Content-Type", getContentType(_resolved_path));
-	_response.setHeader("Content-Lenght", intToString(target_size));
+	_response.setHeader("Content-Length", intToString(target_size));
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
-
-/* 	
-	// RESPONSABILITE de Connection -> Send Response au fur et a mesure
-
-	char buffer[8192]; //8KB optimal?
-	ssize_t bytesRead;
-
-	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
-		response_body.append(buffer, bytesRead);
-	close(fd);
-	if (bytesRead < 0)
-	{
-		_status_code = INTERNAL_SERVER_ERROR;
-		return;
-	} */
 	_response.setStatusCode(OK);
 }
 

@@ -144,6 +144,8 @@ void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 						std::cout << "[DEBUG] Status Code: " << currConn->request.getStatusCode() << std::endl;
 						RequestHandler requestHandler(currConn);
 						requestHandler.handleRequest();
+						currConn->response.formatResponse();
+
 						std::cout << currConn->response << std::endl;
 						if (currConn->response.getStatusCode() != OK)
 						{
@@ -157,13 +159,12 @@ void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 						ev.events = EPOLLOUT | EPOLLRDHUP;
 						ev.data.fd = currConn->clientFd;
 						epoll_ctl(epollFd, EPOLL_CTL_MOD, currConn->clientFd, &ev);
-						//currConn->response = currConn->build_response();
 						currConn->request.cleanRequest();
-						currConn->sendResponse(epollFd);
 					}
 
 					// If the socket is ready for writing
 					if (ready_events[i].events & EPOLLOUT) {
+						//currConn->response.formatResponse();
 						currConn->sendResponse(epollFd);
 
 						// Close Connection if needed

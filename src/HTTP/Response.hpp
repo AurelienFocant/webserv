@@ -9,6 +9,7 @@
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
+#include <cerrno>
 
 #define BUFFER_SIZE 8192
 
@@ -36,9 +37,12 @@ class	Response
 	/*Publics Methods*/
 
 	void				formatResponse();
-	std::string			buildHttpResponse();
-	//void				eraseBytesSent();
-	void				resetBuffer();
+	
+	const char*			getDataToSend(size_t& size);
+	void				updateBytesSend(size_t bytes_sent);
+	bool				readBodyChunk();
+	bool				isDone() const;
+
 	void				cleanResponse();
 
 
@@ -69,22 +73,22 @@ class	Response
 	std::string							_http_version;
 
 	std::map<std::string, std::string>	_headers;
-	//std::string						_headers;
 	size_t								_headers_size;
 	size_t								_header_sent;
 	
-	int				_fd;
-	size_t			_body_size;
-	size_t			_body_sent;
-	std::string		_body_content;
+	int									_fd;
+	std::string							_body_content;
+	size_t								_body_size;
+	size_t								_body_sent;
 
-	char			_buffer[BUFFER_SIZE]; // sert pour header et body | or std::vector<char> ? for CGI?
-	size_t			_buffer_size;
-	size_t			_buffer_sent;
+	char								_buffer[BUFFER_SIZE]; // sert pour header et body | or std::vector<char> ? for CGI?
+	size_t								_buffer_size;
+	size_t								_buffer_sent;
 
-	/*Private Methods*/
+	/* Private Methods */
 
-
+	std::string			buildHttpResponse();
+	void				resetBuffer();
 
 };
 

@@ -49,6 +49,48 @@ bool	Connection::receiveRequest()
 
 void	Connection::sendResponse(int epollFd)
 {
+	size_t data_size = 0; 
+	const char *data = response.getDataToSend(data_size);
+
+	if (!data || !data_size)
+	{
+		if (response.isDone())
+		{
+			if (response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
+			{
+				connClosed = true;
+				response.cleanResponse();
+				return;
+			}
+
+			// full response sent --> stop watching EPOLLOUT
+			struct epoll_event	ev;
+			ev.events = EPOLLIN | EPOLLRDHUP; // keep listening for reads
+			ev.data.fd = clientFd;
+
+			if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) < 0) {
+				perror("epoll_ctl MOD");
+				connClosed = true;
+			}
+		}
+		else
+		{
+			std::cout << "[Error] No data to send but response not done" << std::endl;
+			connClosed = true;
+		}
+		return ;
+	}
+
+	ssize_t bytesSent = send(clientFd, data, data_size, MSG_NOSIGNAL);
+
+	if (bytesSent > 0)
+		response.updateBytesSend(bytesSent);
+	else if (bytesSent < 0)
+		return;
+};
+
+/* void	Connection::sendResponse(int epollFd)
+{
 	ssize_t bytesSent = send(clientFd,
 			response_str.c_str() + respOffset,
 			response_str.length() - respOffset,
@@ -78,7 +120,7 @@ void	Connection::sendResponse(int epollFd)
 			connClosed = true;
 		}
 	}
-};
+}; */
 
 std::string	Connection::build_response(void)
 {
