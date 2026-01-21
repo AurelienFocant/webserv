@@ -73,7 +73,7 @@ class	Response
 	std::string							_http_version;
 
 	std::map<std::string, std::string>	_headers;
-	size_t								_headers_size;
+	//size_t								_headers_size;
 	size_t								_header_sent;
 	
 	int									_body_fd;
