@@ -4,13 +4,15 @@
 
 Connection::Connection()
 	: _fd(-1)
+	, _epoll_fd(-1) // a surveiller avec obj map
 	, handler(NULL)
 	, connClosed(false)
 {
 }
 
-Connection::Connection(int fd, bool (Webserv::*f)(Connection & conn))
+Connection::Connection(int fd, const int& epoll_fd, bool (Webserv::*f)(Connection & conn))
 	: _fd(fd)
+	, _epoll_fd(epoll_fd)
 	, handler(f)
 	, connClosed(false)
 {
@@ -18,6 +20,7 @@ Connection::Connection(int fd, bool (Webserv::*f)(Connection & conn))
 
 Connection::Connection( const Connection& src )
 	: _fd(src._fd)
+	, _epoll_fd(src._epoll_fd)
 	, handler(src.handler)
 	, connClosed(src.connClosed)
 {
@@ -43,7 +46,7 @@ void	Connection::setEvent(uint32_t event)
 	_event = event;
 }
 
-void	Connection::sendResponse(int epollFd)
+void	Connection::sendResponse()
 {
 	size_t data_size = 0; 
 	const char *data = response.getDataToSend(data_size);
@@ -64,7 +67,7 @@ void	Connection::sendResponse(int epollFd)
 			ev.events = EPOLLIN | EPOLLRDHUP; // keep listening for reads
 			ev.data.fd = _fd;
 
-			if (epoll_ctl(epollFd, EPOLL_CTL_MOD, _fd, &ev) < 0) {
+			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _fd, &ev) < 0) {
 				perror("epoll_ctl MOD");
 				connClosed = true;
 			}

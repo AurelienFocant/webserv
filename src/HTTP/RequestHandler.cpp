@@ -3,11 +3,11 @@
 
 /* ////////////REQUEST HANDLER////////////////// */
 
-RequestHandler::RequestHandler(Connection* currConn) 
-	: _request(currConn->request)
-	, _response(currConn->response)
-	, _server(currConn->virtual_server)
-	, _root(currConn->virtual_server.getRoot())
+RequestHandler::RequestHandler(Connection& currConn) 
+	: _request(currConn.request)
+	, _response(currConn.response)
+	, _server(currConn.virtual_server)
+	, _root(currConn.virtual_server.())
 	, _request_path("")
 	, _resolved_path("")
 	, _matched_location(NULL)

@@ -36,7 +36,7 @@ void	Response::formatResponse()
 
 		_status_code = INTERNAL_SERVER_ERROR;
 
-		std::cerr << "[Error] Response header size exceed buffer size " << formatted.size() << " bytes" << std::endl;
+		std::cerr << "[Error] Response.cpp::39 Response header size exceed buffer size " << formatted.size() << " bytes" << std::endl;
 		formatted = "HTTP/1.1 500 Internal Server Error\r\n"
 					"Content-Length: 0\r\n"  //Content-length = error file size
 					"Connection: close\r\n"
