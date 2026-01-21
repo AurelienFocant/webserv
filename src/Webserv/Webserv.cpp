@@ -1,6 +1,8 @@
 #include "Webserv.hpp"
 #include "ConfigParser.hpp"
 #include "ConfigBuilder.hpp"
+#include "RequestHandler.hpp"
+
 
 #include <iostream>
 #include <fstream>
@@ -109,7 +111,7 @@ void	Webserv::initWebServer()
 		// ?? listen options ?
 
 
-		_connections[listenSocket] = Connection(listenSocket, &Webserv::listenHandler);
+		_connections[listenSocket] = Connection(listenSocket, _epoll_fd, &Webserv::listenHandler);
 		// Connection &conn = _connections[listenSocket];
 		// (this->*(conn.handler))(conn);
 
@@ -184,7 +186,7 @@ bool	Webserv::listenHandler(Connection & conn)
 		return (false);
 	}
 
-	_connections[clientSocket] = Connection(clientSocket, &Webserv::clientHandler);
+	_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
 	return (true);
 }
 
@@ -240,9 +242,13 @@ bool	Webserv::clientHandler(Connection & conn)
 
 	else if (conn.getEvent() & EPOLLOUT) {
 		conn.virtual_server = _findCorrectServer(conn.request);
-		
+	
+		RequestHandler	reqHandl(conn);
+		reqHandl.handleRequest();
+		conn.response.formatResponse();
+		conn.sendResponse();
 
-		// RequestHandler	reqHandl(conn);
+
 		// conn.response = reqHandl.handleRequest();
 		// _sendResponse();
 	}

@@ -56,7 +56,7 @@ class RequestHandler
 	public:
 
 	/* Constructors / Destructors */
-	RequestHandler	(Connection* currConn); // en const ref ou pointeur?
+	RequestHandler	(Connection& currConn); // en const ref ou pointeur?
 	~RequestHandler	();
 
 	/* Getters */
