@@ -34,6 +34,7 @@ class Connection
 	private:
 		int			_fd;
 		uint32_t	_event;
+		const int	_epoll_fd;
 
 	public:
 		bool   		(Webserv::*handler)(Connection & conn);
@@ -41,7 +42,7 @@ class Connection
 		Request		request;
 		Response	response;
 
-		void	sendResponse(int epollFd);
+		void	sendResponse();
 
 		bool	connClosed;
 
@@ -55,7 +56,7 @@ class Connection
 		VirtualServer		virtual_server;
 
 		Connection	();
-		Connection	(int fd, bool (Webserv::*f)(Connection & conn));
+		Connection	(int fd, const int& epoll_fd, bool (Webserv::*f)(Connection & conn));
 		Connection	( const Connection& src );
 		Connection&	operator= ( const Connection& rhs );
 		~Connection	( void );
