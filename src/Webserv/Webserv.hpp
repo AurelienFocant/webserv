@@ -12,7 +12,6 @@ const std::string defaultConfigPath("./data/webserv.nginx.conf");
 class Webserv
 {
 	private:
-		std::string		_server_root;
 		int	_epoll_fd;
 		std::vector<VirtualServer>	_servers;
 		std::map<int, Connection >	_connections;
@@ -43,7 +42,6 @@ class Webserv
 		bool	clientHandler(Connection & conn);
 
 		//quick fix added for getting server root location -> deducted from the executable path
-		void	extractServerRoot(char* full_path);
 };
 
 #endif // WEBSERV_HPP

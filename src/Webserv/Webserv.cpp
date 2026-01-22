@@ -265,11 +265,3 @@ bool	Webserv::clientHandler(Connection & conn)
 
 	return (true);
 }
-
-void	Webserv::extractServerRoot(char* full_path) {
-	std::string	root(full_path);
-	size_t	pos = root.find_last_of("/");
-	root.erase(pos);
-	_server_root = root;
-	return ;
-}
