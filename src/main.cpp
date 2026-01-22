@@ -114,6 +114,7 @@ int	main(int ac, char **av)
 	try {
 		webserv.readConfig();
 		webserv.initWebServer();
+		webserv.extractServerRoot(av[0]);
 		webserv.run();
 	}
 	catch (std::exception &e) {

@@ -229,7 +229,7 @@ bool	Request::parseHeader() {
 	if (_list_it == _token_list.end() || _list_it->tkType == EOC)
 		return (true);
 	int	nbr_eol = 0;
-	while (_progress != PARSER_ERROR && _list_it->tkType != EOC && nbr_eol != 2) {
+	while (_progress != PARSER_ERROR && nbr_eol != 2 && _list_it->tkType != EOC) {
 		switch (_list_it->tkType) {
 			case (WORD):
 				nbr_eol = 0;

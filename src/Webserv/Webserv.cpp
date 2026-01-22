@@ -72,7 +72,10 @@ void	Webserv::_parseConfig(void)
 	// both tokenizer and parser are constructed with what they need,
 	// but builder takes it as argument to main fct ?
 	ConfigBuilder	builder;
+
+	//previous
 	_servers = builder.build(parser.getRoot());
+
 }
 
 void	Webserv::readConfig()
@@ -186,7 +189,9 @@ bool	Webserv::listenHandler(Connection & conn)
 		return (false);
 	}
 
-	_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	Connection	new_connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	_connections.insert(std::make_pair(clientSocket, new_connection));
 	return (true);
 }
 
@@ -229,8 +234,10 @@ bool	Webserv::clientHandler(Connection & conn)
 
 		// RequestParser request_parser(request_str);
 		// conn.request = request_parser.parseRequest();
-		conn.request.addInput(request_str);
-		conn.request.parseRequest();
+		if (request_str.size() != 0) {
+			conn.request.addInput(request_str);
+			conn.request.parseRequest();
+		}
 
 		if (conn.request.getCompleted()) {
 			struct epoll_event	ev_hints;
@@ -247,6 +254,7 @@ bool	Webserv::clientHandler(Connection & conn)
 		reqHandl.handleRequest();
 		conn.response.formatResponse();
 		conn.sendResponse();
+		conn.request.cleanRequest();
 
 
 		// conn.response = reqHandl.handleRequest();
@@ -256,4 +264,12 @@ bool	Webserv::clientHandler(Connection & conn)
 
 
 	return (true);
+}
+
+void	Webserv::extractServerRoot(char* full_path) {
+	std::string	root(full_path);
+	size_t	pos = root.find_last_of("/");
+	root.erase(pos);
+	_server_root = root;
+	return ;
 }
