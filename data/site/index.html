@@ -2,81 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
-
-    <!-- Basic CSS -->
-    <style>
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f6f8;
-            color: #333;
-        }
-
-        header {
-            background-color: #1e90ff;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-        }
-
-        main {
-            padding: 2rem;
-            max-width: 800px;
-            margin: auto;
-        }
-
-        footer {
-            text-align: center;
-            padding: 1rem;
-            background-color: #eee;
-            margin-top: 2rem;
-            font-size: 0.9rem;
-        }
-
-        button {
-            padding: 0.6rem 1rem;
-            border: none;
-            background-color: #1e90ff;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        button:hover {
-            background-color: #187bcd;
-        }
-    </style>
+    <title>Webserv Test</title>
 </head>
 <body>
 
-    <header>
-        <h1>Welcome to My Website</h1>
-        <p>This is a simple HTML index page</p>
-    </header>
+<h1>42 Webserv Test Page</h1>
 
-    <main>
-        <h2>Hello 👋</h2>
-        <p>
-            This is your starting point. You can add content, images,
-            links, or connect this page to CSS and JavaScript files.
-        </p>
+<hr>
 
-        <button onclick="sayHello()">Click Me</button>
-    </main>
+<!-- LOGIN FORM -->
+<h2>Login (POST)</h2>
+<form method="POST" action="/login">
+    <label>
+        Username:
+        <input type="text" name="username">
+    </label><br><br>
 
-    <footer>
-        © 2026 Your Name
-    </footer>
+    <label>
+        Password:
+        <input type="password" name="password">
+    </label><br><br>
 
-    <!-- JavaScript -->
-    <script>
-        function sayHello() {
-            alert("Hello! Your index.html is working.");
-        }
-    </script>
+    <input type="submit" value="Login">
+</form>
+
+<hr>
+
+<!-- COMMENT FORM -->
+<h2>Post a Comment (POST)</h2>
+<form method="POST" action="/comment">
+    <textarea name="comment" rows="5" cols="40"></textarea><br><br>
+    <input type="submit" value="Send Comment">
+</form>
+
+<hr>
+
+<!-- FILE UPLOAD TEST -->
+<h2>File Upload (multipart/form-data)</h2>
+<form method="POST" action="/upload" enctype="multipart/form-data">
+    <input type="file" name="file"><br><br>
+    <input type="submit" value="Upload">
+</form>
+
+<hr>
+
+<!-- DELETE METHOD TEST -->
+<h2>DELETE request (manual test)</h2>
+<p>Use curl:</p>
+<pre>
+curl -X DELETE http://localhost:8080/resource
+</pre>
+
+<hr>
+
+<!-- REDIRECTION TEST -->
+<h2>Redirection</h2>
+<a href="/redirect">Test redirection (301 / 302)</a>
+
+<hr>
+
+<!-- ERROR TEST -->
+<h2>Error pages</h2>
+<ul>
+    <li><a href="/does_not_exist">404 Not Found</a></li>
+    <li><a href="/forbidden">403 Forbidden</a></li>
+</ul>
 
 </body>
 </html>
