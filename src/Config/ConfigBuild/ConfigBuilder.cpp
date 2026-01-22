@@ -5,6 +5,7 @@
 #include "ConfigBuilder.hpp"
 #include "DirectiveSpecs.hpp"
 
+// Entrypoint
 std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 {
     const BlockNode* block =
@@ -19,68 +20,43 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
     visit(*block);
 	_popContext();
 
-    return _servers;
+    return (_servers);
 }
 
-// Visit BLOCK
+
+// Visit BLOCK or Directive
 void ConfigBuilder::visit(const BlockNode& node)
 {
-	// if (node.name != "ast_root")
-	// 	_validateStatement(node);
+	_validateStatement(node);
 
     const std::string& name = node.name;
-	if (name == "server") {
+	if (name == "server")
 		_pushContext(SERVER);
-	}
-	else if (name == "location") {
+	else if (name == "location")
 		_pushContext(LOCATION);
-		_getCurrentCtxt().setLocationName(node.args[0]);
-	}
-	else if (_contextStack.size() != 1) {
+	else if (name != "ast_root")
 		_error(node.line, std::string("Unknown block: ") + name);
-	}
+
 
 	_has_root = 0;
 	for (size_t i = 0; i < node.children.size(); ++i)
 		_visitChild((node.children[i]));
 
-	// manage finished block
+
 	if (name == "server") {
-		ConfigContext& ctx = _getCurrentCtxt();
-
-		// shouldn't port be set to 80 by default ?
-		// I think nginx does that but still complains if you dont put any listen
-		// to be tested
-		if (ctx.getPort() == -1)
-			_error(node.line, "server missing listen directive");
-
-		VirtualServer server;
-		// should make a constructor taking a context as arg ??
-		server.setPort(ctx.getPort());
-		server.setRoot(ctx.getRoot());
-		server.setServName(ctx.getServerName());
-		server.setLocations(ctx.getLocations());
-		server.setIndexes(ctx.getIndexes());
-		server.setAutoindex(ctx.getAutoindex());
-
-		_servers.push_back(server);
+		VirtualServer server(_getCurrentCtxt());
 		_popContext();
+		_addServer(server);
 	}
 	else if (name == "location") {
-		ConfigContext &locCtx = _getCurrentCtxt();
-
-		Location loc;
-		loc.setRoot(locCtx.getRoot());
-		loc.setIndex(locCtx.getIndexes());
-		loc.setAutoIndex(locCtx.getAutoindex());
-		// loc.setAlias(locCtx.getAlias());
-
+		Location loc(_getCurrentCtxt());
+		loc.setName(node.args[0]);
+		// loc._isCGI();
 		_popContext();
-		_getCurrentCtxt().addLocation(locCtx.getLocationName(), loc);
+		_getCurrentCtxt().addLocation(loc.getName(), loc);
 	}
 }
 
-// Visit DIRECTIVE
 void ConfigBuilder::visit(const DirectiveNode& node)
 {
 	_validateStatement(node);
@@ -100,6 +76,8 @@ void	ConfigBuilder::_visitChild(ConfigNode const* child)
 			_error(child->line, "Unknown node type in config tree");
 }
 
+
+// Validation
 void	ConfigBuilder::_validateStatement(ConfigNode const& node)
 {
 	std::map<std::string, DirectiveSpecs>::iterator it = _direcSpecs.find(node.name);
@@ -115,12 +93,11 @@ void	ConfigBuilder::_validateStatement(ConfigNode const& node)
 
 	if (node.args.size() > (size_t) spec.max_args)
 		_error(node.line, std::string("Directive ") + node.name + std::string(" has too many arguments"));
-
-
 }
 
 void ConfigBuilder::_initDirectiveSpecs()
 {
+	_direcSpecs["ast_root"]		= DirectiveSpecs(MAIN, 0, 0);
 	_direcSpecs["server"]		= DirectiveSpecs(MAIN, 0, 0);
 	_direcSpecs["location"]		= DirectiveSpecs(SERVER, 1, 1);
 
@@ -131,6 +108,8 @@ void ConfigBuilder::_initDirectiveSpecs()
 	// _direcSpecs["autoindex"]		= DirectiveSpecs(SERVER|LOCATION, 0, 0);
 }
 
+
+// Handlers
 void ConfigBuilder::_initHandlers()
 {
 	_handlers["listen"]		= &ConfigBuilder::_handleListen;
@@ -173,6 +152,8 @@ void ConfigBuilder::_handleServerName(const DirectiveNode& d)
 	_getCurrentCtxt().setServerName(d.args[0]);
 }
 
+
+// Helpers
 ConfigContext& ConfigBuilder::_getCurrentCtxt()
 {
 	return _contextStack.top();
@@ -185,6 +166,11 @@ void ConfigBuilder::_pushContext(ContextType type)
 		newContext.inheritFrom(_getCurrentCtxt());
 	}
 	_contextStack.push(newContext);
+}
+
+void ConfigBuilder::_addServer(VirtualServer const& server)
+{
+		_servers.push_back(server);
 }
 
 void ConfigBuilder::_popContext()
@@ -201,6 +187,8 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 	throw std::runtime_error(oss.str());
 }
 
+
+// Constructors
 ConfigBuilder::ConfigBuilder()
 	: _has_root(0)
 {

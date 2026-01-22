@@ -4,7 +4,7 @@
 #include "VirtualServer.hpp"
 
 enum ContextType {
-    MAIN,
+    MAIN = 1,
     SERVER,
     LOCATION
 };
