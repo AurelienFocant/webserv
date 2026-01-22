@@ -40,6 +40,8 @@ class Webserv
 
 		bool	listenHandler(Connection & conn);
 		bool	clientHandler(Connection & conn);
+
+		//quick fix added for getting server root location -> deducted from the executable path
 };
 
 #endif // WEBSERV_HPP
