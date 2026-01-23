@@ -13,9 +13,10 @@ class HtmlBuilder
 		HtmlBuilder(const std::string& text);
 		HtmlBuilder(const HtmlBuilder& other);
 		HtmlBuilder& operator=(const HtmlBuilder& other);
+		HtmlBuilder& operator+(const HtmlBuilder& other);
 		~HtmlBuilder();
 
-		HtmlBuilder& insertHtmlTag(const std::string& tag);
+		HtmlBuilder& Tag(const std::string& tag);
 
 		const std::string& str() const;
 };

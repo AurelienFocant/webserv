@@ -22,13 +22,20 @@ HtmlBuilder& HtmlBuilder::operator=(const HtmlBuilder& other)
 	return *this;
 }
 
+HtmlBuilder& HtmlBuilder::operator+(const HtmlBuilder& other)
+{
+	if (this != &other)
+		_html = _html + other._html;
+	return *this;
+}
+
 HtmlBuilder::~HtmlBuilder()
 {
 }
 
-HtmlBuilder& HtmlBuilder::insertHtmlTag(const std::string& tag)
+HtmlBuilder& HtmlBuilder::Tag(const std::string& tag)
 {
-	_html = "<" + tag + ">" + _html + "</" + tag + ">";
+	_html = "<" + tag + ">\n" + _html + "</" + tag + ">\n";
 	return *this;
 }
 
