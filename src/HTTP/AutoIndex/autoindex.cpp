@@ -1,0 +1,98 @@
+#include <stdexcept>
+#include <vector>
+#include <string>
+
+#include <dirent.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <algorithm>
+
+#include "HtmlBuilder.hpp"
+
+bool isDir(const std::string& path);
+
+bool compareFilenames(const std::string& a, const std::string& b)
+{
+	bool aIsDir = isDir(a);
+	bool bIsDir = isDir(b);
+	if (aIsDir && !bIsDir) return true;
+	if (!aIsDir && bIsDir) return false;
+	return a < b;
+}
+
+std::vector<std::string>	resolveLocalDirFilenames(std::string const& path)
+{
+	DIR						*dirp;
+	struct dirent			*dirent;
+	std::vector<std::string> filenames;
+
+	dirp = opendir(path.c_str());
+	if (!dirp)
+		throw (std::runtime_error("Couldn't open dir"));	// should probably return 500 internal error
+	// !!!!!!!!!!!!!!!!!!!!!!!! //
+
+
+	filenames.push_back("../");
+	while (((dirent) = readdir(dirp))) {
+		std::string file(dirent->d_name);
+		if (file.at(0) != '.') {
+			if (isDir(path + "/" + file))
+				file += '/';
+			filenames.push_back(file);
+		}
+	}
+
+	closedir(dirp);
+
+
+	std::sort(filenames.begin(), filenames.end(), compareFilenames);
+	return (filenames);
+}
+
+std::string	buildHtmlBody(std::vector<std::string> & filenames)
+{
+	std::string body;
+
+	if (!filenames.empty()) {
+		std::vector<std::string>::iterator it;
+
+		for (it = filenames.begin(); it != filenames.end(); ++it) {
+			*it =
+				"<a href=\"" + *it + "\">"
+				+ *it + "</a>";
+		}
+		for (it = filenames.begin(); it != filenames.end(); ++it) {
+			body += *it + '\n';
+		}
+	}
+	return (body);
+}
+
+std::string	addAutoindexHtml(std::string const& path, std::string const& body)
+{
+	HtmlBuilder html(body);
+	HtmlBuilder	title("Index of " + path + '\n');
+	HtmlBuilder header = title;
+	title.Tag("title").Tag("head");
+	header.Tag("h1");
+
+	html.Tag("pre")
+		.Tag("hr");
+
+	html = header + html;
+
+	html.Tag("body");
+
+	html = title + html;
+	html.Tag("html");
+	return (html.str());
+}
+
+std::string _generateAutoIndex(std::string const& path)
+{
+	std::vector<std::string>	filenames	= resolveLocalDirFilenames(path.c_str());
+	std::string					body		= buildHtmlBody(filenames);
+	return (addAutoindexHtml(path, body));
+}

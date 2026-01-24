@@ -10,7 +10,7 @@ ConfigParser::ConfigParser(const std::vector<t_Token>& tokens)
 
 ConfigParser::~ConfigParser()
 {
-	delete (_astRoot);
+	delete (_ast_root);
 }
 
 t_Token ConfigParser::_peek() const
@@ -45,14 +45,14 @@ void ConfigParser::_expect(e_tokenType type)
 
 void ConfigParser::parseConfig()
 {
-	_astRoot = new BlockNode("root");
+	_ast_root = new BlockNode("ast_root");
 	while (!_atEnd())
-		_astRoot->children.push_back(_parseStatement());
+		_ast_root->children.push_back(_parseStatement());
 }
 
 BlockNode*	ConfigParser::getRoot(void)
 {
-	return (_astRoot);
+	return (_ast_root);
 }
 
 ConfigNode* ConfigParser::_parseStatement()

@@ -23,6 +23,7 @@ class ConfigBuilder
 
 	private:
 		std::vector<VirtualServer>	_servers;
+		void _addServer(VirtualServer const& server);
 
 		void	_initDirectiveSpecs(void);
 		std::map<std::string, DirectiveSpecs>	_direcSpecs;

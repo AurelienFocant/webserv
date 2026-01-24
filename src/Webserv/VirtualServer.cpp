@@ -1,4 +1,5 @@
 #include "VirtualServer.hpp"
+#include "ConfigContext.hpp"
 
 VirtualServer::VirtualServer( void )
 	: _port(80)
@@ -8,6 +9,15 @@ VirtualServer::VirtualServer( void )
 	, _locations()
 {
 	_indexes.push_back("index.html");
+}
+
+VirtualServer::VirtualServer(ConfigContext const& ctxt)
+	: _port(ctxt.getPort())
+	, _root(ctxt.getRoot())
+	, _server_name(ctxt.getServerName())
+	, _autoindex(ctxt.getAutoindex())
+	, _locations(ctxt.getLocations())
+{
 }
 
 VirtualServer::VirtualServer(const VirtualServer& src)
