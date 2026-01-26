@@ -6,10 +6,19 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <signal.h>
 
 #define MAX_EVENTS	1024
+
+int g_signum;
+
+static	void sigintHandler(int num)
+{
+	g_signum = num;
+}
 
 Webserv::Webserv( void )
 	: _configPath(defaultConfigPath)
@@ -126,19 +135,26 @@ void	Webserv::initWebServer()
 
 
 		// set up signals
+		signal(SIGINT, sigintHandler);
 	}
 }
 
 void	Webserv::run()
 {
+	// for (int i = 0; i < 20; i++) {
+	// 	std::cout << i << std::endl;
 	while (1) {
-		// check g_signum
+		if (g_signum == SIGINT)
+			return ;
 
 		struct epoll_event	ready_events[MAX_EVENTS];
 		int					event_count;
-		event_count = epoll_wait(_epoll_fd, ready_events, MAX_EVENTS, -1);
+		event_count = epoll_wait(_epoll_fd, ready_events, MAX_EVENTS, 200);
+		if (event_count < 0 && errno == EINTR)
+			return ;
 		if (event_count < 0)
-			break ;
+			throw (std::runtime_error("epoll failed"));
+
 
 		for (int i = 0; i < event_count; i++) {
 
