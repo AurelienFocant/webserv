@@ -1,4 +1,5 @@
 #include "RequestHandler.hpp"
+#include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 
 /* ////////////REQUEST HANDLER////////////////// */
@@ -198,7 +199,6 @@ void	RequestHandler::processGetMethod()
 	_response.setHeader("Content-Length", intToString(target_size));
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
-	_response.setStatusCode(OK);
 }
 
 /* INDEX/DIRECTORY HANDLING */
@@ -228,14 +228,26 @@ bool	RequestHandler::resolveIndex()
 
 bool	RequestHandler::hasAutoIndex()
 {
-	if (_matched_location)
+/* 	if (_matched_location)
 		return (_matched_location->getAutoIndex());
-	return _server.getAutoindex();
+	return _server.getAutoindex(); */
+	return true;
 }
 
 void	RequestHandler::generateAutoIndex()
 {
-	return;
+	std::string	html = ::generateAutoIndex(_resolved_path);
+
+	_response.setStatusCode(OK);
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setHeader("Content-Type", "text/html");
+	_response.setHeader("Content-Length", intToString(html.size()));
+	_response.setBodyContent(html);
+	_response.setBodySize(html.size());
+
+	std::cout << "[DEBUG] Autoindex size: " << html.size() << " bytes" << std::endl;
+	std::cout << "[DEBUG] Html generated: " << html << std::endl;
+
 }
 
 /* UTILS */

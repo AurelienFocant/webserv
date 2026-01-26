@@ -48,8 +48,10 @@ void	Connection::setEvent(uint32_t event)
 
 void	Connection::sendResponse()
 {
-	size_t data_size = 0; 
-	const char *data = response.getDataToSend(data_size);
+	const char *data;
+	size_t		data_size = 0;
+
+	data = response.getDataToSend(data_size);
 
 	if (!data || !data_size)
 	{

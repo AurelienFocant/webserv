@@ -32,6 +32,7 @@ class	Response
 	enum	bodyType {
 		STATIC,
 		DYNAMIC,
+		MEMORY
 	};
 
 	/*Publics Methods*/
@@ -61,7 +62,7 @@ class	Response
 	int					getBodySize() const;
 	std::string			getHttpVersion() const;
 	std::string			getHeader(const std::string& key) const;
-	//std::string			getBodyContent() const;
+	std::string			getBodyContent(size_t& size) const;
 
 	private:
 
@@ -77,7 +78,7 @@ class	Response
 	size_t								_header_sent;
 	
 	int									_body_fd;
-	std::string							_body_content;
+	std::string							_body_content; //autoindex
 	size_t								_body_size;
 	size_t								_body_sent;
 
