@@ -3,13 +3,40 @@
 #include <vector>
 
 ConfigContext::ConfigContext(void)
-    : _type(MAIN), _port(-1), _root(), _serverName(),  _locations() {}
+    : _type(MAIN)
+	, _port(-1)
+	, _root()
+	, _serverName()
+	, _locationName()
+	, _locations()
+	, _indexes()
+	, _autoindex(false)
+{
+}
 
 ConfigContext::ConfigContext(ContextType t)
-    : _type(t), _port(-1), _root(), _serverName(), _locations() {}
+    : _type(t)
+	, _port(-1)
+	, _root()
+	, _serverName()
+	, _locationName()
+	, _locations()
+	, _indexes()
+	, _autoindex(false)
+{
+}
 
 ConfigContext::ConfigContext(const ConfigContext &src)
-    : _type(src._type), _port(src._port), _root(src._root), _serverName(src._serverName), _locationName(src._locationName), _locations(src._locations) {}
+    : _type(src._type)
+	, _port(src._port)
+	, _root(src._root)
+	, _serverName(src._serverName)
+	, _locationName(src._locationName)
+	, _locations(src._locations)
+	, _indexes(src._indexes)
+	, _autoindex(src._autoindex)
+{
+}
 
 ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
 {
@@ -18,7 +45,10 @@ ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
         _port = rhs._port;
         _root = rhs._root;
         _serverName = rhs._serverName;
+		_locationName = rhs._locationName;
         _locations = rhs._locations;
+		_indexes = rhs._indexes;
+		_autoindex = rhs._autoindex;
     }
     return *this;
 }

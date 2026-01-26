@@ -36,6 +36,7 @@ class ConfigBuilder
 		void _handleRoot   		(const DirectiveNode& d);
 		void _handleServerName	(const DirectiveNode& d);
 		void _handleIndex		(const DirectiveNode& d);
+		void _handleAutoindex	(const DirectiveNode& d);
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&				_getCurrentCtxt(void);

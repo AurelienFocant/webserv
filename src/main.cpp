@@ -22,7 +22,6 @@
 
 #include "Webserv.hpp"
 
-
 // void	main_loop(Webserv & webserv, int epollFd, int listenSocket)
 // {
 // 	struct epoll_event			ready_events[MAX_EVENTS];

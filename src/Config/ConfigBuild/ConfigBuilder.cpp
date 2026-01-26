@@ -24,7 +24,7 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
 }
 
 
-// Visit BLOCK or Directive
+// Visit BLOCK or DIRECTIVE
 void ConfigBuilder::visit(const BlockNode& node)
 {
 	_validateStatement(node);
@@ -105,7 +105,7 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["root"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["server_name"]	= DirectiveSpecs(SERVER, 1, 1);
 	_direcSpecs["index"]		= DirectiveSpecs(SERVER|LOCATION, 1, 10);
-	// _direcSpecs["autoindex"]		= DirectiveSpecs(SERVER|LOCATION, 0, 0);
+	_direcSpecs["autoindex"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 }
 
 
@@ -116,7 +116,7 @@ void ConfigBuilder::_initHandlers()
 	_handlers["root"]		= &ConfigBuilder::_handleRoot;
 	_handlers["server_name"]= &ConfigBuilder::_handleServerName;
 	_handlers["index"]		= &ConfigBuilder::_handleIndex;
-	// _handlers["autoindex"]	= &ConfigBuilder::_handleAutoIndex;
+	_handlers["autoindex"]	= &ConfigBuilder::_handleAutoindex;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -124,6 +124,7 @@ void ConfigBuilder::_handleListen(const DirectiveNode& d)
 	std::stringstream ss(d.args[0]);
 	int port;
 	char c;
+
 	ss >> port;
 	if (ss.fail() || (ss >> c))
 		_error(d.line, "invalid port format");
@@ -152,8 +153,18 @@ void ConfigBuilder::_handleServerName(const DirectiveNode& d)
 	_getCurrentCtxt().setServerName(d.args[0]);
 }
 
+void ConfigBuilder::_handleAutoindex(const DirectiveNode& d)
+{
+	if (d.args[0] == "on")
+		_getCurrentCtxt().setAutoindex(true);
+	else if (d.args[0] == "off")
+		_getCurrentCtxt().setAutoindex(false);
+	else
+		_error(d.line, "unknown option for 'autoindex' directive");
+}
 
-// Helpers
+
+// Utils
 ConfigContext& ConfigBuilder::_getCurrentCtxt()
 {
 	return _contextStack.top();
@@ -162,10 +173,17 @@ ConfigContext& ConfigBuilder::_getCurrentCtxt()
 void ConfigBuilder::_pushContext(ContextType type)
 {
 	ConfigContext newContext(type);
+
 	if (_contextStack.size()) {
 		newContext.inheritFrom(_getCurrentCtxt());
 	}
 	_contextStack.push(newContext);
+}
+void ConfigBuilder::_popContext()
+{
+	if (_contextStack.size()) {
+		_contextStack.pop();
+	}
 }
 
 void ConfigBuilder::_addServer(VirtualServer const& server)
@@ -173,12 +191,6 @@ void ConfigBuilder::_addServer(VirtualServer const& server)
 		_servers.push_back(server);
 }
 
-void ConfigBuilder::_popContext()
-{
-	if (_contextStack.size()) {
-		_contextStack.pop();
-	}
-}
 
 void ConfigBuilder::_error(int line, const std::string& msg)
 {
