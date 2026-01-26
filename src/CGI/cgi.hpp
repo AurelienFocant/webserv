@@ -4,18 +4,35 @@
 
 # include <unistd.h>
 
-class	cgi {
+class	Cgi {
 	public:
+	/*Constructors - Copy Constructor - Destructor*/
+		Cgi();
+		Cgi(enum	script_t, const Request& request, const char*	path_to_script);
+		Cgi(enum	script_t, const Request& request, const std::string& path_to_script);
+		Cgi(const Cgi& copy_from);
+		~Cgi();
+	
+	/*Overloaded Operator*/
+		Cgi&	operator=(const Cgi& rhs);
+
+	
 		bool	createChild(/*name of excec as parameter ?*/);
 	private:
-		cgi();
-		cgi(const cgi& copy_from);
-		~cgi();
-		cgi&	operator=(const cgi& rhs);
 };
 
 #endif
 
+
+# include "Cgi.hpp"
+
+/*Constructors*/
+Cgi::Cgi() {}
+Cgi(enum	script_t, const Request& request, const char*	path_to_script) {
+}
+
+Cgi(enum	script_t, const Request& request, const std::string& path_to_script) {
+}
 
 
 bool	cgi::createChild() {
