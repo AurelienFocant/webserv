@@ -179,6 +179,7 @@ void ConfigBuilder::_pushContext(ContextType type)
 	}
 	_contextStack.push(newContext);
 }
+
 void ConfigBuilder::_popContext()
 {
 	if (_contextStack.size()) {
@@ -190,7 +191,6 @@ void ConfigBuilder::_addServer(VirtualServer const& server)
 {
 		_servers.push_back(server);
 }
-
 
 void ConfigBuilder::_error(int line, const std::string& msg)
 {

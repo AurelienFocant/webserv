@@ -26,11 +26,11 @@ toc: false
 - root    --> http, server, location
     - (cannot be duplicated)
 - server_name
+- index                 --> http, server, location (default to index.html)
+- autoindex             --> http, server, location (show as directory listing)
 
 
 ## Should be implemented
-- index                 --> http, server, location (default to index.html)
-- autoindex             --> http, server, location (show as directory listing)
 ### - limit_except           --> location
 - keepalive_time
     - (absolute time of a open connection)

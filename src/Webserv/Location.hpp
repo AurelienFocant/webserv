@@ -25,8 +25,8 @@ class Location
 	std::string					getAlias() const {return _alias;}
 	// std::string					getRedirect() const {return _redirect;}
 	// int							getRedirectCode() const {return _redirect_code;}
-	std::vector<std::string>	getIndexes() const {return _indexes;}
-	bool						getAutoIndex() const {return _autoindex;}
+	std::vector<std::string>	getIndexes()	const {return _indexes;}
+	bool						getAutoIndex()	const {return _autoindex;}
 
 
 	/* Setters */

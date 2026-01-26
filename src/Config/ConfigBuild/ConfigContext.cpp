@@ -2,28 +2,20 @@
 #include "ConfigBuilder.hpp"
 #include <vector>
 
-ConfigContext::ConfigContext(void)
-    : _type(MAIN)
-	, _port(-1)
-	, _root()
-	, _serverName()
-	, _locationName()
-	, _locations()
-	, _indexes()
-	, _autoindex(false)
-{
-}
+const int DEFAULTPORT = 80;
+const std::string DEFAULTROOT = "html";
+const std::string DEFAULTNAME = "";
 
 ConfigContext::ConfigContext(ContextType t)
     : _type(t)
-	, _port(-1)
-	, _root()
-	, _serverName()
-	, _locationName()
+	, _port(DEFAULTPORT)
+	, _root(DEFAULTROOT)
+	, _serverName(DEFAULTNAME)
+	, _locationName("")
 	, _locations()
-	, _indexes()
 	, _autoindex(false)
 {
+	_indexes.push_back("index.html");
 }
 
 ConfigContext::ConfigContext(const ConfigContext &src)
@@ -59,17 +51,11 @@ ConfigContext::~ConfigContext(void)
 
 void ConfigContext::inheritFrom(const ConfigContext &parent)
 {
-	if (parent._port != -1)
-		_port = parent._port;
-	if (!parent._root.empty())
-		_root = parent._root;
-	if (!parent._serverName.empty())
-		_serverName = parent._serverName;
-	if (!(parent._indexes.empty()))
-		_indexes.assign(parent._indexes.begin(), parent._indexes.end());
-	if (parent._autoindex)
-		_autoindex = parent._autoindex;
-
+	_port = parent._port;
+	_root = parent._root;
+	_serverName = parent._serverName;
+	_indexes = parent._indexes;
+	_autoindex = parent._autoindex;
 }
 
 ContextType ConfigContext::getType(void) const
@@ -124,7 +110,7 @@ void ConfigContext::setLocationName(const std::string &name)
 
 void ConfigContext::addLocation(const std::string &name, const Location &loc)
 {
-	_locations[name] = loc;
+	_locations.insert(std::make_pair(name, loc));
 }
 
 void ConfigContext::setIndexes(std::vector<std::string> const& src)
@@ -132,7 +118,7 @@ void ConfigContext::setIndexes(std::vector<std::string> const& src)
 	_indexes.assign(src.begin(), src.end());
 }
 
-std::vector<std::string>&	ConfigContext::getIndexes(void)
+std::vector<std::string> const&	ConfigContext::getIndexes(void) const
 {
 	return (_indexes);
 }

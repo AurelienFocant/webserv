@@ -2,8 +2,8 @@
 #include "ConfigContext.hpp"
 
 VirtualServer::VirtualServer( void )
-	: _port(80)
-	, _root("/html")
+	: _port(-1)
+	, _root("")
 	, _server_name("")
 	, _autoindex(false)
 	, _locations()
@@ -18,6 +18,7 @@ VirtualServer::VirtualServer(ConfigContext const& ctxt)
 	, _autoindex(ctxt.getAutoindex())
 	, _locations(ctxt.getLocations())
 {
+	_indexes = ctxt.getIndexes();
 }
 
 VirtualServer::VirtualServer(const VirtualServer& src)

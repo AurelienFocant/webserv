@@ -33,6 +33,7 @@ Location&	Location::operator= (const Location& rhs)
 		_name = rhs._name;
 		_root = rhs._root;
 		_autoindex = rhs._autoindex;
+		_indexes = rhs._indexes;
 	}
 	return (*this);
 }

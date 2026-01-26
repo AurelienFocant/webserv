@@ -41,8 +41,8 @@ class ConfigContext {
 		void		setLocationName(const std::string &locationName);
 		const std::map<std::string, Location>&	getLocations(void) const;
 		void									addLocation(const std::string &name, const Location &loc);
-		void						setIndexes(std::vector<std::string> const& src);
-		std::vector<std::string>&	getIndexes(void);
+		void							setIndexes(std::vector<std::string> const& src);
+		std::vector<std::string> const&	getIndexes(void) const;
 		bool		getAutoindex(void) const;
 		void		setAutoindex(bool b);
 
