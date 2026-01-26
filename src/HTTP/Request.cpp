@@ -4,7 +4,7 @@ const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
 						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
 const char*			Request::important_argument[] = {
-	"content-length", "content-type", "transfert-encoding"
+	"content-length", "content-type", "transfert-encoding", NULL
 	};
 
 /*Constructor - Copy Constructor - Destructor*/
