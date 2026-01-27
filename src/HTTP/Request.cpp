@@ -356,6 +356,14 @@ t_HttpCode		Request::getStatusCode() const {
 	return(_status_code);
 }
 
+std::string		Request::getHeaderValue(const std::string& key) const
+{
+	std::multimap<std::string, std::string>::const_iterator it = _headers.find(key);
+	if (it != _headers.end())
+		return it->second;
+	return "";
+}
+
 /*Setters*/
 bool	Request::setMethod() {
 	if (_progress == PARSER_ERROR)

@@ -41,6 +41,7 @@ class	Request	: private HTTPTokenizer {
 		t_HttpCode		getStatusCode() const ;
 
 		const std::multimap<std::string, std::string>&	getHeadersValue() const {return (_headers);}
+		std::string										getHeaderValue(const std::string& key) const;
 
 	private:
 	/*Private Attributes*/

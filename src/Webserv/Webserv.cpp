@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
@@ -213,12 +214,11 @@ std::string	_receiveLoop(int fd)
 VirtualServer&	Webserv::_findCorrectServer(Request const& request)
 {
 	//Check for the existence of Host in Request for HTTP/1.1?
-	// ! error if key doesn't exist
-	std::string	host = request.getHeadersValue("Host");
+	std::string	host = request.getHeaderValue("host");
 
 	size_t	colon = host.find(':');
 	if (colon != std::string::npos)
-		host = std::substr(0, colon);
+		host.substr(0, colon);
 	
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
