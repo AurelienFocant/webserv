@@ -23,6 +23,7 @@ class ConfigBuilder
 
 	private:
 		std::vector<VirtualServer>	_servers;
+		void _addServer(VirtualServer const& server);
 
 		void	_initDirectiveSpecs(void);
 		std::map<std::string, DirectiveSpecs>	_direcSpecs;
@@ -35,6 +36,7 @@ class ConfigBuilder
 		void _handleRoot   		(const DirectiveNode& d);
 		void _handleServerName	(const DirectiveNode& d);
 		void _handleIndex		(const DirectiveNode& d);
+		void _handleAutoindex	(const DirectiveNode& d);
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&				_getCurrentCtxt(void);

@@ -118,8 +118,8 @@ fre:		ffclean re
 	ffclean fre \
 
 #---------------------------DEBUGGING-------------------------#
-vgdb: debug
-	valgrind --vgdb-error=0 --vgdb=full --leak-check=full --show-leak-kinds=all ./debugRT worlds/invalid.rt -D WIDTH=80 -D HEIGHT=100
+vgdb:
+	valgrind --vgdb-error=0 --vgdb=full --leak-check=full --show-leak-kinds=all ./$(NAME)
 
 leak: all
 	valgrind --leak-check=full --show-leak-kinds=all ./hugeRT worlds/invalid.rt

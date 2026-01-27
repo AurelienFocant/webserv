@@ -1,23 +1,30 @@
 #include "Location.hpp"
+#include "ConfigContext.hpp"
 
 #include <iostream>
 
 Location::Location()
 	: _name("")
 	, _root("")
-	, _alias("")
 	, _autoindex(false)
 {
 	_indexes.push_back("index.html");
 }
 
+Location::Location(ConfigContext& ctxt)
+	: _name(ctxt.getLocationName())
+	, _root(ctxt.getRoot())
+	, _autoindex(ctxt.getAutoindex())
+{
+	this->setIndexes(ctxt.getIndexes());
+}
+
 Location::Location(const Location& src)
 	: _name(src._name)
 	, _root(src._root)
-	, _alias(src._alias)
 	, _autoindex(src._autoindex)
 {
-	// this->setIndexes(src.getIndexes());
+	this->setIndexes(src.getIndexes());
 }
 
 Location&	Location::operator= (const Location& rhs)
@@ -25,8 +32,8 @@ Location&	Location::operator= (const Location& rhs)
 	if (this != &rhs) {
 		_name = rhs._name;
 		_root = rhs._root;
-		_alias = rhs._alias;
 		_autoindex = rhs._autoindex;
+		_indexes = rhs._indexes;
 	}
 	return (*this);
 }

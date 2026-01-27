@@ -7,6 +7,8 @@
 
 #include "Location.hpp"
 
+class ConfigContext;
+
 class VirtualServer
 {
 	private:
@@ -43,6 +45,7 @@ class VirtualServer
 
 
 		VirtualServer	( void );
+		VirtualServer	(ConfigContext const& ctxt);
 		VirtualServer	( const VirtualServer& src );
 		VirtualServer&	operator= ( const VirtualServer& rhs );
 		~VirtualServer	( void );

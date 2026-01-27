@@ -15,7 +15,7 @@ private:
     bool	_atEnd() const;
     void	_expect(e_tokenType type);
 
-	BlockNode*	_astRoot;
+	BlockNode*	_ast_root;
     ConfigNode*		_parseStatement();
     BlockNode* 		_parseBlock();
     DirectiveNode*	_parseDirective(const t_Token& first);

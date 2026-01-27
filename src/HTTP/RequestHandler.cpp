@@ -1,5 +1,5 @@
-
 #include "RequestHandler.hpp"
+#include "HtmlBuilder.hpp"
 
 /* ////////////REQUEST HANDLER////////////////// */
 
@@ -235,7 +235,6 @@ bool	RequestHandler::hasAutoIndex()
 
 void	RequestHandler::generateAutoIndex()
 {
-	// a implementer
 	return;
 }
 

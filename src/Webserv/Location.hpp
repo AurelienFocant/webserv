@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+class ConfigContext;
+
 class Location 
 {
 	private:
@@ -23,8 +25,8 @@ class Location
 	std::string					getAlias() const {return _alias;}
 	// std::string					getRedirect() const {return _redirect;}
 	// int							getRedirectCode() const {return _redirect_code;}
-	std::vector<std::string>	getIndex() const {return _indexes;}
-	bool						getAutoIndex() const {return _autoindex;}
+	std::vector<std::string>	getIndexes()	const {return _indexes;}
+	bool						getAutoIndex()	const {return _autoindex;}
 
 
 	/* Setters */
@@ -33,12 +35,13 @@ class Location
 	void	setAlias(const std::string& alias) {_alias = alias;}
 	// void	setRedirect(const std::string& redirect) {_redirect = redirect;}
 	// void	setRedirectCode(const int& redirect_code) {_redirect_code = redirect_code;}
-	void	setIndex(const std::vector<std::string>& indexes) {_indexes = indexes;}
+	void	setIndexes(const std::vector<std::string>& indexes) {_indexes = indexes;}
 	void	setAutoIndex(bool autoindex) {_autoindex = autoindex;}
 
 	void	addIndexFile(const std::string& file) {_indexes.push_back(file);}
 
 	Location	();
+	Location	(ConfigContext& ctxt);
 	Location	(const Location& other);
 	Location&	operator= (const Location& rhs);
 	~Location	();
