@@ -211,22 +211,34 @@ std::string	_receiveLoop(int fd)
 }
 
 
-VirtualServer&	Webserv::_findCorrectServer(Request const& request)
+VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
 {
 	//Check for the existence of Host in Request for HTTP/1.1?
-	std::string	host = request.getHeaderValue("host");
+	sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+
+	//get local port
+	if (getsockname(conn.getFd(), (sockaddr*) &addr, &len) < 0)
+		throw std::runtime_error("getsockname failed");
+	unsigned int port = ntohs(addr.sin_port);
+
+	std::string	host = conn.request.getHeaderValue("host");
 
 	size_t	colon = host.find(':');
 	if (colon != std::string::npos)
-		host.substr(0, colon);
-	
+		host = host.substr(0, colon);
+
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		if (_servers[i].getServName() == host /*&& _servers[i].getPort() == listen_port */)
-			return _servers[i];
+		if (_servers[i].getPort() == port)
+		{
+			if (_servers[i].getServName() == host)
+				return _servers[i];
+		}
 	}
+	// completer logique si port correspondant + !hostname return sever[i] et !port return error)
 
-	return (getServer(0)); // return first server as default server if non occurence or error? Need testing
+	return (getServer(0)); // return first server as default server (HTTP/1.0) if non occurence or error? Need testing
 }
 
 bool	Webserv::clientHandler(Connection & conn)
@@ -260,7 +272,7 @@ bool	Webserv::clientHandler(Connection & conn)
 	}
 
 	else if (conn.getEvent() & EPOLLOUT) {
-		conn.virtual_server = _findCorrectServer(conn.request);
+		conn.virtual_server = _findCorrectServer(conn);
 	
 		RequestHandler	reqHandl(conn);
 		reqHandl.handleRequest();

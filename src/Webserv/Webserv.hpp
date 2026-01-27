@@ -21,7 +21,7 @@ class Webserv
 		void	_openConfig(); 
 		void	_parseConfig();
 
-		VirtualServer&	_findCorrectServer(Request const& request);
+		VirtualServer&	_findCorrectServer(Connection const& conn);
 
 		Webserv(void);
 
