@@ -230,15 +230,18 @@ VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
 
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		if (_servers[i].getPort() == port)
-		{
-			if (_servers[i].getServName() == host)
+		if (_servers[i].getPort() == port && _servers[i].getServName() == host)
 				return _servers[i];
-		}
 	}
-	// completer logique si port correspondant + !hostname return sever[i] et !port return error)
+
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getPort() == port)
+			return _servers[i];
+	}
 
 	return (getServer(0)); // return first server as default server (HTTP/1.0) if non occurence or error? Need testing
+	// return error si pas de port qui correspond
 }
 
 bool	Webserv::clientHandler(Connection & conn)
@@ -249,8 +252,6 @@ bool	Webserv::clientHandler(Connection & conn)
 	// error
 	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
 	}
-
-
 
 	if (conn.getEvent() & EPOLLIN) {
 

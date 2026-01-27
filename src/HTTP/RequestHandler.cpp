@@ -23,8 +23,6 @@ RequestHandler::~RequestHandler() {}
 
 void	RequestHandler::handleRequest()
 {
-	//std::cout << "Just here to use _response: " <<_response.SEND_HEADER << std::endl; 
-
 	if (_response.getStatusCode() != OK)
 		return;
 
@@ -58,17 +56,17 @@ bool	RequestHandler::extractPath()
 bool	RequestHandler::resolvePath()
 {
 	findLocation();
-
-/* 	if (_matched_location && !_matched_location->getRedirect().empty())
-	{
-		handleRedirect(); //ex: location /old_page { return 301 /new_page;} ou error_pages
-		return true;
-	} */
  
 	if (_matched_location)
 	{
+		//Return priorite #1
+		if (!_matched_location->getRedirect().empty() && _matched_location->getRedirectCode())
+		{
+			handleRedirect();
+			return true;
+		}
 		// Alias prioritaire sur root
-		if (!_matched_location->getAlias().empty())
+		else if (!_matched_location->getAlias().empty())
 		{
 			std::string	location_path = _matched_location->getName();
 			std::string	remaining_path = _request_path.substr(location_path.length());
@@ -80,9 +78,7 @@ bool	RequestHandler::resolvePath()
 			_resolved_path = _root + _request_path;
 		}
 		else
-		{
 			_resolved_path = _root + _request_path;
-		}
 	}
 	else
 		_resolved_path = _root + _request_path;
@@ -94,6 +90,21 @@ bool	RequestHandler::resolvePath()
 
 	return true;
 
+}
+
+void	RequestHandler::handleRedirect()
+{
+	_response.setHttpVersion(_request.getHttpVersion());
+	if (!_matched_location->getRedirect().empty())
+	{
+		_response.setStatusCode(_matched_location->getRedirectCode());
+		_response.setHeader("Location", _matched_location->getRedirect());
+	}
+	else
+	{
+		_response.setStatusCode(MOVED_PERMANENTLY);
+		_response.setHeader("Location", _resolved_path + "/");
+	}
 }
 
 void	RequestHandler::findLocation()
@@ -144,6 +155,8 @@ bool	RequestHandler::validatePath()
 
 bool	RequestHandler::processMethods()
 {
+	if (_response.getStatusCode() == MOVED_PERMANENTLY) //
+		return false; 
 	switch(_request.getMethod())
 	{
 		case GET:
@@ -166,19 +179,18 @@ void	RequestHandler::processGetMethod()
 {
 	if (_is_directory)
 	{
-		if	(_resolved_path[_resolved_path.length() -1] != '/') //Le serveur n'a pas le droit de modifier l'url en "silence. soit redirect /dir/ soit 404"
+/* 		if	(_resolved_path[_resolved_path.length() -1] != '/') //Le serveur n'a pas le droit de modifier l'url en "silence. soit redirect /dir/ soit 404"
 		{
-			_response.setStatusCode(MOVED_PERMANENTLY);
-			// set response header Location: request_path + "/";
+			handleRedirect();
 			return;
-		}
+		} */
 		if (!resolveIndex())
 		{
 			if (hasAutoIndex())
 			{
 				generateAutoIndex();
 				_response.setStatusCode(OK);
-				return; // listing HTML genere directement enregistre dans le body de response?
+				return;
 			}
 			else
 				_response.setStatusCode(FORBIDDEN); //Directory listing forbidden

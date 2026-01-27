@@ -36,6 +36,7 @@ class RequestHandler
 	bool			resolvePath();
 	bool			validatePath();
 	void			findLocation();
+	void			handleRedirect();
 
 	bool			processMethods();
 	void			processGetMethod();
