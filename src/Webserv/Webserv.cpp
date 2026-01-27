@@ -212,9 +212,21 @@ std::string	_receiveLoop(int fd)
 
 VirtualServer&	Webserv::_findCorrectServer(Request const& request)
 {
-	// TODO
-	(void) request;
-	return (getServer(0));
+	//Check for the existence of Host in Request for HTTP/1.1?
+	// ! error if key doesn't exist
+	std::string	host = request.getHeadersValue("Host");
+
+	size_t	colon = host.find(':');
+	if (colon != std::string::npos)
+		host = std::substr(0, colon);
+	
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getServName() == host /*&& _servers[i].getPort() == listen_port */)
+			return _servers[i];
+	}
+
+	return (getServer(0)); // return first server as default server if non occurence or error? Need testing
 }
 
 bool	Webserv::clientHandler(Connection & conn)
