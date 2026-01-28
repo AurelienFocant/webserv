@@ -88,7 +88,8 @@ bool	cgi::launchCgi(char** argv, char** env) {
 
 	//DO PARENT STUFF
 	}
-	waitpid(pid); // Do we block on it ?
+//	Need to read child production ?on std::cout?
+//	waitpid(pid); Do we block on it ?
 //	checkChildErrors(); -> wrapper on wait ?
 	return (true);
 }
