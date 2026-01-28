@@ -39,6 +39,9 @@ class RequestHandler
 
 	bool			processMethods();
 	void			processGetMethod();
+	/*POST Methods*/
+	//void	processPostMethod() ;
+	bool			createNewUser() ;
 
 	bool			resolveIndex();
 	bool			hasAutoIndex();
@@ -49,6 +52,7 @@ class RequestHandler
 	bool 			isDirectory(const std::string& path);
 	size_t			fileSize(const std::string& path);
 	std::string 	getContentType(const std::string& path);
+	
 
 	/* For testing */
 	void			printRoutes();

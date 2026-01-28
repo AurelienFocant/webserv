@@ -148,12 +148,16 @@ bool	RequestHandler::processMethods()
 		case GET:
 			processGetMethod();
 			break ;
-/* 		case POST:
+/*
+ 		case POST:
 			processPostMethod();
 			break ;
-		case DELETE:
-			processDeleteMethod(); */
+*/
+/*
+			case DELETE:
+			processDeleteMethod();
 			break ;
+*/
 		default: 
 			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
 			return false;
@@ -201,6 +205,95 @@ void	RequestHandler::processGetMethod()
 	_response.setStatusCode(OK);
 }
 
+bool	RequestHandler::createNewUser()
+{
+    // Example: get POST values (adapt to your code)
+    std::string username = this->_postParams["username"];
+    std::string password = this->_postParams["password"];
+
+    // 1. Check if fields are filled
+    if (username.empty() || password.empty())
+        return;
+
+    const std::string dbPath = "data/dB/users_login.csv";
+    const std::string userDir = "data/dB/" + username;
+
+    // 2. Check if user already exists
+    std::ifstream infile(dbPath.c_str());
+    std::string line;
+
+    if (infile.is_open())
+    {
+        while (std::getline(infile, line))
+        {
+            // CSV format: username,password
+            std::string::size_type pos = line.find(',');
+            if (pos != std::string::npos)
+            {
+                std::string existingUser = line.substr(0, pos);
+                if (existingUser == username)
+                {
+                    infile.close();
+                    return (false); // User already exists
+                }
+            }
+        }
+        infile.close();
+    }
+
+    // 3. Append new user to CSV
+    std::ofstream outfile(dbPath.c_str(), std::ios::app);
+    if (!outfile.is_open())
+        return;
+
+    outfile << username << "," << password << "\n";
+    outfile.close();
+
+    // 4. Create user directory
+    mkdir(userDir.c_str(), 0755);
+	
+	return (true);
+}
+/*
+void	Request::processPostMethod() {
+	if (_is_directory)
+	{
+		if	(_resolved_path[_resolved_path.length() -1] != '/') //Le serveur n'a pas le droit de modifier l'url en "silence. soit redirect /dir/ soit 404"
+		{
+			_response.setStatusCode(MOVED_PERMANENTLY);
+			// set response header Location: request_path + "/";
+			return;
+		}
+		if (!resolveIndex())
+		{
+			if (hasAutoIndex())
+			{
+				generateAutoIndex();
+				_response.setStatusCode(OK);
+				return; // listing HTML genere directement enregistre dans le body de response?
+			}
+			else
+				_response.setStatusCode(FORBIDDEN); //Directory listing forbidden
+			return;
+		}
+	}
+
+	int	fd = openReadFile(_resolved_path);
+	if (fd < 0)
+		return;
+
+	int target_size = fileSize(_resolved_path);
+
+*/	/* Init Response *//*
+	_response.setStatusCode(OK);
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setHeader("Content-Type", getContentType(_resolved_path));
+	_response.setHeader("Content-Length", intToString(target_size));
+	_response.setBodyFd(fd);
+	_response.setBodySize(target_size);
+	_response.setStatusCode(OK);
+}
+*/
 /* INDEX/DIRECTORY HANDLING */
 
 bool	RequestHandler::resolveIndex()
