@@ -59,53 +59,82 @@ bool	RequestHandler::resolvePath()
  
 	if (_matched_location)
 	{
-		//Return priorite #1
-		if (!_matched_location->getRedirect().empty() && _matched_location->getRedirectCode())
-		{
-			handleRedirect();
-			return true;
-		}
-		// Alias prioritaire sur root
+		//Config Redirections
+		if (handleConfigRedirect())
+			return false;
 		else if (!_matched_location->getAlias().empty())
 		{
+			//Alias : replace prefix of location
 			std::string	location_path = _matched_location->getName();
 			std::string	remaining_path = _request_path.substr(location_path.length());
 			_resolved_path = _matched_location->getAlias() + remaining_path;
 		}
 		else if (!_matched_location->getRoot().empty())
 		{
+			//Location root : replace main root
 			_root = _matched_location->getRoot();
 			_resolved_path = _root + _request_path;
 		}
 		else
+		{
+			//Default root
 			_resolved_path = _root + _request_path;
+		}
 	}
 	else
+	{
+		//Default root
 		_resolved_path = _root + _request_path;
+	}
 
 	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
-	if (!validatePath())
+	if (!validatePath() || handleTrailingSlash())
 		return false;
 
 	return true;
 
 }
 
-void	RequestHandler::handleRedirect()
+bool	RequestHandler::handleConfigRedirect()
 {
+	if (_matched_location->getRedirect().empty() || !_matched_location->getRedirectCode())
+		return false;
+	
 	_response.setHttpVersion(_request.getHttpVersion());
-	if (!_matched_location->getRedirect().empty())
-	{
-		_response.setStatusCode(_matched_location->getRedirectCode());
-		_response.setHeader("Location", _matched_location->getRedirect());
-	}
-	else
-	{
-		_response.setStatusCode(MOVED_PERMANENTLY);
-		_response.setHeader("Location", _resolved_path + "/");
-	}
+	_response.setStatusCode(_matched_location->getRedirectCode());
+	_response.setHeader("Location", _matched_location->getRedirect());
+	_response.setHeader("Content-Length", "0");
+
+	return true;
 }
+
+bool	RequestHandler::handleTrailingSlash()
+{
+	if (_request_path[_request_path.length() - 1] == '/')
+		return false;
+
+	std::string redirect_url = _request_path + "/";
+	//if query??
+
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setStatusCode(MOVED_PERMANENTLY);
+	_response.setHeader("Location", redirect_url);
+	_response.setHeader("Content-Length", "0");
+
+	return true;
+}
+
+bool	RequestHandler::hasRedirect()
+{
+	int status = _response.getStatusCode();
+
+	return status == MOVED_PERMANENTLY
+		|| status == FOUND
+		|| status == SEE_OTHER
+		|| status == TEMPORARY_REDIRECT;
+}
+
 
 void	RequestHandler::findLocation()
 {
@@ -116,11 +145,15 @@ void	RequestHandler::findLocation()
 		const std::string&	route_path = it->first;
 		const Location*		location = &(it->second);
 
+		//Check if the requested path begin with a Location name
 		if (_request_path.find(route_path, 0) == 0)
 		{
 			size_t route_len = route_path.length();
+
+			// Test if it's a real match, not just a partial prefix
 			if (_request_path.length() == route_len || _request_path[route_len] == '/')
 			{
+				//Keep the longest match
 				if (route_len > longest_match)
 				{
 					longest_match = route_path.length();
@@ -129,6 +162,11 @@ void	RequestHandler::findLocation()
 			}
 		}
 	}
+
+	if (_matched_location)
+		std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
+	else
+		std::cout << "[DEBUG] No location matched: " << std::endl;
 }
 
 bool	RequestHandler::validatePath()
@@ -155,52 +193,48 @@ bool	RequestHandler::validatePath()
 
 bool	RequestHandler::processMethods()
 {
-	if (_response.getStatusCode() == MOVED_PERMANENTLY) //
-		return false; 
+	if (hasRedirect())
+	{
+		std::cout << "[DEBUG] Redirect code: " << _response.getStatusCode()
+		<< " skip processMethods() " << std::endl;
+		return false;
+	}
+
 	switch(_request.getMethod())
 	{
 		case GET:
-			processGetMethod();
-			break ;
+			return processGetMethod();
 /* 		case POST:
-			processPostMethod();
-			break ;
+			return processPostMethod();
 		case DELETE:
-			processDeleteMethod(); */
-			break ;
+			return processDeleteMethod(); */
 		default: 
 			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
 			return false;
 	}
-	return true;
 }
 
-void	RequestHandler::processGetMethod()
+bool	RequestHandler::processGetMethod()
 {
 	if (_is_directory)
 	{
-/* 		if	(_resolved_path[_resolved_path.length() -1] != '/') //Le serveur n'a pas le droit de modifier l'url en "silence. soit redirect /dir/ soit 404"
-		{
-			handleRedirect();
-			return;
-		} */
 		if (!resolveIndex())
 		{
 			if (hasAutoIndex())
 			{
 				generateAutoIndex();
 				_response.setStatusCode(OK);
-				return;
+				return true;
 			}
 			else
 				_response.setStatusCode(FORBIDDEN); //Directory listing forbidden
-			return;
+			return false;
 		}
 	}
 
 	int	fd = openReadFile(_resolved_path);
 	if (fd < 0)
-		return;
+		return false;
 
 	int target_size = fileSize(_resolved_path);
 
@@ -211,6 +245,8 @@ void	RequestHandler::processGetMethod()
 	_response.setHeader("Content-Length", intToString(target_size));
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
+
+	return true;
 }
 
 /* INDEX/DIRECTORY HANDLING */
@@ -243,7 +279,7 @@ bool	RequestHandler::hasAutoIndex()
 /* 	if (_matched_location)
 		return (_matched_location->getAutoIndex());
 	return _server.getAutoindex(); */
-	return true;
+	return false;
 }
 
 void	RequestHandler::generateAutoIndex()
@@ -276,7 +312,7 @@ std::string RequestHandler::getContentType(const std::string& path)
 {
     size_t dotPos = path.find_last_of('.');
     if (dotPos == std::string::npos) {
-        return "application/octet-stream";  // Default ? 
+        return "application/octet-stream";
     }
     
     std::string ext = path.substr(dotPos + 1);

@@ -32,19 +32,28 @@ class RequestHandler
 	bool					_is_directory;
 
 	/* Private Methods */
+
+	/* Path processing */
 	bool			extractPath();
 	bool			resolvePath();
 	bool			validatePath();
 	void			findLocation();
-	void			handleRedirect();
 
+	/*  Redirections */
+	bool			handleConfigRedirect();
+	bool			handleTrailingSlash();
+	bool			hasRedirect();
+
+	/* Request processing */
 	bool			processMethods();
-	void			processGetMethod();
+	bool			processGetMethod();
 
+	/* Directory listing / Index */
 	bool			resolveIndex();
 	bool			hasAutoIndex();
 	void			generateAutoIndex();
 
+	/* File operations */
 	int				openReadFile(const std::string& path);
 	int				openWriteFile(const std::string& path);
 	bool 			isDirectory(const std::string& path);

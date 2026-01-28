@@ -128,9 +128,13 @@ void	Response::updateBytesSend(size_t bytes_sent)
 		_header_sent += bytes_sent;
 		if (_buffer_sent >= _buffer_size)
 		{
-			_state++;
-			// implementer hasBody() pour savoir si on passe directement a DONE
 			resetBuffer();
+			if (_body_size == 0) // if NO body
+			{
+				_state = DONE;
+				return;
+			}
+			_state = SEND_BODY;
 		}
 	}
 	else if (_state == SEND_BODY)
