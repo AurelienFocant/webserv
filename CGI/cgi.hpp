@@ -17,7 +17,7 @@ class	Cgi {
 		Cgi&	operator=(const Cgi& rhs);
 
 	
-		bool	createChild(/*name of excec as parameter ?*/);
+		bool	launchCgi(/*name of excec as parameter ?*/);
 	private:
 };
 
@@ -35,7 +35,31 @@ Cgi(enum	script_t, const Request& request, const std::string& path_to_script) {
 }
 
 
-bool	cgi::createChild() {
+bool	cgi::execute() {
+	char** argv;	
+	//Create argv for child exec
+	try {
+		argv = new[](sizeof(char*) * (2 + 1)); //size must depend of number of argument and if an interpreter is needed
+		argv[0] = findInterpreter(file_to_execute).c_str;
+		argv[1] = file_to_execute.c_str(); //->maybe do one function that initialize whole argv based on file_to_execute
+	}
+	catch (std::exception& e) {
+		//setup Response status code to Internal_server_error: here or up the stack
+		std::cerr << "Fatal error; " << e.what() << std::endl;
+		return (false); //Continue or crash the program ?
+	}
+	//Create and initialize environement variable for script
+	CppEnv	cgi_env(/*request*/);
+
+	if (!launchCgi(argv, cgi_env.getCEnv())) {
+		//some errors happened, setup response code accordingly
+	}
+	delete[](argv);
+	//delete[](cgi_env); -> probably needed, depend on CppEnv implementation
+	return (true);
+}
+
+bool	cgi::launchCgi(char** argv, char** env) {
 //Pipe creation for communication with the process
 	int	pipe_fd[2];
 	if (pipe(pipe_fd) < 0) {
@@ -53,7 +77,7 @@ bool	cgi::createChild() {
 		close(pipe_fd[0]);
 
 	//DO CHILD STUFF
-		std::execv();
+		std::execv(argv[0], argv, env);
 		exit(EXIT_FAILURE);
 	}
 	else { // Parent process
@@ -64,5 +88,7 @@ bool	cgi::createChild() {
 
 	//DO PARENT STUFF
 	}
+	waitpid(pid); // Do we block on it ?
+//	checkChildErrors(); -> wrapper on wait ?
 	return (true);
 }

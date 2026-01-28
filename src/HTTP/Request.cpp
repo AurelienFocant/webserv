@@ -3,9 +3,6 @@
 const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
 						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
-const char*			Request::important_argument[] = {
-	"content-length", "content-type", "transfert-encoding"
-	};
 
 /*Constructor - Copy Constructor - Destructor*/
 Request::Request() : HTTPTokenizer()
@@ -16,7 +13,7 @@ Request::Request() : HTTPTokenizer()
 Request::Request(std::string const& request) : HTTPTokenizer(request)
 {
 	cleanRequest();
-	if (!parseRequest()) {}
+	parseRequest();
 }
 
 bool	Request::cleanRequest() {
@@ -63,13 +60,6 @@ bool	Request::parseRequest() {
 		case (FIRST_LINE):
 			if (!parseHeader())
 				break ;
-		    /* FALLTHRU */
-			//else fall_through;
-/*		case (PARSED):
-			if (parseHeader())
-				break ;
-			//else fall_through; 
-*/
 		case (PARSED):
 			if (_status_code == INIT_STATE)
 				handleBody();
@@ -94,7 +84,8 @@ bool	Request::parseRequest() {
 	removeEOC();
 
 	std::cout << "Request.cpp -l95: " << _progress << std::endl;
-
+	if (_complete)
+		cleanTokenList();
 	return (_complete);
 }
 
@@ -156,11 +147,6 @@ bool	Request::defineBodyExtractionHandler() {
 	else if (_content_length != std::numeric_limits<unsigned long>::max()) {
 		_body_handler = &Request::bodyHandlerContentLength; 
 	}
-	/*
-	else if (_content_type == "multipart") {
-		_body_handler = &Request::bodyHandlerMultipart; 
-	}
-	*/
 	else {
 		_progress = DONE;
 		_complete = true;
@@ -250,8 +236,6 @@ bool	Request::parseHeader() {
 				break ;
 			case (EOC):
 				break ;
-//			case (ERROR):
-				//fall-through
 			default:
 				_progress = PARSER_ERROR;
 				_complete = true;
@@ -309,6 +293,10 @@ std::string	Request::normalizeHeadersKey(std::string argument) {
 	return (argument);
 }
 
+const char*			Request::important_argument[] = {
+	"content-length", "content-type", "transfert-encoding"
+	};
+
 void	Request::detectImportantValue(std::string& argument, std::string value) {
 	int	i = 0;
 	while (important_argument[i] && important_argument[i] != argument)
@@ -323,6 +311,7 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 			_content_type = value;
 			break ;
 		case (2):
+//			if (value != "chunked");
 			_content_encoding = true;
 			break ;
 		default:

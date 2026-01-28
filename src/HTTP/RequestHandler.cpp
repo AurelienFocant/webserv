@@ -205,55 +205,6 @@ void	RequestHandler::processGetMethod()
 	_response.setStatusCode(OK);
 }
 
-bool	RequestHandler::createNewUser()
-{
-    // Example: get POST values (adapt to your code)
-    std::string username = this->_postParams["username"];
-    std::string password = this->_postParams["password"];
-
-    // 1. Check if fields are filled
-    if (username.empty() || password.empty())
-        return;
-
-    const std::string dbPath = "data/dB/users_login.csv";
-    const std::string userDir = "data/dB/" + username;
-
-    // 2. Check if user already exists
-    std::ifstream infile(dbPath.c_str());
-    std::string line;
-
-    if (infile.is_open())
-    {
-        while (std::getline(infile, line))
-        {
-            // CSV format: username,password
-            std::string::size_type pos = line.find(',');
-            if (pos != std::string::npos)
-            {
-                std::string existingUser = line.substr(0, pos);
-                if (existingUser == username)
-                {
-                    infile.close();
-                    return (false); // User already exists
-                }
-            }
-        }
-        infile.close();
-    }
-
-    // 3. Append new user to CSV
-    std::ofstream outfile(dbPath.c_str(), std::ios::app);
-    if (!outfile.is_open())
-        return;
-
-    outfile << username << "," << password << "\n";
-    outfile.close();
-
-    // 4. Create user directory
-    mkdir(userDir.c_str(), 0755);
-	
-	return (true);
-}
 /*
 void	Request::processPostMethod() {
 	if (_is_directory)
