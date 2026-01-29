@@ -109,6 +109,7 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["autoindex"]   			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["keepalive_time"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["keepalive_timeout"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["return"]				= DirectiveSpecs(SERVER|LOCATION, 2, 2);
 }
 
 
@@ -122,6 +123,7 @@ void ConfigBuilder::_initHandlers()
 	_handlers["autoindex"]			= &ConfigBuilder::_handleAutoindex;
 	_handlers["keepalive_time"]		= &ConfigBuilder::_handleKeepaliveTime;
 	_handlers["keepalive_timeout"]	= &ConfigBuilder::_handleKeepaliveTimeout;
+	_handlers["return"]				= &ConfigBuilder::_handleReturn;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -171,31 +173,49 @@ void ConfigBuilder::_handleAutoindex(const DirectiveNode& d)
 void ConfigBuilder::_handleKeepaliveTime(const DirectiveNode& d)
 {
 	std::stringstream ss(d.args[0]);
-	int port;
+	int time;
 	char c;
 
-	ss >> port;
+	ss >> time;
 	if (ss.fail() || (ss >> c))
 		_error(d.line, "invalid time format");
-	if (port < 60 || port > 3600)
+	if (time < 60 || time > 3600)
 		_error(d.line, "Keepalive_time should be between 1min and 1h");
 
-	_getCurrentCtxt().setPort(port);
+	_getCurrentCtxt().setKeepalive_time(time);
 }
 
 void ConfigBuilder::_handleKeepaliveTimeout(const DirectiveNode& d)
 {
 	std::stringstream ss(d.args[0]);
-	int port;
+	int time;
 	char c;
 
-	ss >> port;
+	ss >> time;
 	if (ss.fail() || (ss >> c))
 		_error(d.line, "invalid time format");
-	if (port < 1 || port > 600)
+	if (time < 1 || time > 600)
 		_error(d.line, "Keepalive_timeout should be between 1sec and 10min");
 
-	_getCurrentCtxt().setPort(port);
+	_getCurrentCtxt().setKeepalive_timeout(time);
+}
+
+void ConfigBuilder::_handleReturn(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int code;
+	char c;
+
+	ss >> code;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid status code format");
+	if (code < 100 || code > 505)
+		_error(d.line, "invalid status code");
+	_getCurrentCtxt().setRedirectCode(code);
+
+
+	std::string	s(d.args[1]);
+	_getCurrentCtxt().setRedirect(s);
 }
 
 

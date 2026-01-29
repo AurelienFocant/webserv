@@ -1,6 +1,5 @@
 #include "ConfigContext.hpp"
 #include "VirtualServer.hpp"
-#include "ConfigBuilder.hpp"
 #include <vector>
 
 const int DEFAULTPORT = 80;
@@ -17,6 +16,8 @@ ConfigContext::ConfigContext(ContextType t)
 	, _autoindex(false)
 	, _keepalive_time(3600)
 	, _keepalive_timeout(75)
+	, _redirect_code(0)
+	, _redirect("")
 	, _cgi(false)
 {
 	_indexes.push_back("index.html");
@@ -33,6 +34,8 @@ ConfigContext::ConfigContext(const ConfigContext &src)
 	, _autoindex(src._autoindex)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout(src._keepalive_timeout)
+	, _redirect_code(src._redirect_code)
+	, _redirect(src._redirect)
 	, _cgi(src._cgi)
 {
 }
@@ -50,9 +53,11 @@ ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
 		_autoindex = rhs._autoindex;
 		_keepalive_time = rhs._keepalive_time;
 		_keepalive_timeout = rhs._keepalive_timeout;
+		_redirect_code = rhs._redirect_code;
+		_redirect = rhs._redirect;
 		_cgi = rhs._cgi;
-    }
-    return *this;
+	}
+	return *this;
 }
 
 ConfigContext::~ConfigContext(void)
@@ -70,6 +75,8 @@ void ConfigContext::inheritFrom(const ConfigContext &parent)
 	_autoindex = parent._autoindex;
 	_keepalive_time = parent._keepalive_time;
 	_keepalive_timeout = parent._keepalive_timeout;
+	_redirect = parent._redirect;
+	_redirect_code = parent._redirect_code;
 }
 
 bool ConfigContext::isCGI(std::string location_name)

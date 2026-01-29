@@ -16,11 +16,14 @@ class VirtualServer
 		unsigned int	_port;
 		std::string		_root;
 	 	std::string		_server_name;
+		std::string		_redirect;
+		int				_redirect_code;
 		bool			_autoindex;
-		std::vector<std::string>		_indexes;
-		std::map<std::string, Location>	_locations;
 		std::time_t	_keepalive_time;
 		std::time_t	_keepalive_timeout;
+
+		std::vector<std::string>		_indexes;
+		std::map<std::string, Location>	_locations;
 
 		void	_initDefaultErrorPages(void);
 

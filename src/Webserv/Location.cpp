@@ -17,12 +17,12 @@ Location::Location()
 Location::Location(ConfigContext& ctxt)
 	: _name(ctxt.getLocationName())
 	, _root(ctxt.getRoot())
-	, _redirect("")
-	, _redirect_code(0)
+	, _redirect(ctxt.getRedirect())
+	, _redirect_code(ctxt.getRedirectCode())
 	, _autoindex(ctxt.getAutoindex())
-	, _cgi_on(ctxt.getCGI())
 	, _keepalive_time(ctxt.getKeepalive_time())
 	, _keepalive_timeout(ctxt.getKeepalive_timeout())
+	, _cgi_on(ctxt.getCGI())
 {
 	this->setIndexes(ctxt.getIndexes());
 }
@@ -33,6 +33,8 @@ Location::Location(const Location& src)
 	, _redirect(src._redirect)
 	, _redirect_code(src._redirect_code)
 	, _autoindex(src._autoindex)
+	, _keepalive_time(src._keepalive_time)
+	, _keepalive_timeout(src._keepalive_timeout)
 	, _cgi_on(false)
 {
 	this->setIndexes(src.getIndexes());

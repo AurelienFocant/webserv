@@ -23,6 +23,8 @@ class ConfigContext {
 		bool		_autoindex;
 		std::time_t	_keepalive_time;
 		std::time_t	_keepalive_timeout;
+		int			_redirect_code;
+		std::string	_redirect;
 
 		bool		_cgi;
 
@@ -47,8 +49,14 @@ class ConfigContext {
 		std::vector<std::string> const&	getIndexes(void) const;
 		bool		getAutoindex(void) const;
 		void		setAutoindex(bool b);
+		int			getRedirectCode(void) const {return _redirect_code;}
+		void		setRedirectCode(int code) {_redirect_code = code;}
+		std::string	getRedirect(void) const {return _redirect;}
+		void		setRedirect(std::string redirect) {_redirect = redirect;}
 		std::time_t	getKeepalive_time() const;
+		void		setKeepalive_time(std::time_t t) {_keepalive_time = t;}
 		std::time_t	getKeepalive_timeout() const;
+		void		setKeepalive_timeout(std::time_t t) {_keepalive_timeout = t;}
 
 
 		bool		getCGI() const;
