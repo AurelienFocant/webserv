@@ -16,8 +16,8 @@ Location::Location()
 Location::Location(ConfigContext& ctxt)
 	: _name(ctxt.getLocationName())
 	, _root(ctxt.getRoot())
-	, _redirect("/test_redirect/")
-	, _redirect_code(301)
+	, _redirect("")
+	, _redirect_code(0)
 	, _autoindex(ctxt.getAutoindex())
 {
 	this->setIndexes(ctxt.getIndexes());

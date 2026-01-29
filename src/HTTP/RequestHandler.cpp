@@ -47,8 +47,8 @@ bool	RequestHandler::extractPath()
 	}
 
 	_request_path = _request.getRequestUri();
-	std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
-	std::cout << "[DEBUG] Path " << _request_path << std::endl;
+	//std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
+	//std::cout << "[DEBUG] Path " << _request_path << std::endl;
 
 	size_t queryPos = _request_path.find("?");
 	if (queryPos != std::string::npos)
@@ -91,7 +91,7 @@ bool	RequestHandler::resolvePath()
 		_resolved_path = _root + _request_path;
 	}
 
-	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
+	//std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
 	if (!validatePath())
 		return false;
@@ -274,7 +274,7 @@ bool	RequestHandler::hasAutoIndex()
 /* 	if (_matched_location)
 		return (_matched_location->getAutoIndex());
 	return _server.getAutoindex(); */
-	return false;
+	return true;
 }
 
 void	RequestHandler::generateAutoIndex()
@@ -321,7 +321,7 @@ void	RequestHandler::buildErrorResponse(int status_code)
 	int 	fd = -1;
 	size_t	file_size;
 
-	if (loadErrorPage(status_code, fd, file_size))
+	if (loadErrorPage(404, fd, file_size))
 	{
 		_response.setStatusCode(status_code);
 		_response.setHttpVersion(_request.getHttpVersion());
@@ -330,7 +330,7 @@ void	RequestHandler::buildErrorResponse(int status_code)
 		_response.setBodyFd(fd);
 		_response.setBodySize(file_size);
 	}
-	else
+/* 	else
 	{
 		std::string	error_content = generateDefaultError(status_code);
 
@@ -340,7 +340,7 @@ void	RequestHandler::buildErrorResponse(int status_code)
 		_response.setHeader("Content-Length", intToString(error_content.size()));
 		_response.setBodyContent(error_content);
 		_response.setBodySize(error_content.size());
-	}
+	} */
 
 }
 
@@ -370,90 +370,13 @@ std::string	RequestHandler::generateDefaultError(int status_code)
 	std::string			status_message = httpStatusToString(static_cast<t_HttpCode> (status_code));
 
 	html << "<!DOCTYPE html>\n"
-         << "<html lang=\"en\">\n"
-         << "<head>\n"
-         << "    <meta charset=\"UTF-8\">\n"
-         << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-         << "    <title>" << status_code << " " << status_message << "</title>\n"
-         << "    <style>\n"
-         << "        * { margin: 0; padding: 0; box-sizing: border-box; }\n"
-         << "        body {\n"
-         << "            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n"
-         << "            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n"
-         << "            min-height: 100vh;\n"
-         << "            display: flex;\n"
-         << "            align-items: center;\n"
-         << "            justify-content: center;\n"
-         << "            color: #333;\n"
-         << "        }\n"
-         << "        .error-container {\n"
-         << "            background: white;\n"
-         << "            padding: 3rem;\n"
-         << "            border-radius: 20px;\n"
-         << "            box-shadow: 0 20px 60px rgba(0,0,0,0.3);\n"
-         << "            text-align: center;\n"
-         << "            max-width: 600px;\n"
-         << "            animation: fadeIn 0.5s ease-in;\n"
-         << "        }\n"
-         << "        @keyframes fadeIn {\n"
-         << "            from { opacity: 0; transform: translateY(-20px); }\n"
-         << "            to { opacity: 1; transform: translateY(0); }\n"
-         << "        }\n"
-         << "        .error-code {\n"
-         << "            font-size: 6rem;\n"
-         << "            font-weight: bold;\n"
-         << "            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n"
-         << "            -webkit-background-clip: text;\n"
-         << "            -webkit-text-fill-color: transparent;\n"
-         << "            margin-bottom: 1rem;\n"
-         << "        }\n"
-         << "        .error-message {\n"
-         << "            font-size: 1.5rem;\n"
-         << "            color: #555;\n"
-         << "            margin-bottom: 1rem;\n"
-         << "        }\n"
-         << "        .error-description {\n"
-         << "            color: #777;\n"
-         << "            margin-bottom: 2rem;\n"
-         << "            line-height: 1.6;\n"
-         << "        }\n"
-         << "        .home-link {\n"
-         << "            display: inline-block;\n"
-         << "            padding: 12px 30px;\n"
-         << "            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n"
-         << "            color: white;\n"
-         << "            text-decoration: none;\n"
-         << "            border-radius: 25px;\n"
-         << "            font-weight: 600;\n"
-         << "            transition: transform 0.3s ease;\n"
-         << "        }\n"
-         << "        .home-link:hover {\n"
-         << "            transform: translateY(-2px);\n"
-         << "            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);\n"
-         << "        }\n"
-         << "        .server-info {\n"
-         << "            margin-top: 2rem;\n"
-         << "            padding-top: 2rem;\n"
-         << "            border-top: 1px solid #eee;\n"
-         << "            color: #999;\n"
-         << "            font-size: 0.9rem;\n"
-         << "        }\n"
-         << "    </style>\n"
-         << "</head>\n"
-         << "<body>\n"
-         << "    <div class=\"error-container\">\n"
-         << "        <div class=\"error-code\">" << status_code << "</div>\n"
-         << "        <div class=\"error-message\">" << status_message << "</div>\n"
-         << "        <div class=\"error-description\">\n"
-         //<< getErrorDescription(status_code)
-         << "        </div>\n"
-         << "        <a href=\"/\" class=\"home-link\">← Back to Home</a>\n"
-         << "        <div class=\"server-info\">\n"
-         << "            <p>Webserv/1.0</p>\n"
-         << "        </div>\n"
-         << "    </div>\n"
-         << "</body>\n"
-         << "</html>";
+		<< "<html>\n"
+		<< "<head><title>Error " << status_code << "</title></head>\n"
+		<< "<body style=\"font-family:Arial;text-align:center;padding-top:100px;\">\n"
+		<< "    <h1>" << status_code << "</h1>\n"
+		<< "    <p>" << status_message << "</p>\n"
+		<< "</body>\n"
+		<< "</html>";
 
 	return html.str();
 }

@@ -9,6 +9,7 @@ VirtualServer::VirtualServer( void )
 	, _locations()
 {
 	_indexes.push_back("index.html");
+	initDefaultConfig();
 }
 
 VirtualServer::VirtualServer(ConfigContext const& ctxt)
@@ -18,6 +19,7 @@ VirtualServer::VirtualServer(ConfigContext const& ctxt)
 	, _autoindex(ctxt.getAutoindex())
 	, _locations(ctxt.getLocations())
 {
+	initDefaultConfig();
 }
 
 VirtualServer::VirtualServer(const VirtualServer& src)
@@ -28,6 +30,7 @@ VirtualServer::VirtualServer(const VirtualServer& src)
 	, _locations(src._locations)
 {
 	this->setIndexes(src.getIndexes());
+	initDefaultConfig();
 }
 
 VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
@@ -123,6 +126,8 @@ void	VirtualServer::_initDefaultErrorPages(void)
 	std::string	root = "./data/error_pages/";
 	this->error_pages[400] = root + "400.html";
 	this->error_pages[404] = root + "404.html";
+/* 	error_pages.insert(std::make_pair(400, root + "400.html"));
+	error_pages.insert(std::make_pair(404, root + "404.html")); */
 }
 
 void	VirtualServer::initDefaultConfig(void)
