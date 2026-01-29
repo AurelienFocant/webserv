@@ -123,9 +123,8 @@ void	Webserv::initWebServer()
 		// ?? listen options ?
 
 
-		_connections[listenSocket] = Connection(listenSocket, _epoll_fd, &Webserv::listenHandler);
-		// Connection &conn = _connections[listenSocket];
-		// (this->*(conn.handler))(conn);
+		Connection	new_connection(listenSocket, _epoll_fd, 0, &Webserv::listenHandler);
+		_connections.insert(std::make_pair(listenSocket, new_connection));
 
 
 		struct epoll_event	ev_hints;
@@ -134,8 +133,28 @@ void	Webserv::initWebServer()
 		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
 
-		// set up signals
 		signal(SIGINT, sigintHandler);
+	}
+}
+
+void	Webserv::_closeConnection(Connection & conn)
+{
+	(void) conn;
+	// ?? connection to be closed
+		// ?? epoll_ctl DELETE connection from epoll_wait
+		// close(fd);
+		// delete from _connections map()
+}
+
+void	Webserv::_closeStaleConnections(void)
+{
+	std::map<int, Connection>::iterator	it;
+
+	for (it = _connections.begin(); it != _connections.end(); it++) {
+		if (it->second.conn_closed)
+			return (_closeConnection(it->second));
+		if (it->second.hasTimedOut())
+			return (_closeConnection(it->second));
 	}
 }
 
@@ -168,11 +187,7 @@ void	Webserv::run()
 		}
 
 		// check keepalive_timeout and keepalive_time
-
-		// ?? connection to be closed
-			// ?? epoll_ctl DELETE connection from epoll_wait
-			// close(fd);
-			// delete from _connections map()
+		_closeStaleConnections();
 	}
 }
 
@@ -207,7 +222,8 @@ bool	Webserv::listenHandler(Connection & conn)
 	}
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	Connection	new_connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL), &Webserv::clientHandler);
+	new_connection.setLastConnTime(std::time(NULL));
 	_connections.insert(std::make_pair(clientSocket, new_connection));
 	return (true);
 }
@@ -266,7 +282,7 @@ bool	Webserv::clientHandler(Connection & conn)
 
 	else if (conn.getEvent() & EPOLLOUT) {
 		conn.virtual_server = _findCorrectServer(conn.request);
-	
+
 		RequestHandler	reqHandl(conn);
 		reqHandl.handleRequest();
 		conn.response.formatResponse();

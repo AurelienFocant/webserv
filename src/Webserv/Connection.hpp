@@ -48,8 +48,8 @@ class Connection
 
 		void	sendResponse();
 
-		bool	connClosed;
-
+		bool	conn_closed;
+		bool	hasTimedOut(void);
 
 
 
@@ -69,8 +69,7 @@ class Connection
 
 	
 
-		Connection	();
-		Connection	(int fd, const int& epoll_fd, bool (Webserv::*f)(Connection & conn));
+		Connection	(int fd, const int& epoll_fd, std::time_t start_time, bool (Webserv::*f)(Connection & conn));
 		Connection	( const Connection& src );
 		Connection&	operator= ( const Connection& rhs );
 		~Connection	( void );
