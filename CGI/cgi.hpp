@@ -60,7 +60,7 @@ bool	cgi::execute() {
 }
 
 bool	cgi::launchCgi(char** argv, char** env) {
-//Pipe creation for communication with the process
+//Pipe creation for communication with the child
 	int	pipe_fd[2];
 	if (pipe(pipe_fd) < 0) {
 		return (false);
@@ -76,7 +76,6 @@ bool	cgi::launchCgi(char** argv, char** env) {
 		dup2(pipe_fd[0], STDIN_FILENO);
 		close(pipe_fd[0]);
 
-	//DO CHILD STUFF
 		std::execv(argv[0], argv, env);
 		exit(EXIT_FAILURE);
 	}
@@ -85,11 +84,45 @@ bool	cgi::launchCgi(char** argv, char** env) {
 		close(pipe_fd[0]);
 		dup2(pipe_fd[1], STDIN_FILENO);
 		close(pipe_fd[1]);
-
-	//DO PARENT STUFF
 	}
+
+
 //	Need to read child production ?on std::cout?
-//	waitpid(pid); Do we block on it ?
-//	checkChildErrors(); -> wrapper on wait ?
+	int	status = 0;
+	int time = 3000;
+	while (time > 0) {
+		int	ret = waitpid(pid, &status, WNOHANG);
+		switch (waitpid(ret) {
+			case (pid):
+				break ;
+			case (0):
+				time -= 50;
+				if (usleep(50) < 0) {
+					kill(pid);
+					//setStatus code internal error
+					return (false);
+				}
+				break ;
+			default:
+				switch (errno) {
+					case (ECHILD):
+						break ;
+					case (EINTR):
+						break ;
+					case (EINVAL):
+						break ;
+					default:
+						//SOMETHING went really wrong
+				}
+		}
+		//add check for if signaled
+	}
+	if (ret == 0) {
+		kill(pid);
+		//setcode for timeout ?
+	}
+	//Read production of the child
+	std::string	response(std::cin);
+	//Error happened
 	return (true);
 }

@@ -86,6 +86,8 @@ bool	Request::parseRequest() {
 	std::cout << "Request.cpp -l95: " << _progress << std::endl;
 	if (_complete)
 		cleanTokenList();
+	std::vector<std::string> res;
+	res = getHeaderValues("hOsT");
 	return (_complete);
 }
 
@@ -286,9 +288,12 @@ void	Request::safeInsertion(const std::string& key, const std::string& value) {
 		return ;
 }
 
-std::string	Request::normalizeHeadersKey(std::string argument) {
+std::string	Request::normalizeHeadersKey(std::string argument) const {
 	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
-		*it = std::tolower(*it);
+		if (*it == '-')
+			*it = '_';
+		else
+			*it = std::toupper(*it);
 	}
 	return (argument);
 }
@@ -343,6 +348,30 @@ bool			Request::getCompleted() const {
 
 t_HttpCode		Request::getStatusCode() const {
 	return(_status_code);
+}
+
+std::vector<std::string>	Request::getHeaderValues(std::string header_name) const {
+	header_name = normalizeHeadersKey(header_name);
+	std::pair<
+		std::multimap<std::string, std::string>::const_iterator
+	, std::multimap<std::string, std::string>::const_iterator>	range;
+	range = _headers.equal_range(header_name);
+//	size_t	nbr_values = 1;
+//	if (range.first == range.second)
+//	else
+	size_t	nbr_values = _headers.count(header_name);
+	std::vector<std::string> values;
+	values.reserve(nbr_values);
+	std::multimap<std::string, std::string>::const_iterator it = range.first;
+	for (; nbr_values > 0; --nbr_values) {
+		values.push_back(it->second);
+		++it;
+	}
+	return (values);
+}
+
+const std::multimap<std::string, std::string>&	Request::getHeaders() const {
+	return (_headers);
 }
 
 /*Setters*/
@@ -416,7 +445,7 @@ bool	Request::addInput(std::string input) {
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) {
 	ostream << other.getMethod() << '\t' << other.getRequestUri() << '\t' << other.getHttpVersion() << '\n';
-	for (std::multimap<std::string, std::string>::const_iterator	it = other.getHeadersValue().begin(); it != other.getHeadersValue().end(); it++) {
+	for (std::multimap<std::string, std::string>::const_iterator	it = other.getHeaders().begin(); it != other.getHeaders().end(); it++) {
 		std::cout << it->first << ' ' << it->second << '\n';
 	}
 	if (!other.getBody().empty())
