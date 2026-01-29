@@ -271,10 +271,9 @@ bool	RequestHandler::resolveIndex()
 
 bool	RequestHandler::hasAutoIndex()
 {
-/* 	if (_matched_location)
+	if (_matched_location)
 		return (_matched_location->getAutoIndex());
-	return _server.getAutoindex(); */
-	return true;
+	return _server.getAutoindex();
 }
 
 void	RequestHandler::generateAutoIndex()

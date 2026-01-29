@@ -1,7 +1,7 @@
 #include "Response.hpp"
 	
 Response::Response()
-: _state(SEND_HEADER)
+: _state(DEFAULT)
 , _body_type(STATIC)
 , _status_code(OK)
 , _http_version("")
@@ -28,6 +28,8 @@ void	Response::formatResponse()
 		return;
 	std::string	formatted = buildHttpResponse();
 
+	_state = SEND_HEADER;
+	
 	if (formatted.size() > BUFFER_SIZE)
 	{
 		//Doc NGINX: A request header field cannot exceed the size of one buffer as well
@@ -175,6 +177,11 @@ const char*	Response::getDataToSend(size_t& size)
 		return _buffer + _buffer_sent;
 	}
 	return NULL;
+}
+
+bool	Response::isDefault() const
+{
+	return _state == DEFAULT;
 }
 
 bool	Response::isDone() const

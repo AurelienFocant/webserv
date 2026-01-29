@@ -281,9 +281,11 @@ bool	Webserv::clientHandler(Connection & conn)
 {
 	// client close gracefully
 	if (conn.getEvent() & EPOLLRDHUP) {
+		std::cout << "[Error] RDHUP" <<std::endl; 
 	}
 	// error
 	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
+		std::cout << "[Error] HUP or ERR" <<std::endl; 
 	}
 
 	if (conn.getEvent() & EPOLLIN) {
@@ -304,10 +306,13 @@ bool	Webserv::clientHandler(Connection & conn)
 	}
 
 	else if (conn.getEvent() & EPOLLOUT) {
-		conn.virtual_server = _findCorrectServer(conn);
 
-		RequestHandler	reqHandl(conn);
-		reqHandl.handleRequest();
+		if (conn.response.isDefault())
+		{
+			conn.virtual_server = _findCorrectServer(conn);
+			RequestHandler	reqHandl(conn);
+			reqHandl.handleRequest();
+		}
 		conn.response.formatResponse();
 		conn.sendResponse();
 		conn.request.cleanRequest();

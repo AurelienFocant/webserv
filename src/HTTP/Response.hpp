@@ -24,6 +24,7 @@ class	Response
 		~Response();
 	
 	enum	state {
+		DEFAULT,
 		SEND_HEADER,
 		SEND_BODY,
 		DONE,
@@ -42,6 +43,8 @@ class	Response
 	const char*			getDataToSend(size_t& size);
 	void				updateBytesSend(size_t bytes_sent);
 	bool				readBodyChunk();
+
+	bool				isDefault() const;
 	bool				isDone() const;
 
 	void				cleanResponse();
