@@ -39,6 +39,7 @@ class RequestHandler
 
 	bool			processMethods();
 	void			processGetMethod();
+	bool			processPostMethod();
 	/*POST Methods*/
 	//void	processPostMethod() ;
 	bool			createNewUser() ;

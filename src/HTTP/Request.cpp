@@ -122,12 +122,12 @@ bool	Request::parseFirstLine() {
 
 bool	Request::handleBody() {
 	extractHeadersInformations();
-	if (!areHeadersValid()) {
+	/*if (!areHeadersValid()) {
 		_progress = DONE;
 		_complete = true;
 		_status_code = BAD_REQUEST; //see if it is the correct status code
 		return (_complete);
-	}
+	}*/
 	if (_method == GET) { //Check for GET request
 		if (_progress == PARSED) {
 			_progress = DONE;

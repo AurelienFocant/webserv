@@ -1,20 +1,4 @@
-
-#ifndef		CGI_HPP
-# define	CGI_HPP
-
-# include <unistd.h>
-
-namespace	cgi {
-		bool	execute() ;
-		bool	launchCgi(/*name of excec as parameter ?*/);
-		char	*findInterpreter(const std::string& extension) ;
-		char	**buildCgiEnv(const Request& request);
-};
-
-#endif
-
-
-# include "Cgi.hpp"
+#include "cgi.hpp"
 
 bool	cgi::execute(const requestHandler& handler, Response& response, char **env) {
 	char** argv;	

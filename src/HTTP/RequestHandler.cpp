@@ -1,5 +1,6 @@
 #include "RequestHandler.hpp"
 #include "HtmlBuilder.hpp"
+#include "cgi.hpp"
 
 /* ////////////REQUEST HANDLER////////////////// */
 
@@ -205,16 +206,17 @@ void	RequestHandler::processGetMethod()
 	_response.setStatusCode(OK);
 }
 
-bool	Request::processPostMethod() {
-	if (_matched_location._cgi) {
-		CppEnv	env(_request);
-		cgi::execute(*this, _reponse, env);
-	if (_matched_location == "createuser")
-		utils::createUser();
+bool	RequestHandler::processPostMethod() {
+//	if (_matched_location->getCGI()) {
+//		char **env = cgi::buildCgiEnv(_request);
+//		cgi::execute(*this, _response, env);
+//	}
+//	if (_matched_location == "createuser")
+//		utils::createUser();
 //	if (_matched_location == "comment")
 	//	use script create comment;
-	if (_matched_location == "createuser")
-		
+//	if (_matched_location == "createuser")
+	return (true);		
 }
 
 /*
