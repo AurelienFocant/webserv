@@ -167,6 +167,7 @@ void	Webserv::run()
 			(this->*currConn.handler)(currConn);
 		}
 
+		// check keepalive_timeout and keepalive_time
 
 		// ?? connection to be closed
 			// ?? epoll_ctl DELETE connection from epoll_wait
@@ -276,6 +277,8 @@ bool	Webserv::clientHandler(Connection & conn)
 		// conn.response = reqHandl.handleRequest();
 		// _sendResponse();
 	}
+
+	// update last_conn_timestamp;
 
 
 

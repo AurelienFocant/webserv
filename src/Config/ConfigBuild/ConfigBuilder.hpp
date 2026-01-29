@@ -40,7 +40,7 @@ class ConfigBuilder
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&				_getCurrentCtxt(void);
-		void _pushContext(ContextType type);
+		void _pushNewInheritedCtxt(ContextType type);
 		void _popContext (void);
 		void _error(int line, const std::string &);
 

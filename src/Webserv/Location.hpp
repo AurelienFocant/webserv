@@ -16,6 +16,7 @@ class Location
 	std::string _alias;
 	bool		_autoindex;
 	std::vector<std::string>	_indexes;
+	bool	_cgi_on;
 
 	public:
 
@@ -38,7 +39,6 @@ class Location
 	void	setIndexes(const std::vector<std::string>& indexes) {_indexes = indexes;}
 	void	setAutoIndex(bool autoindex) {_autoindex = autoindex;}
 
-	void	addIndexFile(const std::string& file) {_indexes.push_back(file);}
 
 	Location	();
 	Location	(ConfigContext& ctxt);

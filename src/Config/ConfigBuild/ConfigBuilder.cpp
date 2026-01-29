@@ -16,7 +16,7 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
     _initHandlers();
 	_initDirectiveSpecs();
 
-	_pushContext(MAIN);
+	_pushNewInheritedCtxt(MAIN);
     visit(*block);
 	_popContext();
 
@@ -31,9 +31,9 @@ void ConfigBuilder::visit(const BlockNode& node)
 
     const std::string& name = node.name;
 	if (name == "server")
-		_pushContext(SERVER);
+		_pushNewInheritedCtxt(SERVER);
 	else if (name == "location")
-		_pushContext(LOCATION);
+		_pushNewInheritedCtxt(LOCATION);
 	else if (name != "ast_root")
 		_error(node.line, std::string("Unknown block: ") + name);
 
@@ -49,9 +49,10 @@ void ConfigBuilder::visit(const BlockNode& node)
 		_addServer(server);
 	}
 	else if (name == "location") {
+		std::string location_name = node.args[0];
+		_getCurrentCtxt().isCGI(location_name);
 		Location loc(_getCurrentCtxt());
-		loc.setName(node.args[0]);
-		// loc._isCGI();
+		loc.setName(location_name);
 		_popContext();
 		_getCurrentCtxt().addLocation(loc.getName(), loc);
 	}
@@ -170,7 +171,7 @@ ConfigContext& ConfigBuilder::_getCurrentCtxt()
 	return _contextStack.top();
 }
 
-void ConfigBuilder::_pushContext(ContextType type)
+void ConfigBuilder::_pushNewInheritedCtxt(ContextType type)
 {
 	ConfigContext newContext(type);
 

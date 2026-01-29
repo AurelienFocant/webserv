@@ -20,15 +20,13 @@ class ConfigContext {
 		std::map<std::string, Location> _locations;
 		std::vector<std::string>		_indexes;
 		bool		_autoindex;
+		bool		_cgi;
 
 	public:
-		ConfigContext(void);
-		ConfigContext(ContextType t);
-		ConfigContext(const ConfigContext &src);
-		ConfigContext& operator=(const ConfigContext &rhs);
-		~ConfigContext(void);
+		void	inheritFrom(const ConfigContext &parent);
 
-		void inheritFrom(const ConfigContext &parent);
+		bool	isCGI(std::string location_name);
+
 
 		ContextType getType(void) const;
 		int         getPort(void) const;
@@ -45,5 +43,11 @@ class ConfigContext {
 		std::vector<std::string> const&	getIndexes(void) const;
 		bool		getAutoindex(void) const;
 		void		setAutoindex(bool b);
+		bool		getCGI() const;
 
+		ConfigContext(void);
+		ConfigContext(ContextType t);
+		ConfigContext(const ConfigContext &src);
+		ConfigContext& operator=(const ConfigContext &rhs);
+		~ConfigContext(void);
 };

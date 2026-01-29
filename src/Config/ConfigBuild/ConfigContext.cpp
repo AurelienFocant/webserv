@@ -1,3 +1,4 @@
+#include "ConfigContext.hpp"
 #include "VirtualServer.hpp"
 #include "ConfigBuilder.hpp"
 #include <vector>
@@ -14,6 +15,7 @@ ConfigContext::ConfigContext(ContextType t)
 	, _locationName("")
 	, _locations()
 	, _autoindex(false)
+	, _cgi(false)
 {
 	_indexes.push_back("index.html");
 }
@@ -27,6 +29,7 @@ ConfigContext::ConfigContext(const ConfigContext &src)
 	, _locations(src._locations)
 	, _indexes(src._indexes)
 	, _autoindex(src._autoindex)
+	, _cgi(src._cgi)
 {
 }
 
@@ -41,6 +44,7 @@ ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
         _locations = rhs._locations;
 		_indexes = rhs._indexes;
 		_autoindex = rhs._autoindex;
+		_cgi = rhs._cgi;
     }
     return *this;
 }
@@ -48,6 +52,8 @@ ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
 ConfigContext::~ConfigContext(void)
 {
 }
+
+
 
 void ConfigContext::inheritFrom(const ConfigContext &parent)
 {
@@ -58,6 +64,17 @@ void ConfigContext::inheritFrom(const ConfigContext &parent)
 	_autoindex = parent._autoindex;
 }
 
+bool ConfigContext::isCGI(std::string location_name)
+{
+	if (location_name[location_name.size()] != '$')
+		return (false);
+
+	_cgi = true;
+	return (true);
+}
+
+
+// Getters Setters
 ContextType ConfigContext::getType(void) const
 {
 	return _type;
@@ -131,4 +148,9 @@ bool	ConfigContext::getAutoindex(void) const
 void	ConfigContext::setAutoindex(bool b)
 {
 	_autoindex = b;
+}
+
+bool	ConfigContext::getCGI(void) const
+{
+	return (_cgi);
 }

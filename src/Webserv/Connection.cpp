@@ -5,6 +5,8 @@
 Connection::Connection()
 	: _fd(-1)
 	, _epoll_fd(-1) // a surveiller avec obj map
+	, _first_conn(0)
+	, _last_conn(0)
 	, handler(NULL)
 	, connClosed(false)
 {
@@ -13,6 +15,8 @@ Connection::Connection()
 Connection::Connection(int fd, const int& epoll_fd, bool (Webserv::*f)(Connection & conn))
 	: _fd(fd)
 	, _epoll_fd(epoll_fd)
+	, _first_conn(std::time(NULL))
+	, _last_conn(0)
 	, handler(f)
 	, connClosed(false)
 {
@@ -21,6 +25,8 @@ Connection::Connection(int fd, const int& epoll_fd, bool (Webserv::*f)(Connectio
 Connection::Connection( const Connection& src )
 	: _fd(src._fd)
 	, _epoll_fd(src._epoll_fd)
+	, _first_conn(src._first_conn)
+	, _last_conn(src._last_conn)
 	, handler(src.handler)
 	, connClosed(src.connClosed)
 {
@@ -31,6 +37,7 @@ Connection&	Connection::operator= ( const Connection& rhs )
 {
 	if (this != &rhs) {
 		_fd = rhs._fd;
+		_last_conn = rhs._last_conn;
 		handler = rhs.handler;
 		connClosed = rhs.connClosed;
 	}
@@ -96,4 +103,19 @@ uint32_t	Connection::getEvent(void) const
 int	Connection::getFd(void) const
 {
 	return (_fd);
+}
+
+std::time_t Connection::getFirstConnTime() const
+{
+	return (_first_conn);
+}
+
+void		Connection::setLastConnTime(std::time_t time)
+{
+	_last_conn = time;
+}
+
+std::time_t Connection::getLastConnTime()	const
+{
+	return (_last_conn);
 }
