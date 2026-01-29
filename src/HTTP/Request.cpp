@@ -86,8 +86,6 @@ bool	Request::parseRequest() {
 	std::cout << "Request.cpp -l95: " << _progress << std::endl;
 	if (_complete)
 		cleanTokenList();
-	std::vector<std::string> res;
-	res = getHeaderValues("hOsT");
 	return (_complete);
 }
 
@@ -123,16 +121,21 @@ bool	Request::parseFirstLine() {
 }
 
 bool	Request::handleBody() {
+	extractHeadersInformations();
+	if (!areHeadersValid()) {
+		_progress = DONE;
+		_complete = true;
+		_status_code = BAD_REQUEST; //see if it is the correct status code
+		return (_complete);
+	}
 	if (_method == GET) { //Check for GET request
 		if (_progress == PARSED) {
-			extractHeadersInformations();
 			_progress = DONE;
 			_complete = true;
 			_status_code = OK;
 		}
 	}
 	else if (_method == POST) { //Parsing body if POST request
-		extractHeadersInformations();
 		defineBodyExtractionHandler();
 	}
 	else {
@@ -299,7 +302,7 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 }
 
 const char*			Request::important_argument[] = {
-	"content-length", "content-type", "transfert-encoding"
+	"CONTENT_LENGTH", "TRANSFERT_ENCODING"
 	};
 
 void	Request::detectImportantValue(std::string& argument, std::string value) {
@@ -313,11 +316,10 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 			_content_length = std::atol(value.c_str()); 
 			break ;
 		case (1):
-			_content_type = value;
-			break ;
-		case (2):
-//			if (value != "chunked");
-			_content_encoding = true;
+			if (value != "chunked")
+				_status_code = BAD_REQUEST; //FIND CORRECT ERROR
+			else
+				_content_encoding = true;
 			break ;
 		default:
 			break ; 
@@ -356,9 +358,6 @@ std::vector<std::string>	Request::getHeaderValues(std::string header_name) const
 		std::multimap<std::string, std::string>::const_iterator
 	, std::multimap<std::string, std::string>::const_iterator>	range;
 	range = _headers.equal_range(header_name);
-//	size_t	nbr_values = 1;
-//	if (range.first == range.second)
-//	else
 	size_t	nbr_values = _headers.count(header_name);
 	std::vector<std::string> values;
 	values.reserve(nbr_values);

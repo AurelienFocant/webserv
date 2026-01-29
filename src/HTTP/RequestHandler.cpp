@@ -205,46 +205,25 @@ void	RequestHandler::processGetMethod()
 	_response.setStatusCode(OK);
 }
 
+bool	Request::processPostMethod() {
+	if (_matched_location._cgi) {
+		CppEnv	env(_request);
+		cgi::execute(*this, _reponse, env);
+	if (_matched_location == "createuser")
+		utils::createUser();
+//	if (_matched_location == "comment")
+	//	use script create comment;
+	if (_matched_location == "createuser")
+		
+}
+
 /*
-void	Request::processPostMethod() {
-	if (_is_directory)
-	{
-		if	(_resolved_path[_resolved_path.length() -1] != '/') //Le serveur n'a pas le droit de modifier l'url en "silence. soit redirect /dir/ soit 404"
-		{
-			_response.setStatusCode(MOVED_PERMANENTLY);
-			// set response header Location: request_path + "/";
-			return;
-		}
-		if (!resolveIndex())
-		{
-			if (hasAutoIndex())
-			{
-				generateAutoIndex();
-				_response.setStatusCode(OK);
-				return; // listing HTML genere directement enregistre dans le body de response?
-			}
-			else
-				_response.setStatusCode(FORBIDDEN); //Directory listing forbidden
-			return;
-		}
-	}
-
-	int	fd = openReadFile(_resolved_path);
-	if (fd < 0)
-		return;
-
-	int target_size = fileSize(_resolved_path);
-
-*/	/* Init Response *//*
-	_response.setStatusCode(OK);
-	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Type", getContentType(_resolved_path));
-	_response.setHeader("Content-Length", intToString(target_size));
-	_response.setBodyFd(fd);
-	_response.setBodySize(target_size);
-	_response.setStatusCode(OK);
+void	Request::processDelMethod() {
+	if (_matched_location == "comment")
+	//	use script delete comment;
 }
 */
+
 /* INDEX/DIRECTORY HANDLING */
 
 bool	RequestHandler::resolveIndex()
