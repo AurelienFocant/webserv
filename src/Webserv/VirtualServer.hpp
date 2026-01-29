@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <ctime>
 
 #include "Location.hpp"
 
@@ -17,8 +18,9 @@ class VirtualServer
 	 	std::string		_server_name;
 		bool			_autoindex;
 		std::vector<std::string>		_indexes;
-
 		std::map<std::string, Location>	_locations;
+		std::time_t	_keepalive_time;
+		std::time_t	_keepalive_timeout;
 
 		void	_initDefaultErrorPages(void);
 

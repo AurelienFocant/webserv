@@ -17,6 +17,8 @@ VirtualServer::VirtualServer(ConfigContext const& ctxt)
 	, _server_name(ctxt.getServerName())
 	, _autoindex(ctxt.getAutoindex())
 	, _locations(ctxt.getLocations())
+	, _keepalive_time(ctxt.getKeepalive_time())
+	, _keepalive_timeout(ctxt.getKeepalive_timeout())
 {
 	_indexes = ctxt.getIndexes();
 }

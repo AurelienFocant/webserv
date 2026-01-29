@@ -15,6 +15,8 @@ ConfigContext::ConfigContext(ContextType t)
 	, _locationName("")
 	, _locations()
 	, _autoindex(false)
+	, _keepalive_time(3600)
+	, _keepalive_timeout(75)
 	, _cgi(false)
 {
 	_indexes.push_back("index.html");
@@ -29,6 +31,8 @@ ConfigContext::ConfigContext(const ConfigContext &src)
 	, _locations(src._locations)
 	, _indexes(src._indexes)
 	, _autoindex(src._autoindex)
+	, _keepalive_time(src._keepalive_time)
+	, _keepalive_timeout(src._keepalive_timeout)
 	, _cgi(src._cgi)
 {
 }
@@ -44,6 +48,8 @@ ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
         _locations = rhs._locations;
 		_indexes = rhs._indexes;
 		_autoindex = rhs._autoindex;
+		_keepalive_time = rhs._keepalive_time;
+		_keepalive_timeout = rhs._keepalive_timeout;
 		_cgi = rhs._cgi;
     }
     return *this;
@@ -62,6 +68,8 @@ void ConfigContext::inheritFrom(const ConfigContext &parent)
 	_serverName = parent._serverName;
 	_indexes = parent._indexes;
 	_autoindex = parent._autoindex;
+	_keepalive_time = parent._keepalive_time;
+	_keepalive_timeout = parent._keepalive_timeout;
 }
 
 bool ConfigContext::isCGI(std::string location_name)
@@ -149,6 +157,18 @@ void	ConfigContext::setAutoindex(bool b)
 {
 	_autoindex = b;
 }
+
+std::time_t	ConfigContext::getKeepalive_time() const
+{
+	return (_keepalive_time);
+}
+
+std::time_t	ConfigContext::getKeepalive_timeout() const
+{
+	return (_keepalive_timeout);
+}
+
+
 
 bool	ConfigContext::getCGI(void) const
 {

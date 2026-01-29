@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <ctime>
 
 class ConfigContext;
 
@@ -17,6 +18,8 @@ class Location
 	bool		_autoindex;
 	std::vector<std::string>	_indexes;
 	bool	_cgi_on;
+	std::time_t	_keepalive_time;
+	std::time_t	_keepalive_timeout;
 
 	public:
 

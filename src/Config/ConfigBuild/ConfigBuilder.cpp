@@ -98,26 +98,30 @@ void	ConfigBuilder::_validateStatement(ConfigNode const& node)
 
 void ConfigBuilder::_initDirectiveSpecs()
 {
-	_direcSpecs["ast_root"]		= DirectiveSpecs(MAIN, 0, 0);
-	_direcSpecs["server"]		= DirectiveSpecs(MAIN, 0, 0);
-	_direcSpecs["location"]		= DirectiveSpecs(SERVER, 1, 1);
+	_direcSpecs["ast_root"]				= DirectiveSpecs(MAIN, 0, 0);
+	_direcSpecs["server"]	   			= DirectiveSpecs(MAIN, 0, 0);
+	_direcSpecs["location"]	   			= DirectiveSpecs(SERVER, 1, 1);
 
-	_direcSpecs["listen"]		= DirectiveSpecs(SERVER, 1, 1);
-	_direcSpecs["root"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
-	_direcSpecs["server_name"]	= DirectiveSpecs(SERVER, 1, 1);
-	_direcSpecs["index"]		= DirectiveSpecs(SERVER|LOCATION, 1, 10);
-	_direcSpecs["autoindex"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["listen"]	   			= DirectiveSpecs(SERVER, 1, 1);
+	_direcSpecs["root"]		   			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["server_name"] 			= DirectiveSpecs(SERVER, 1, 1);
+	_direcSpecs["index"]	   			= DirectiveSpecs(SERVER|LOCATION, 1, 10);
+	_direcSpecs["autoindex"]   			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["keepalive_time"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["keepalive_timeout"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 }
 
 
 // Handlers
 void ConfigBuilder::_initHandlers()
 {
-	_handlers["listen"]		= &ConfigBuilder::_handleListen;
-	_handlers["root"]		= &ConfigBuilder::_handleRoot;
-	_handlers["server_name"]= &ConfigBuilder::_handleServerName;
-	_handlers["index"]		= &ConfigBuilder::_handleIndex;
-	_handlers["autoindex"]	= &ConfigBuilder::_handleAutoindex;
+	_handlers["listen"]				= &ConfigBuilder::_handleListen;
+	_handlers["root"]				= &ConfigBuilder::_handleRoot;
+	_handlers["server_name"]		= &ConfigBuilder::_handleServerName;
+	_handlers["index"]				= &ConfigBuilder::_handleIndex;
+	_handlers["autoindex"]			= &ConfigBuilder::_handleAutoindex;
+	_handlers["keepalive_time"]		= &ConfigBuilder::_handleKeepaliveTime;
+	_handlers["keepalive_timeout"]	= &ConfigBuilder::_handleKeepaliveTimeout;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -162,6 +166,36 @@ void ConfigBuilder::_handleAutoindex(const DirectiveNode& d)
 		_getCurrentCtxt().setAutoindex(false);
 	else
 		_error(d.line, "unknown option for 'autoindex' directive");
+}
+
+void ConfigBuilder::_handleKeepaliveTime(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int port;
+	char c;
+
+	ss >> port;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid time format");
+	if (port < 60 || port > 3600)
+		_error(d.line, "Keepalive_time should be between 1min and 1h");
+
+	_getCurrentCtxt().setPort(port);
+}
+
+void ConfigBuilder::_handleKeepaliveTimeout(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int port;
+	char c;
+
+	ss >> port;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid time format");
+	if (port < 1 || port > 600)
+		_error(d.line, "Keepalive_timeout should be between 1sec and 10min");
+
+	_getCurrentCtxt().setPort(port);
 }
 
 

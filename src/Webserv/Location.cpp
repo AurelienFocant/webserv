@@ -17,6 +17,8 @@ Location::Location(ConfigContext& ctxt)
 	, _root(ctxt.getRoot())
 	, _autoindex(ctxt.getAutoindex())
 	, _cgi_on(ctxt.getCGI())
+	, _keepalive_time(ctxt.getKeepalive_time())
+	, _keepalive_timeout(ctxt.getKeepalive_timeout())
 {
 	this->setIndexes(ctxt.getIndexes());
 }

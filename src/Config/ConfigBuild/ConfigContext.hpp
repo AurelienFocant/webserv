@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include "VirtualServer.hpp"
+#include <ctime>
 
 enum ContextType {
     MAIN = 1,
@@ -20,6 +21,9 @@ class ConfigContext {
 		std::map<std::string, Location> _locations;
 		std::vector<std::string>		_indexes;
 		bool		_autoindex;
+		std::time_t	_keepalive_time;
+		std::time_t	_keepalive_timeout;
+
 		bool		_cgi;
 
 	public:
@@ -43,6 +47,10 @@ class ConfigContext {
 		std::vector<std::string> const&	getIndexes(void) const;
 		bool		getAutoindex(void) const;
 		void		setAutoindex(bool b);
+		std::time_t	getKeepalive_time() const;
+		std::time_t	getKeepalive_timeout() const;
+
+
 		bool		getCGI() const;
 
 		ConfigContext(void);
