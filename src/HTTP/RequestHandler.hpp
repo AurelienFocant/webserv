@@ -53,6 +53,16 @@ class RequestHandler
 	bool			hasAutoIndex();
 	void			generateAutoIndex();
 
+	/* Build Response */
+	void			buildFileResponse(int fd);
+	void			buildHtmlResponse(const std::string& content);
+	void			buildRedirectResponse(int status_code, const std::string& redirect_uri);
+	void			buildErrorResponse(int status_code);
+
+	/* Errors */
+	bool			loadErrorPage(int status_code, int& fd, size_t& size);
+	std::string		generateDefaultError(int status_code);
+
 	/* File operations */
 	int				openReadFile(const std::string& path);
 	int				openWriteFile(const std::string& path);

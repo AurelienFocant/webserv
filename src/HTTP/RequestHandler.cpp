@@ -23,13 +23,17 @@ RequestHandler::~RequestHandler() {}
 
 void	RequestHandler::handleRequest()
 {
-	if (_response.getStatusCode() != OK)
+	if (_request.getStatusCode() != OK)
+	{
+		buildErrorResponse(_request.getStatusCode());
 		return;
+	}
 
 	if (!extractPath() || !resolvePath() || !processMethods())
+	{
+		buildErrorResponse(_response.getStatusCode());
 		return;
-
-	_response.setStatusCode(OK);
+	}
 }
 
 /* PATH PROCESSING */
@@ -89,7 +93,10 @@ bool	RequestHandler::resolvePath()
 
 	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
-	if (!validatePath() || handleTrailingSlash())
+	if (!validatePath())
+		return false;
+
+	if (_is_directory && handleTrailingSlash())
 		return false;
 
 	return true;
@@ -98,13 +105,13 @@ bool	RequestHandler::resolvePath()
 
 bool	RequestHandler::handleConfigRedirect()
 {
-	if (_matched_location->getRedirect().empty() || !_matched_location->getRedirectCode())
+	std::string redirect_uri = _matched_location->getRedirect();
+	int			redirect_code = _matched_location->getRedirectCode();
+
+	if (redirect_uri.empty() || !redirect_code)
 		return false;
 	
-	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setStatusCode(_matched_location->getRedirectCode());
-	_response.setHeader("Location", _matched_location->getRedirect());
-	_response.setHeader("Content-Length", "0");
+	buildRedirectResponse(redirect_code, redirect_uri);
 
 	return true;
 }
@@ -114,13 +121,10 @@ bool	RequestHandler::handleTrailingSlash()
 	if (_request_path[_request_path.length() - 1] == '/')
 		return false;
 
-	std::string redirect_url = _request_path + "/";
+	std::string redirect_uri = _request_path + "/";
 	//if query??
 
-	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setStatusCode(MOVED_PERMANENTLY);
-	_response.setHeader("Location", redirect_url);
-	_response.setHeader("Content-Length", "0");
+	buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
 
 	return true;
 }
@@ -223,7 +227,6 @@ bool	RequestHandler::processGetMethod()
 			if (hasAutoIndex())
 			{
 				generateAutoIndex();
-				_response.setStatusCode(OK);
 				return true;
 			}
 			else
@@ -236,15 +239,7 @@ bool	RequestHandler::processGetMethod()
 	if (fd < 0)
 		return false;
 
-	int target_size = fileSize(_resolved_path);
-
-	/* Init Response */
-	_response.setStatusCode(OK);
-	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Type", getContentType(_resolved_path));
-	_response.setHeader("Content-Length", intToString(target_size));
-	_response.setBodyFd(fd);
-	_response.setBodySize(target_size);
+	buildFileResponse(fd);
 
 	return true;
 }
@@ -286,16 +281,181 @@ void	RequestHandler::generateAutoIndex()
 {
 	std::string	html = ::generateAutoIndex(_resolved_path);
 
+	buildHtmlResponse(html);
+}
+
+/* BUILD RESPONSE */
+
+void	RequestHandler::buildFileResponse(int fd)
+{
+	int target_size = fileSize(_resolved_path);
+
+	_response.setStatusCode(OK);
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setHeader("Content-Type", getContentType(_resolved_path));
+	_response.setHeader("Content-Length", intToString(target_size));
+	_response.setBodyFd(fd);
+	_response.setBodySize(target_size);
+}
+
+void	RequestHandler::buildHtmlResponse(const std::string& content)
+{
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
 	_response.setHeader("Content-Type", "text/html");
-	_response.setHeader("Content-Length", intToString(html.size()));
-	_response.setBodyContent(html);
-	_response.setBodySize(html.size());
+	_response.setHeader("Content-Length", intToString(content.size()));
+	_response.setBodyContent(content);
+	_response.setBodySize(content.size());
+}
 
-	std::cout << "[DEBUG] Autoindex size: " << html.size() << " bytes" << std::endl;
-	std::cout << "[DEBUG] Html generated: " << html << std::endl;
+void	RequestHandler::buildRedirectResponse(int status_code, const std::string& redirect_uri)
+{
+	_response.setStatusCode(status_code);
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setHeader("Location", redirect_uri);
+	_response.setHeader("Content-Length", "0");
+}
 
+void	RequestHandler::buildErrorResponse(int status_code)
+{
+	int 	fd = -1;
+	size_t	file_size;
+
+	if (loadErrorPage(status_code, fd, file_size))
+	{
+		_response.setStatusCode(status_code);
+		_response.setHttpVersion(_request.getHttpVersion());
+		_response.setHeader("Content-Type", "text/html");
+		_response.setHeader("Content-Length", intToString(file_size));
+		_response.setBodyFd(fd);
+		_response.setBodySize(file_size);
+	}
+	else
+	{
+		std::string	error_content = generateDefaultError(status_code);
+
+		_response.setStatusCode(status_code);
+		_response.setHttpVersion(_request.getHttpVersion());
+		_response.setHeader("Content-Type", "text/html");
+		_response.setHeader("Content-Length", intToString(error_content.size()));
+		_response.setBodyContent(error_content);
+		_response.setBodySize(error_content.size());
+	}
+
+}
+
+/* ERRORS */
+
+bool	RequestHandler::loadErrorPage(int status_code, int& fd, size_t& size)
+{
+
+	std::map<int, std::string>::iterator it = _server.error_pages.find(status_code);
+	if (it == _server.error_pages.end())
+		return false;
+	
+	std::string error_path = it->second;
+
+	fd = openReadFile(error_path);
+	if (fd < 0)
+		return false;
+
+	size = fileSize(error_path);
+	
+	return true;
+}
+
+std::string	RequestHandler::generateDefaultError(int status_code)
+{
+	std::stringstream	html;
+	std::string			status_message = httpStatusToString(static_cast<t_HttpCode> (status_code));
+
+	html << "<!DOCTYPE html>\n"
+         << "<html lang=\"en\">\n"
+         << "<head>\n"
+         << "    <meta charset=\"UTF-8\">\n"
+         << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+         << "    <title>" << status_code << " " << status_message << "</title>\n"
+         << "    <style>\n"
+         << "        * { margin: 0; padding: 0; box-sizing: border-box; }\n"
+         << "        body {\n"
+         << "            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n"
+         << "            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n"
+         << "            min-height: 100vh;\n"
+         << "            display: flex;\n"
+         << "            align-items: center;\n"
+         << "            justify-content: center;\n"
+         << "            color: #333;\n"
+         << "        }\n"
+         << "        .error-container {\n"
+         << "            background: white;\n"
+         << "            padding: 3rem;\n"
+         << "            border-radius: 20px;\n"
+         << "            box-shadow: 0 20px 60px rgba(0,0,0,0.3);\n"
+         << "            text-align: center;\n"
+         << "            max-width: 600px;\n"
+         << "            animation: fadeIn 0.5s ease-in;\n"
+         << "        }\n"
+         << "        @keyframes fadeIn {\n"
+         << "            from { opacity: 0; transform: translateY(-20px); }\n"
+         << "            to { opacity: 1; transform: translateY(0); }\n"
+         << "        }\n"
+         << "        .error-code {\n"
+         << "            font-size: 6rem;\n"
+         << "            font-weight: bold;\n"
+         << "            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n"
+         << "            -webkit-background-clip: text;\n"
+         << "            -webkit-text-fill-color: transparent;\n"
+         << "            margin-bottom: 1rem;\n"
+         << "        }\n"
+         << "        .error-message {\n"
+         << "            font-size: 1.5rem;\n"
+         << "            color: #555;\n"
+         << "            margin-bottom: 1rem;\n"
+         << "        }\n"
+         << "        .error-description {\n"
+         << "            color: #777;\n"
+         << "            margin-bottom: 2rem;\n"
+         << "            line-height: 1.6;\n"
+         << "        }\n"
+         << "        .home-link {\n"
+         << "            display: inline-block;\n"
+         << "            padding: 12px 30px;\n"
+         << "            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n"
+         << "            color: white;\n"
+         << "            text-decoration: none;\n"
+         << "            border-radius: 25px;\n"
+         << "            font-weight: 600;\n"
+         << "            transition: transform 0.3s ease;\n"
+         << "        }\n"
+         << "        .home-link:hover {\n"
+         << "            transform: translateY(-2px);\n"
+         << "            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);\n"
+         << "        }\n"
+         << "        .server-info {\n"
+         << "            margin-top: 2rem;\n"
+         << "            padding-top: 2rem;\n"
+         << "            border-top: 1px solid #eee;\n"
+         << "            color: #999;\n"
+         << "            font-size: 0.9rem;\n"
+         << "        }\n"
+         << "    </style>\n"
+         << "</head>\n"
+         << "<body>\n"
+         << "    <div class=\"error-container\">\n"
+         << "        <div class=\"error-code\">" << status_code << "</div>\n"
+         << "        <div class=\"error-message\">" << status_message << "</div>\n"
+         << "        <div class=\"error-description\">\n"
+         //<< getErrorDescription(status_code)
+         << "        </div>\n"
+         << "        <a href=\"/\" class=\"home-link\">← Back to Home</a>\n"
+         << "        <div class=\"server-info\">\n"
+         << "            <p>Webserv/1.0</p>\n"
+         << "        </div>\n"
+         << "    </div>\n"
+         << "</body>\n"
+         << "</html>";
+
+	return html.str();
 }
 
 /* UTILS */
