@@ -6,6 +6,8 @@
 Location::Location()
 	: _name("")
 	, _root("")
+	, _redirect("")
+	, _redirect_code(0)
 	, _autoindex(false)
 	, _cgi_on(false)
 {
@@ -15,6 +17,8 @@ Location::Location()
 Location::Location(ConfigContext& ctxt)
 	: _name(ctxt.getLocationName())
 	, _root(ctxt.getRoot())
+	, _redirect("")
+	, _redirect_code(0)
 	, _autoindex(ctxt.getAutoindex())
 	, _cgi_on(ctxt.getCGI())
 	, _keepalive_time(ctxt.getKeepalive_time())
@@ -26,6 +30,8 @@ Location::Location(ConfigContext& ctxt)
 Location::Location(const Location& src)
 	: _name(src._name)
 	, _root(src._root)
+	, _redirect(src._redirect)
+	, _redirect_code(src._redirect_code)
 	, _autoindex(src._autoindex)
 	, _cgi_on(false)
 {
@@ -37,6 +43,8 @@ Location&	Location::operator= (const Location& rhs)
 	if (this != &rhs) {
 		_name = rhs._name;
 		_root = rhs._root;
+		_redirect = rhs._redirect;
+		_redirect_code = rhs._redirect_code;
 		_autoindex = rhs._autoindex;
 		_indexes = rhs._indexes;
 		_cgi_on = rhs._cgi_on;

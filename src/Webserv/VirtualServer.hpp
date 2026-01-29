@@ -34,17 +34,16 @@ class VirtualServer
 		const Location							&getLocationAt(std::string key) const;
 
 		// getReferences or getValues ??
-		void			setPort(unsigned int port);
-		unsigned int	getPort(void) const;
-		void			setRoot(std::string root);
-		std::string		getRoot(void) const;
-		void			setServName(std::string name);
-		std::string		getServName(void) const;
-		void							setIndexes(std::vector<std::string> const& src);
-		std::vector<std::string> const&	getIndexes(void) const;
-		bool			getAutoindex(void) const;
-		void	   	 	setAutoindex(bool b);
-
+		void								setPort(unsigned int port);
+		unsigned int						getPort(void) const;
+		void								setRoot(std::string root);
+		std::string							getRoot(void) const;
+		void								setServName(std::string name);
+		std::string							getServName(void) const;
+		void								setIndexes(std::vector<std::string> const& src);
+		std::vector<std::string> const&		getIndexes(void) const;
+		bool								getAutoindex(void) const;
+		void	   	 						setAutoindex(bool b);
 
 		VirtualServer	( void );
 		VirtualServer	(ConfigContext const& ctxt);

@@ -4,7 +4,7 @@ const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
 						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
 const char*			Request::important_argument[] = {
-	"content-length", "content-type", "transfert-encoding"
+	"content-length", "content-type", "transfert-encoding", NULL
 	};
 
 /*Constructor - Copy Constructor - Destructor*/
@@ -348,12 +348,20 @@ std::string	Request::Request::getBody() const {
 	return (_body);
 }
 
-bool			Request::getCompleted() const {
+bool			Request::isCompleted() const {
 	return(_complete);
 }
 
 t_HttpCode		Request::getStatusCode() const {
 	return(_status_code);
+}
+
+std::string		Request::getHeaderValue(const std::string& key) const
+{
+	std::multimap<std::string, std::string>::const_iterator it = _headers.find(key);
+	if (it != _headers.end())
+		return it->second;
+	return "";
 }
 
 /*Setters*/

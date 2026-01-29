@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <signal.h>
@@ -243,11 +244,37 @@ std::string	_receiveLoop(int fd)
 }
 
 
-VirtualServer&	Webserv::_findCorrectServer(Request const& request)
+VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
 {
-	// TODO
-	(void) request;
-	return (getServer(0));
+	//Check for the existence of Host in Request for HTTP/1.1?
+	sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+
+	//get local port
+	if (getsockname(conn.getFd(), (sockaddr*) &addr, &len) < 0)
+		throw std::runtime_error("getsockname failed");
+	unsigned int port = ntohs(addr.sin_port);
+
+	std::string	host = conn.request.getHeaderValue("host");
+
+	size_t	colon = host.find(':');
+	if (colon != std::string::npos)
+		host = host.substr(0, colon);
+
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getPort() == port && _servers[i].getServName() == host)
+				return _servers[i];
+	}
+
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getPort() == port)
+			return _servers[i];
+	}
+
+	return (getServer(0)); // return first server as default server (HTTP/1.0) if non occurence or error? Need testing
+	// return error si pas de port qui correspond
 }
 
 bool	Webserv::clientHandler(Connection & conn)
@@ -259,20 +286,16 @@ bool	Webserv::clientHandler(Connection & conn)
 	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
 	}
 
-
-
 	if (conn.getEvent() & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
 
-		// RequestParser request_parser(request_str);
-		// conn.request = request_parser.parseRequest();
 		if (request_str.size() != 0) {
 			conn.request.addInput(request_str);
 			conn.request.parseRequest();
 		}
 
-		if (conn.request.getCompleted()) {
+		if (conn.request.isCompleted()) {
 			struct epoll_event	ev_hints;
 			ev_hints.events = EPOLLOUT | EPOLLRDHUP;
 			ev_hints.data.fd = conn.getFd();
@@ -281,22 +304,16 @@ bool	Webserv::clientHandler(Connection & conn)
 	}
 
 	else if (conn.getEvent() & EPOLLOUT) {
-		conn.virtual_server = _findCorrectServer(conn.request);
+		conn.virtual_server = _findCorrectServer(conn);
 
 		RequestHandler	reqHandl(conn);
 		reqHandl.handleRequest();
 		conn.response.formatResponse();
 		conn.sendResponse();
 		conn.request.cleanRequest();
-
-
-		// conn.response = reqHandl.handleRequest();
-		// _sendResponse();
 	}
 
 	// update last_conn_timestamp;
-
-
 
 	return (true);
 }
