@@ -24,3 +24,4 @@ It includes :
 - listen can only do so on a port
 - only one server name can be specified
 - root can only be an absolute path
+- return directive can only take the form 'return code URL'

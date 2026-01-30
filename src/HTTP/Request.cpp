@@ -344,7 +344,7 @@ std::string	Request::Request::getBody() const {
 	return (_body);
 }
 
-bool			Request::getCompleted() const {
+bool			Request::isCompleted() const {
 	return(_complete);
 }
 

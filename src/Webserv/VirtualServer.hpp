@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <ctime>
 
 #include "Location.hpp"
 
@@ -15,9 +16,13 @@ class VirtualServer
 		unsigned int	_port;
 		std::string		_root;
 	 	std::string		_server_name;
+		std::string		_redirect;
+		int				_redirect_code;
 		bool			_autoindex;
-		std::vector<std::string>		_indexes;
+		std::time_t	_keepalive_time;
+		std::time_t	_keepalive_timeout;
 
+		std::vector<std::string>		_indexes;
 		std::map<std::string, Location>	_locations;
 
 		void	_initDefaultErrorPages(void);
@@ -32,17 +37,16 @@ class VirtualServer
 		const Location							&getLocationAt(std::string key) const;
 
 		// getReferences or getValues ??
-		void			setPort(unsigned int port);
-		unsigned int	getPort(void) const;
-		void			setRoot(std::string root);
-		std::string		getRoot(void) const;
-		void			setServName(std::string name);
-		std::string		getServName(void) const;
-		void							setIndexes(std::vector<std::string> const& src);
-		std::vector<std::string> const&	getIndexes(void) const;
-		bool			getAutoindex(void) const;
-		void	   	 	setAutoindex(bool b);
-
+		void								setPort(unsigned int port);
+		unsigned int						getPort(void) const;
+		void								setRoot(std::string root);
+		std::string							getRoot(void) const;
+		void								setServName(std::string name);
+		std::string							getServName(void) const;
+		void								setIndexes(std::vector<std::string> const& src);
+		std::vector<std::string> const&		getIndexes(void) const;
+		bool								getAutoindex(void) const;
+		void	   	 						setAutoindex(bool b);
 
 		VirtualServer	( void );
 		VirtualServer	(ConfigContext const& ctxt);

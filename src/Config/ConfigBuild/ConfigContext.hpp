@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include "VirtualServer.hpp"
+#include <ctime>
 
 enum ContextType {
     MAIN = 1,
@@ -20,15 +21,18 @@ class ConfigContext {
 		std::map<std::string, Location> _locations;
 		std::vector<std::string>		_indexes;
 		bool		_autoindex;
+		std::time_t	_keepalive_time;
+		std::time_t	_keepalive_timeout;
+		int			_redirect_code;
+		std::string	_redirect;
+
+		bool		_cgi;
 
 	public:
-		ConfigContext(void);
-		ConfigContext(ContextType t);
-		ConfigContext(const ConfigContext &src);
-		ConfigContext& operator=(const ConfigContext &rhs);
-		~ConfigContext(void);
+		void	inheritFrom(const ConfigContext &parent);
 
-		void inheritFrom(const ConfigContext &parent);
+		bool	isCGI(std::string location_name);
+
 
 		ContextType getType(void) const;
 		int         getPort(void) const;
@@ -45,5 +49,21 @@ class ConfigContext {
 		std::vector<std::string> const&	getIndexes(void) const;
 		bool		getAutoindex(void) const;
 		void		setAutoindex(bool b);
+		int			getRedirectCode(void) const {return _redirect_code;}
+		void		setRedirectCode(int code) {_redirect_code = code;}
+		std::string	getRedirect(void) const {return _redirect;}
+		void		setRedirect(std::string redirect) {_redirect = redirect;}
+		std::time_t	getKeepalive_time() const;
+		void		setKeepalive_time(std::time_t t) {_keepalive_time = t;}
+		std::time_t	getKeepalive_timeout() const;
+		void		setKeepalive_timeout(std::time_t t) {_keepalive_timeout = t;}
 
+
+		bool		getCGI() const;
+
+		ConfigContext(void);
+		ConfigContext(ContextType t);
+		ConfigContext(const ConfigContext &src);
+		ConfigContext& operator=(const ConfigContext &rhs);
+		~ConfigContext(void);
 };

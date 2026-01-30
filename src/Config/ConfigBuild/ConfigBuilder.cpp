@@ -16,7 +16,7 @@ std::vector<VirtualServer> ConfigBuilder::build(const ConfigNode* root)
     _initHandlers();
 	_initDirectiveSpecs();
 
-	_pushContext(MAIN);
+	_pushNewInheritedCtxt(MAIN);
     visit(*block);
 	_popContext();
 
@@ -31,9 +31,9 @@ void ConfigBuilder::visit(const BlockNode& node)
 
     const std::string& name = node.name;
 	if (name == "server")
-		_pushContext(SERVER);
+		_pushNewInheritedCtxt(SERVER);
 	else if (name == "location")
-		_pushContext(LOCATION);
+		_pushNewInheritedCtxt(LOCATION);
 	else if (name != "ast_root")
 		_error(node.line, std::string("Unknown block: ") + name);
 
@@ -49,9 +49,10 @@ void ConfigBuilder::visit(const BlockNode& node)
 		_addServer(server);
 	}
 	else if (name == "location") {
+		std::string location_name = node.args[0];
+		_getCurrentCtxt().isCGI(location_name);
 		Location loc(_getCurrentCtxt());
-		loc.setName(node.args[0]);
-		// loc._isCGI();
+		loc.setName(location_name);
 		_popContext();
 		_getCurrentCtxt().addLocation(loc.getName(), loc);
 	}
@@ -97,26 +98,32 @@ void	ConfigBuilder::_validateStatement(ConfigNode const& node)
 
 void ConfigBuilder::_initDirectiveSpecs()
 {
-	_direcSpecs["ast_root"]		= DirectiveSpecs(MAIN, 0, 0);
-	_direcSpecs["server"]		= DirectiveSpecs(MAIN, 0, 0);
-	_direcSpecs["location"]		= DirectiveSpecs(SERVER, 1, 1);
+	_direcSpecs["ast_root"]				= DirectiveSpecs(MAIN, 0, 0);
+	_direcSpecs["server"]	   			= DirectiveSpecs(MAIN, 0, 0);
+	_direcSpecs["location"]	   			= DirectiveSpecs(SERVER, 1, 1);
 
-	_direcSpecs["listen"]		= DirectiveSpecs(SERVER, 1, 1);
-	_direcSpecs["root"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
-	_direcSpecs["server_name"]	= DirectiveSpecs(SERVER, 1, 1);
-	_direcSpecs["index"]		= DirectiveSpecs(SERVER|LOCATION, 1, 10);
-	_direcSpecs["autoindex"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["listen"]	   			= DirectiveSpecs(SERVER, 1, 1);
+	_direcSpecs["root"]		   			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["server_name"] 			= DirectiveSpecs(SERVER, 1, 1);
+	_direcSpecs["index"]	   			= DirectiveSpecs(SERVER|LOCATION, 1, 10);
+	_direcSpecs["autoindex"]   			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["keepalive_time"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["keepalive_timeout"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["return"]				= DirectiveSpecs(SERVER|LOCATION, 2, 2);
 }
 
 
 // Handlers
 void ConfigBuilder::_initHandlers()
 {
-	_handlers["listen"]		= &ConfigBuilder::_handleListen;
-	_handlers["root"]		= &ConfigBuilder::_handleRoot;
-	_handlers["server_name"]= &ConfigBuilder::_handleServerName;
-	_handlers["index"]		= &ConfigBuilder::_handleIndex;
-	_handlers["autoindex"]	= &ConfigBuilder::_handleAutoindex;
+	_handlers["listen"]				= &ConfigBuilder::_handleListen;
+	_handlers["root"]				= &ConfigBuilder::_handleRoot;
+	_handlers["server_name"]		= &ConfigBuilder::_handleServerName;
+	_handlers["index"]				= &ConfigBuilder::_handleIndex;
+	_handlers["autoindex"]			= &ConfigBuilder::_handleAutoindex;
+	_handlers["keepalive_time"]		= &ConfigBuilder::_handleKeepaliveTime;
+	_handlers["keepalive_timeout"]	= &ConfigBuilder::_handleKeepaliveTimeout;
+	_handlers["return"]				= &ConfigBuilder::_handleReturn;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -163,6 +170,54 @@ void ConfigBuilder::_handleAutoindex(const DirectiveNode& d)
 		_error(d.line, "unknown option for 'autoindex' directive");
 }
 
+void ConfigBuilder::_handleKeepaliveTime(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int time;
+	char c;
+
+	ss >> time;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid time format");
+	if (time < 60 || time > 3600)
+		_error(d.line, "Keepalive_time should be between 1min and 1h");
+
+	_getCurrentCtxt().setKeepalive_time(time);
+}
+
+void ConfigBuilder::_handleKeepaliveTimeout(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int time;
+	char c;
+
+	ss >> time;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid time format");
+	if (time < 1 || time > 600)
+		_error(d.line, "Keepalive_timeout should be between 1sec and 10min");
+
+	_getCurrentCtxt().setKeepalive_timeout(time);
+}
+
+void ConfigBuilder::_handleReturn(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int code;
+	char c;
+
+	ss >> code;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid status code format");
+	if (code < 100 || code > 505)
+		_error(d.line, "invalid status code");
+	_getCurrentCtxt().setRedirectCode(code);
+
+
+	std::string	s(d.args[1]);
+	_getCurrentCtxt().setRedirect(s);
+}
+
 
 // Utils
 ConfigContext& ConfigBuilder::_getCurrentCtxt()
@@ -170,7 +225,7 @@ ConfigContext& ConfigBuilder::_getCurrentCtxt()
 	return _contextStack.top();
 }
 
-void ConfigBuilder::_pushContext(ContextType type)
+void ConfigBuilder::_pushNewInheritedCtxt(ContextType type)
 {
 	ConfigContext newContext(type);
 

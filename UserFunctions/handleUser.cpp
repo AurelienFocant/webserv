@@ -1,44 +1,53 @@
-#include "createNewUser.hpp"
+#include "handleUser.hpp"
 
-bool	handleUser::createNewUser() {
+static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& output) ;
+static std::string	urlDecode(const std::string& str) ;
+static int	hexVal(char c) ;
+static bool	dirExist(const std::string& name) ;
+static bool	isSafeName(const std::string& name) ;
+static bool	userExistInCsv(const std::string& csv, const std::string& name) ;
+static bool	addUserToCsv(const std::string& csv, const std::string& name, const std::string& password) ;
+static bool	delUserInCsv(const std::string& csv, const std::string& user) ;
+
+bool	handleUser::createNewUser(const RequestHandler& handler) {
 	const std::string	db_root = "./data/dB";
 	const std::string	csv_path = db_root + "/users_login.csv";
 
 	std::map<std::string, std::string>	key_value;
-	key_value = parseFormUrlEncoded(_request.getBody());
+	key_value = parseFormUrlEncoded(handler._request.getBody());
 
 	const std::string	user_name = key_value.count("username") ? key_value["username"] : "";
 	const std::string	user_password = key_value.count("password") ? key_value["password"] : "";
 
 	if (isSafeName(user_name) || user_password.empty()) {
-		_response.setStatusCode(BAD_REQUEST);
+		handler._response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
 
 	if (!dirExist(db_root)) {
-		_response.setStatusCode(INTERNAL_SERVER_ERROR);
+		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	if (userInCsv(csv_path, username)) {
-		_response.setStatusCode(BAD_REQUEST);
+		handler._response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
-	if (dirExist(db_root + "/" + user_name))
-		_response.setStatusCode(INTERNAL_SERVER_ERROR);
+	if (dirExist(db_root + "/" + user_name)) {
+		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	else {
 		if (mkdir(db_root + "/" + user_name, 0755)) {
-			_response.setStatusCode(INTERNAL_SERVER_ERROR);
+			handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
 			return (false);
 		}
 	}
 	if (!addUserToCsv(csv_path, user_name, user_password)) {
 		rm(db_root + "/" + user_name);
-		_response.setStatusCode(INTERNAL_SERVER_ERROR);
+		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
-	_response.setStatusCode(OK);
+	handler._response.setStatusCode(OK);
 	return (true);
 }
 
@@ -47,30 +56,30 @@ bool	handleUser::deleteUser() {
 	const std::string	csv_path = db_root + "/users_longin.csv";
 
 	std::map<std::string, std::string>	key_value;
-	key_value = parseFormUrlEncoded(_request.getBody());
+	key_value = parseFormUrlEncoded(handler._request.getBody());
 
 	const std::string	user_name = key_value.count("username") ? key_value["username"] : "";
 	const std::string	user_password = key_value.count("password") ? key_value["password"] : "";
 
 	if (isSafeName(user_name) || user_password.empty()) {
-		_response.setStatusCode(BAD_REQUEST);
+		handler._response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
 
 	if (!dirExist(db_root)) {
-		_response.setStatusCode(INTERNAL_SERVER_ERROR);
+		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	const std::string	user_dir = db_root + "/" + user_name;
 	if (!removeTree(user_dir)) {
-		_response.setStatusCode(INTERNAL_SERVER_ERROR);
+		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	if (!delUserInCsv(csv_path, username)) {
-		_response.setStatusCode(BAD_REQUEST);
+		handler._response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
-	_response.setStatusCode(OK);
+	handler._response.setStatusCode(OK);
 	return (true);
 }
 

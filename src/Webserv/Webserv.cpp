@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <signal.h>
@@ -123,9 +124,8 @@ void	Webserv::initWebServer()
 		// ?? listen options ?
 
 
-		_connections[listenSocket] = Connection(listenSocket, _epoll_fd, &Webserv::listenHandler);
-		// Connection &conn = _connections[listenSocket];
-		// (this->*(conn.handler))(conn);
+		Connection	new_connection(listenSocket, _epoll_fd, 0, &Webserv::listenHandler);
+		_connections.insert(std::make_pair(listenSocket, new_connection));
 
 
 		struct epoll_event	ev_hints;
@@ -134,8 +134,28 @@ void	Webserv::initWebServer()
 		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
 
-		// set up signals
 		signal(SIGINT, sigintHandler);
+	}
+}
+
+void	Webserv::_closeConnection(Connection & conn)
+{
+	(void) conn;
+	// ?? connection to be closed
+		// ?? epoll_ctl DELETE connection from epoll_wait
+		// close(fd);
+		// delete from _connections map()
+}
+
+void	Webserv::_closeStaleConnections(void)
+{
+	std::map<int, Connection>::iterator	it;
+
+	for (it = _connections.begin(); it != _connections.end(); it++) {
+		if (it->second.conn_closed)
+			return (_closeConnection(it->second));
+		if (it->second.hasTimedOut())
+			return (_closeConnection(it->second));
 	}
 }
 
@@ -167,11 +187,8 @@ void	Webserv::run()
 			(this->*currConn.handler)(currConn);
 		}
 
-
-		// ?? connection to be closed
-			// ?? epoll_ctl DELETE connection from epoll_wait
-			// close(fd);
-			// delete from _connections map()
+		// check keepalive_timeout and keepalive_time
+		_closeStaleConnections();
 	}
 }
 
@@ -206,7 +223,8 @@ bool	Webserv::listenHandler(Connection & conn)
 	}
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	Connection	new_connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL), &Webserv::clientHandler);
+	new_connection.setLastConnTime(std::time(NULL));
 	_connections.insert(std::make_pair(clientSocket, new_connection));
 	return (true);
 }
@@ -226,36 +244,60 @@ std::string	_receiveLoop(int fd)
 }
 
 
-VirtualServer&	Webserv::_findCorrectServer(Request const& request)
+VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
 {
-	// TODO
-	(void) request;
-	return (getServer(0));
+	//Check for the existence of Host in Request for HTTP/1.1?
+	sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+
+	//get local port
+	if (getsockname(conn.getFd(), (sockaddr*) &addr, &len) < 0)
+		throw std::runtime_error("getsockname failed");
+	unsigned int port = ntohs(addr.sin_port);
+
+	std::string	host = conn.request.getHeaderValues("host").at(0);
+
+	size_t	colon = host.find(':');
+	if (colon != std::string::npos)
+		host = host.substr(0, colon);
+
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getPort() == port && _servers[i].getServName() == host)
+				return _servers[i];
+	}
+
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getPort() == port)
+			return _servers[i];
+	}
+
+	return (getServer(0)); // return first server as default server (HTTP/1.0) if non occurence or error? Need testing
+	// return error si pas de port qui correspond
 }
 
 bool	Webserv::clientHandler(Connection & conn)
 {
 	// client close gracefully
 	if (conn.getEvent() & EPOLLRDHUP) {
+		std::cout << "[Error] RDHUP" <<std::endl; 
 	}
 	// error
 	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
+		std::cout << "[Error] HUP or ERR" <<std::endl; 
 	}
-
-
 
 	if (conn.getEvent() & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
 
-		// RequestParser request_parser(request_str);
-		// conn.request = request_parser.parseRequest();
 		if (request_str.size() != 0) {
 			conn.request.addInput(request_str);
 			conn.request.parseRequest();
 		}
 
-		if (conn.request.getCompleted()) {
+		if (conn.request.isCompleted()) {
 			struct epoll_event	ev_hints;
 			ev_hints.events = EPOLLOUT | EPOLLRDHUP;
 			ev_hints.data.fd = conn.getFd();
@@ -264,20 +306,19 @@ bool	Webserv::clientHandler(Connection & conn)
 	}
 
 	else if (conn.getEvent() & EPOLLOUT) {
-		conn.virtual_server = _findCorrectServer(conn.request);
-	
-		RequestHandler	reqHandl(conn);
-		reqHandl.handleRequest();
+
+		if (conn.response.isDefault())
+		{
+			conn.virtual_server = _findCorrectServer(conn);
+			RequestHandler	reqHandl(conn);
+			reqHandl.handleRequest();
+		}
 		conn.response.formatResponse();
 		conn.sendResponse();
 		conn.request.cleanRequest();
-
-
-		// conn.response = reqHandl.handleRequest();
-		// _sendResponse();
 	}
 
-
+	// update last_conn_timestamp;
 
 	return (true);
 }

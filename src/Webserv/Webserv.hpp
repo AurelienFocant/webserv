@@ -14,14 +14,17 @@ class Webserv
 	private:
 		int	_epoll_fd;
 		std::vector<VirtualServer>	_servers;
-		std::map<int, Connection >	_connections;
+		std::map<int, Connection>	_connections;
 		std::string		_configPath;
 		std::ifstream	_configFile;
 
 		void	_openConfig(); 
 		void	_parseConfig();
 
-		VirtualServer&	_findCorrectServer(Request const& request);
+		VirtualServer&	_findCorrectServer(Connection const& conn);
+
+		void	_closeConnection(Connection & conn);
+		void	_closeStaleConnections(void);
 
 		Webserv(void);
 

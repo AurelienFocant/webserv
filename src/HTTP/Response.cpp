@@ -1,7 +1,7 @@
 #include "Response.hpp"
 	
 Response::Response()
-: _state(SEND_HEADER)
+: _state(DEFAULT)
 , _body_type(STATIC)
 , _status_code(OK)
 , _http_version("")
@@ -28,6 +28,8 @@ void	Response::formatResponse()
 		return;
 	std::string	formatted = buildHttpResponse();
 
+	_state = SEND_HEADER;
+	
 	if (formatted.size() > BUFFER_SIZE)
 	{
 		//Doc NGINX: A request header field cannot exceed the size of one buffer as well
@@ -66,37 +68,59 @@ std::string	Response::buildHttpResponse()
 
 bool	Response::readBodyChunk()
 {
-	if (_body_type == STATIC && _body_fd != -1)
+	switch (_body_type)
 	{
-		ssize_t bytes_read = read(_body_fd, _buffer, BUFFER_SIZE);
-		if (bytes_read < 0)
+		case STATIC:
 		{
-			std::cerr << "[Error] Failed to read file: " <<
-			strerror(errno) << std::endl;
+			ssize_t bytes_read = read(_body_fd, _buffer, BUFFER_SIZE);
+			if (bytes_read < 0)
+			{
+				std::cerr << "[Error] Failed to read file: " <<
+				strerror(errno) << std::endl;
 
-			close(_body_fd);
-			_body_fd = -1;
+				close(_body_fd);
+				_body_fd = -1;
 
-			_state = DONE;
-			return false;
+				_state = DONE;
+				return false;
+			}
+			if (bytes_read == 0)
+			{
+				close(_body_fd);
+				_body_fd = -1;
+
+				_state = DONE;
+				return false;
+			}
+			_buffer_size = bytes_read;
+			_buffer_sent = 0;
+			break ;
 		}
-		if (bytes_read == 0)
+		case DYNAMIC:
 		{
-			close(_body_fd);
-			_body_fd = -1;
-
-			_state = DONE;
-			return false;
+			// DYNAMIC a implementer
+			break;
 		}
-		_buffer_size = bytes_read;
-		_buffer_sent = 0;
+		case MEMORY:
+		{
+			size_t remaining = _body_content.size() - _body_sent;
+			if (remaining == 0)
+			{
+				_state = DONE;
+				return false;
+			}
+			size_t to_copy = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
+			std::memcpy(_buffer, _body_content.c_str() + _body_sent, to_copy);
+
+			_buffer_size = to_copy;
+			_buffer_sent = 0;
+			_body_sent += to_copy;
+			break;
+		}
 	}
-
-	// DYNAMIC a implementer
 
 	return true;
 }
-
 
 void	Response::updateBytesSend(size_t bytes_sent)
 {
@@ -106,9 +130,13 @@ void	Response::updateBytesSend(size_t bytes_sent)
 		_header_sent += bytes_sent;
 		if (_buffer_sent >= _buffer_size)
 		{
-			_state++;
-			// implementer hasBody() pour savoir si on passe directement a DONE
 			resetBuffer();
+			if (_body_size == 0) // if NO body
+			{
+				_state = DONE;
+				return;
+			}
+			_state = SEND_BODY;
 		}
 	}
 	else if (_state == SEND_BODY)
@@ -151,6 +179,11 @@ const char*	Response::getDataToSend(size_t& size)
 	return NULL;
 }
 
+bool	Response::isDefault() const
+{
+	return _state == DEFAULT;
+}
+
 bool	Response::isDone() const
 {
 	return _state == DONE;
@@ -188,7 +221,6 @@ std::string	Response::getHttpVersion() const
 	return _http_version;
 }
 
-
 std::string	Response::getHeader(const std::string& key) const
 {
 	std::map<std::string, std::string>::const_iterator it = _headers.find(key);
@@ -224,14 +256,17 @@ void	Response::setBodySize(int size)
 }
 
 
-/* std::string	Response::getBodyContent() const
+std::string	Response::getBodyContent(size_t& size) const
 {
-	return _content;
-} */
+	size = _body_size;
+	return _body_content;
+}
 
 void	Response::setBodyContent(const std::string& content)
 {
+	_body_type = MEMORY;
 	_body_content = content;
+	_body_sent = 0;
 }
 
 void	Response::resetBuffer()
@@ -270,18 +305,3 @@ std::ostream& operator<<(std::ostream& os, const Response& response)
 	   << ", FD: " << response._body_fd;
 	return os;
 }
-
-/* 
-	// RESPONSABILITE de Connection -> Send Response au fur et a mesure
-
-	char buffer[8192]; //8KB optimal?
-	ssize_t bytesRead;
-
-	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
-		response_body.append(buffer, bytesRead);
-	close(fd);
-	if (bytesRead < 0)
-	{
-		_status_code = INTERNAL_SERVER_ERROR;
-		return;
-	} */

@@ -5,30 +5,43 @@ VirtualServer::VirtualServer( void )
 	: _port(-1)
 	, _root("")
 	, _server_name("")
+	, _redirect("")
+	, _redirect_code(0)
 	, _autoindex(false)
 	, _locations()
 {
 	_indexes.push_back("index.html");
+	initDefaultConfig();
 }
 
 VirtualServer::VirtualServer(ConfigContext const& ctxt)
 	: _port(ctxt.getPort())
 	, _root(ctxt.getRoot())
 	, _server_name(ctxt.getServerName())
+	, _redirect(ctxt.getRedirect())
+	, _redirect_code(ctxt.getRedirectCode())
 	, _autoindex(ctxt.getAutoindex())
+	, _keepalive_time(ctxt.getKeepalive_time())
+	, _keepalive_timeout(ctxt.getKeepalive_timeout())
 	, _locations(ctxt.getLocations())
 {
 	_indexes = ctxt.getIndexes();
+	initDefaultConfig();
 }
 
 VirtualServer::VirtualServer(const VirtualServer& src)
 	: _port(src._port)
 	, _root(src._root)
 	, _server_name(src._server_name)
+	, _redirect(src._redirect)
+	, _redirect_code(src._redirect_code)
 	, _autoindex(src._autoindex)
+	, _keepalive_time(src._keepalive_time)
+	, _keepalive_timeout(src._keepalive_timeout)
 	, _locations(src._locations)
 {
 	this->setIndexes(src.getIndexes());
+	initDefaultConfig();
 }
 
 VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
@@ -39,6 +52,10 @@ VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
 		_root = rhs._root;
 		_server_name = rhs._server_name;
 		_autoindex = rhs._autoindex;
+		_redirect = rhs._redirect;
+		_redirect_code = rhs._redirect_code;
+		_keepalive_time = rhs._keepalive_time;
+		_keepalive_timeout = rhs._keepalive_timeout;
 		_locations = rhs._locations;
 	}
 	return (*this);
@@ -46,7 +63,6 @@ VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
 
 VirtualServer::~VirtualServer( void )
 {
-	// free all locations ?
 }
 
 const std::map<std::string, Location>& VirtualServer::getLocations() const
@@ -124,6 +140,8 @@ void	VirtualServer::_initDefaultErrorPages(void)
 	std::string	root = "./data/error_pages/";
 	this->error_pages[400] = root + "400.html";
 	this->error_pages[404] = root + "404.html";
+/* 	error_pages.insert(std::make_pair(400, root + "400.html"));
+	error_pages.insert(std::make_pair(404, root + "404.html")); */
 }
 
 void	VirtualServer::initDefaultConfig(void)

@@ -37,10 +37,13 @@ class ConfigBuilder
 		void _handleServerName	(const DirectiveNode& d);
 		void _handleIndex		(const DirectiveNode& d);
 		void _handleAutoindex	(const DirectiveNode& d);
+		void _handleKeepaliveTime(const DirectiveNode& d);
+		void _handleKeepaliveTimeout(const DirectiveNode& d);
+		void _handleReturn(const DirectiveNode& d);
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&				_getCurrentCtxt(void);
-		void _pushContext(ContextType type);
+		void _pushNewInheritedCtxt(ContextType type);
 		void _popContext (void);
 		void _error(int line, const std::string &);
 

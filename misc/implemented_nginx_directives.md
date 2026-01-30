@@ -38,8 +38,6 @@ toc: false
 - keepalive_timeout
     - (timeout before idle connection is closed)
     - (default 75s)
-- client_body_timeout   --> http, server, location
-    - (default 60s)
 
 
 ## Could be implemented

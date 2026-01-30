@@ -90,7 +90,7 @@ std::string	addAutoindexHtml(std::string const& path, std::string const& body)
 	return (html.str());
 }
 
-std::string _generateAutoIndex(std::string const& path)
+std::string generateAutoIndex(std::string const& path)
 {
 	std::vector<std::string>	filenames	= resolveLocalDirFilenames(path.c_str());
 	std::string					body		= buildHtmlBody(filenames);
