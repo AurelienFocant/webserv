@@ -1,8 +1,27 @@
+<!-- index.html (replace your current COMMENT section + add the display box + JS)
+     Assumes CGI endpoints:
+       - POST /cgi-bin/add_comment.py      (username, comment)
+       - POST /cgi-bin/remove_comment.py   (username, id)
+       - GET  /cgi-bin/get_all_comments.sh (returns TSV: username \t id \t comment)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Webserv Test</title>
+  <meta charset="UTF-8">
+  <title>Webserv Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .row { margin: 8px 0; }
+    .comments { border: 1px solid #ccc; padding: 12px; max-width: 800px; }
+    .comment { border-top: 1px solid #eee; padding: 10px 0; display: flex; gap: 12px; align-items: flex-start; }
+    .comment:first-child { border-top: none; }
+    .meta { min-width: 220px; font-size: 12px; color: #444; }
+    .text { flex: 1; white-space: pre-wrap; word-break: break-word; }
+    button { cursor: pointer; }
+    .danger { color: #b00020; }
+    .status { font-size: 12px; color: #333; margin-top: 8px; }
+    input, textarea { width: 420px; max-width: 100%; }
+  </style>
 </head>
 <body>
 
@@ -12,61 +31,217 @@
 
 <!-- LOGIN FORM -->
 <h2>Login (POST)</h2>
-<form method="POST" action="/login">
-    <label>
-        Username:
-        <input type="text" name="username">
-    </label><br><br>
+<form method="POST" action="/login" id="loginForm">
+  <label>Username:
+    <input type="text" name="username" id="loginUsername">
+  </label><br><br>
 
-    <label>
-        Password:
-        <input type="password" name="password">
-    </label><br><br>
+  <label>Password:
+    <input type="password" name="password">
+  </label><br><br>
 
-    <input type="submit" value="Login">
+  <input type="submit" value="Login">
 </form>
 
 <hr>
 
-<!-- COMMENT FORM -->
-<h2>Post a Comment (POST)</h2>
-<form method="POST" action="/comment">
-    <textarea name="comment" rows="5" cols="40"></textarea><br><br>
-    <input type="submit" value="Send Comment">
-</form>
+<!-- COMMENT FORM (JS -> CGI add_comment.py) -->
+<h2>Post a Comment</h2>
+
+<div class="row">
+  <label>Username (required):
+    <input type="text" id="commentUsername" placeholder="alice">
+  </label>
+</div>
+
+<div class="row">
+  <label>Comment:
+    <br>
+    <textarea id="commentText" rows="4" cols="60" placeholder="Write a comment..."></textarea>
+  </label>
+</div>
+
+<div class="row">
+  <button id="sendCommentBtn">Send Comment</button>
+</div>
+
+<div class="status" id="commentStatus"></div>
+
+<hr>
+
+<!-- DISPLAY ALL COMMENTS -->
+<h2>All comments (all users)</h2>
+<div class="comments">
+  <div class="row">
+    <button id="refreshBtn">Refresh</button>
+  </div>
+  <div id="commentsList"></div>
+</div>
 
 <hr>
 
 <!-- FILE UPLOAD TEST -->
 <h2>File Upload (multipart/form-data)</h2>
 <form method="POST" action="/upload" enctype="multipart/form-data">
-    <input type="file" name="file"><br><br>
-    <input type="submit" value="Upload">
+  <input type="file" name="file"><br><br>
+  <input type="submit" value="Upload">
 </form>
 
 <hr>
 
-<!-- DELETE METHOD TEST -->
-<h2>DELETE request (manual test)</h2>
-<p>Use curl:</p>
-<pre>
-curl -X DELETE http://localhost:8080/resource
-</pre>
+<script>
+  const ADD_URL = "/cgi-bin/add_comment.py";
+  const DEL_URL = "/cgi-bin/remove_comment.py";
+  const LIST_URL = "/cgi-bin/get_all_comments.sh";
 
-<hr>
+  const loginUsername = document.getElementById("loginUsername");
+  const commentUsername = document.getElementById("commentUsername");
+  const commentText = document.getElementById("commentText");
+  const statusBox = document.getElementById("commentStatus");
+  const commentsList = document.getElementById("commentsList");
 
-<!-- REDIRECTION TEST -->
-<h2>Redirection</h2>
-<a href="/redirect">Test redirection (301 / 302)</a>
+  // Convenience: keep comment username in sync with login username (client-side only)
+  loginUsername.addEventListener("input", () => {
+    if (!commentUsername.value) commentUsername.value = loginUsername.value;
+  });
 
-<hr>
+  function setStatus(msg) {
+    statusBox.textContent = msg;
+  }
 
-<!-- ERROR TEST -->
-<h2>Error pages</h2>
-<ul>
-    <li><a href="/does_not_exist">404 Not Found</a></li>
-    <li><a href="/forbidden">403 Forbidden</a></li>
-</ul>
+  function formEncode(obj) {
+    return Object.keys(obj)
+      .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(obj[k]))
+      .join("&");
+  }
+
+  async function addComment() {
+    const username = commentUsername.value.trim();
+    const comment = commentText.value;
+
+    if (!username) { setStatus("Username is required."); return; }
+    if (!comment.trim()) { setStatus("Comment is empty."); return; }
+
+    setStatus("Sending...");
+
+    const body = formEncode({ username, comment });
+
+    const res = await fetch(ADD_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+
+    const txt = await res.text();
+    if (!res.ok) {
+      setStatus("Error: " + txt.trim());
+      return;
+    }
+
+    setStatus(txt.trim());
+    commentText.value = "";
+    await loadComments();
+  }
+
+  // TSV format expected: username \t id \t comment\n
+  function parseTSV(text) {
+    const lines = text.split("\n").map(l => l.trimEnd()).filter(l => l.length > 0);
+    const items = [];
+    for (const line of lines) {
+      const parts = line.split("\t");
+      if (parts.length < 3) continue;
+      const username = parts[0];
+      const id = parts[1];
+      const comment = parts.slice(2).join("\t"); // if comment contained tabs, keep remainder
+      items.push({ username, id, comment });
+    }
+    return items;
+  }
+
+  function renderComments(items) {
+    commentsList.innerHTML = "";
+    if (items.length === 0) {
+      commentsList.textContent = "No comments.";
+      return;
+    }
+
+    for (const it of items) {
+      const row = document.createElement("div");
+      row.className = "comment";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `user: ${it.username}\nid: ${it.id}`;
+
+      const text = document.createElement("div");
+      text.className = "text";
+      text.textContent = it.comment;
+
+      const btn = document.createElement("button");
+      btn.className = "danger";
+      btn.textContent = "Delete";
+      btn.addEventListener("click", async () => {
+        await deleteComment(it.username, it.id);
+      });
+
+      row.appendChild(meta);
+      row.appendChild(text);
+      row.appendChild(btn);
+
+      commentsList.appendChild(row);
+    }
+  }
+
+  async function loadComments() {
+    setStatus("Loading comments...");
+    const res = await fetch(LIST_URL, { method: "GET" });
+    const txt = await res.text();
+
+    if (!res.ok) {
+      setStatus("Error loading comments: " + txt.trim());
+      commentsList.textContent = "";
+      return;
+    }
+
+    const items = parseTSV(txt);
+    renderComments(items);
+    setStatus("Comments loaded.");
+  }
+
+  async function deleteComment(username, id) {
+    setStatus("Deleting...");
+
+    const body = formEncode({ username, id });
+
+    const res = await fetch(DEL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+
+    const txt = await res.text();
+    if (!res.ok) {
+      setStatus("Delete error: " + txt.trim());
+      return;
+    }
+
+    setStatus(txt.trim());
+    await loadComments();
+  }
+
+  document.getElementById("sendCommentBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    addComment().catch(err => setStatus("Client error: " + String(err)));
+  });
+
+  document.getElementById("refreshBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    loadComments().catch(err => setStatus("Client error: " + String(err)));
+  });
+
+  // initial load
+  loadComments().catch(err => setStatus("Client error: " + String(err)));
+</script>
 
 </body>
 </html>

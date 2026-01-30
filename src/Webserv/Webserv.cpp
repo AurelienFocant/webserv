@@ -255,7 +255,7 @@ VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
 		throw std::runtime_error("getsockname failed");
 	unsigned int port = ntohs(addr.sin_port);
 
-	std::string	host = conn.request.getHeaderValue("host");
+	std::string	host = conn.request.getHeaderValues("host").at(0);
 
 	size_t	colon = host.find(':');
 	if (colon != std::string::npos)

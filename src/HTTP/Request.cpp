@@ -3,9 +3,6 @@
 const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
 						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
-const char*			Request::important_argument[] = {
-	"content-length", "content-type", "transfert-encoding", NULL
-	};
 
 /*Constructor - Copy Constructor - Destructor*/
 Request::Request() : HTTPTokenizer()
@@ -16,7 +13,7 @@ Request::Request() : HTTPTokenizer()
 Request::Request(std::string const& request) : HTTPTokenizer(request)
 {
 	cleanRequest();
-	if (!parseRequest()) {}
+	parseRequest();
 }
 
 bool	Request::cleanRequest() {
@@ -63,13 +60,6 @@ bool	Request::parseRequest() {
 		case (FIRST_LINE):
 			if (!parseHeader())
 				break ;
-		    /* FALLTHRU */
-			//else fall_through;
-/*		case (PARSED):
-			if (parseHeader())
-				break ;
-			//else fall_through; 
-*/
 		case (PARSED):
 			if (_status_code == INIT_STATE)
 				handleBody();
@@ -94,7 +84,8 @@ bool	Request::parseRequest() {
 	removeEOC();
 
 	std::cout << "Request.cpp -l95: " << _progress << std::endl;
-
+	if (_complete)
+		cleanTokenList();
 	return (_complete);
 }
 
@@ -130,16 +121,21 @@ bool	Request::parseFirstLine() {
 }
 
 bool	Request::handleBody() {
+	extractHeadersInformations();
+	/*if (!areHeadersValid()) {
+		_progress = DONE;
+		_complete = true;
+		_status_code = BAD_REQUEST; //see if it is the correct status code
+		return (_complete);
+	}*/
 	if (_method == GET) { //Check for GET request
 		if (_progress == PARSED) {
-			extractHeadersInformations();
 			_progress = DONE;
 			_complete = true;
 			_status_code = OK;
 		}
 	}
 	else if (_method == POST) { //Parsing body if POST request
-		extractHeadersInformations();
 		defineBodyExtractionHandler();
 	}
 	else {
@@ -156,11 +152,6 @@ bool	Request::defineBodyExtractionHandler() {
 	else if (_content_length != std::numeric_limits<unsigned long>::max()) {
 		_body_handler = &Request::bodyHandlerContentLength; 
 	}
-	/*
-	else if (_content_type == "multipart") {
-		_body_handler = &Request::bodyHandlerMultipart; 
-	}
-	*/
 	else {
 		_progress = DONE;
 		_complete = true;
@@ -250,8 +241,6 @@ bool	Request::parseHeader() {
 				break ;
 			case (EOC):
 				break ;
-//			case (ERROR):
-				//fall-through
 			default:
 				_progress = PARSER_ERROR;
 				_complete = true;
@@ -302,12 +291,19 @@ void	Request::safeInsertion(const std::string& key, const std::string& value) {
 		return ;
 }
 
-std::string	Request::normalizeHeadersKey(std::string argument) {
+std::string	Request::normalizeHeadersKey(std::string argument) const {
 	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
-		*it = std::tolower(*it);
+		if (*it == '-')
+			*it = '_';
+		else
+			*it = std::toupper(*it);
 	}
 	return (argument);
 }
+
+const char*			Request::important_argument[] = {
+	"CONTENT_LENGTH", "TRANSFERT_ENCODING"
+	};
 
 void	Request::detectImportantValue(std::string& argument, std::string value) {
 	int	i = 0;
@@ -320,10 +316,10 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 			_content_length = std::atol(value.c_str()); 
 			break ;
 		case (1):
-			_content_type = value;
-			break ;
-		case (2):
-			_content_encoding = true;
+			if (value != "chunked")
+				_status_code = BAD_REQUEST; //FIND CORRECT ERROR
+			else
+				_content_encoding = true;
 			break ;
 		default:
 			break ; 
@@ -356,12 +352,25 @@ t_HttpCode		Request::getStatusCode() const {
 	return(_status_code);
 }
 
-std::string		Request::getHeaderValue(const std::string& key) const
-{
-	std::multimap<std::string, std::string>::const_iterator it = _headers.find(key);
-	if (it != _headers.end())
-		return it->second;
-	return "";
+std::vector<std::string>	Request::getHeaderValues(std::string header_name) const {
+	header_name = normalizeHeadersKey(header_name);
+	std::pair<
+		std::multimap<std::string, std::string>::const_iterator
+	, std::multimap<std::string, std::string>::const_iterator>	range;
+	range = _headers.equal_range(header_name);
+	size_t	nbr_values = _headers.count(header_name);
+	std::vector<std::string> values;
+	values.reserve(nbr_values);
+	std::multimap<std::string, std::string>::const_iterator it = range.first;
+	for (; nbr_values > 0; --nbr_values) {
+		values.push_back(it->second);
+		++it;
+	}
+	return (values);
+}
+
+const std::multimap<std::string, std::string>&	Request::getHeaders() const {
+	return (_headers);
 }
 
 /*Setters*/
@@ -435,7 +444,7 @@ bool	Request::addInput(std::string input) {
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) {
 	ostream << other.getMethod() << '\t' << other.getRequestUri() << '\t' << other.getHttpVersion() << '\n';
-	for (std::multimap<std::string, std::string>::const_iterator	it = other.getHeadersValue().begin(); it != other.getHeadersValue().end(); it++) {
+	for (std::multimap<std::string, std::string>::const_iterator	it = other.getHeaders().begin(); it != other.getHeaders().end(); it++) {
 		std::cout << it->first << ' ' << it->second << '\n';
 	}
 	if (!other.getBody().empty())
