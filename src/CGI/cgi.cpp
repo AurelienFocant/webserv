@@ -1,12 +1,15 @@
 #include "cgi.hpp"
 
-bool	cgi::execute(const requestHandler& handler, Response& response, char **env) {
-	char** argv;	
+bool	cgi::execute(const RequestHandler& handler, Response& response, char** env) {
+	//For compilation errors
+		(void)handler;
+		(void)response;
+	 //size must depend of number of argument and if an interpreter is needed ?
+	char** argv = new char*[2];
 	//Create argv for child exec
 	try {
-		char	argv[2]; //size must depend of number of argument and if an interpreter is needed
-		argv[0] = findInterpreter(handler.extension);
-		argv[1] = file_to_execute.c_str(); //->maybe do one function that initialize whole argv based on file_to_execute
+//		argv[0] = findInterpreter(handler.extension);
+//		argv[1] = file_to_execute.c_str(); //->maybe do one function that initialize whole argv based on file_to_execute
 	}
 	catch (std::exception& e) {
 		//setup Response status code to Internal_server_error: here or up the stack
@@ -22,8 +25,8 @@ bool	cgi::execute(const requestHandler& handler, Response& response, char **env)
 	return (true);
 }
 
-char	cgi::**buildCgiEnv(const Request& request) {
-	std::multimap<std::string, std::string>	cpp_env = request.getHeaders;
+const char**	cgi::buildCgiEnv(const Request& request) {
+	std::multimap<std::string, std::string>	cpp_env = request.getHeaders();
 	std::string	previous_key = "";
 	std::string	header;
 	std::vector<std::string>	vect;
@@ -34,29 +37,33 @@ char	cgi::**buildCgiEnv(const Request& request) {
 		else {
 			previous_key.clear();
 			previous_key = it->first;
-			vect.insert(0, header);
+			vect.push_back(header);
 			header.clear();
 			header += "HTTP_" + it->first + "=" + it->second;
 		}
 	}
 	size_t	i = 0;
-	char **c_enc = new[](sizeof(char*) * vect.size());
-	for (std::vector<std::string> it = vect.begin(); it != vect.end(); ++it) {
-		c_enc.[i] = vect.at(i).c_str();
+	const char **c_enc = new const char*[vect.size()];
+	for (std::vector<std::string>::iterator it = vect.begin(); it != vect.end(); ++it) {
+		c_enc[i] = vect.at(i).c_str();
 	}
 	return (c_enc);
 }
 
 
-char	cgi::*findInterpreter(const std::string& extension) {
+char*	cgi::findInterpreter(const std::string& extension) {
+	/*
 	char	*response;
 	if (extension == ".py")
-		response = "/*path to python interpreter*/";
+		response = {path to python interpreter};
 	else if (extension == ".sh")
-		response = "/*path to shell interpreter*/";
+		response("path to shell interpreter");
 	else
 		response = NULL;
 	return (response);
+	*/
+	(void)extension;
+	return (NULL);
 }
 
 bool	cgi::launchCgi(char** argv, char** env) {
@@ -76,7 +83,7 @@ bool	cgi::launchCgi(char** argv, char** env) {
 		dup2(pipe_fd[0], STDIN_FILENO);
 		close(pipe_fd[0]);
 
-		std::execv(argv[0], argv, env);
+		execve(argv[0], argv, env);
 		delete[](env);
 		exit(EXIT_FAILURE);
 	}
@@ -91,20 +98,11 @@ bool	cgi::launchCgi(char** argv, char** env) {
 //	Need to read child production ?on std::cout?
 	int	status = 0;
 	int time = 3000;
+	int	ret;
 	while (time > 0) {
-		int	ret = waitpid(pid, &status, WNOHANG);
-		switch (waitpid(ret) {
-			case (pid):
-				break ;
-			case (0):
-				time -= 50;
-				if (usleep(50) < 0) {
-					kill(pid);
-					//setStatus code internal error
-					return (false);
-				}
-				break ;
-			default:
+		ret = waitpid(pid, &status, WNOHANG);
+		switch (ret) {
+			case (-1):
 				switch (errno) {
 					case (ECHILD):
 						break ;
@@ -113,17 +111,32 @@ bool	cgi::launchCgi(char** argv, char** env) {
 					case (EINVAL):
 						break ;
 					default:
+						(void)pid;
 						//SOMETHING went really wrong
 				}
+				break ;
+			case (0):
+				time -= 50;
+				if (usleep(50) < 0) {
+					kill(pid, SIGINT);
+					//setStatus code internal error
+					return (false);
+				}
+				break ;
+			default:
+				if (ret == pid)
+					//Do SOMething
+				(void)pid;
 		}
-		//add check for if signaled
 	}
+	//add check for if signaled
 	if (ret == 0) {
-		kill(pid);
+		kill(pid, SIGINT);
 		//setcode for timeout ?
 	}
 	//Read production of the child
-	std::string	response(std::cin);
+	std::string	response;
+	std::cin >> response;
 	//Error happened
 	return (true);
 }

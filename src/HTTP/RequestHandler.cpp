@@ -224,6 +224,7 @@ bool	RequestHandler::processMethods()
 			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
 			return false;
 	}
+	return (true);
 }
 
 bool	RequestHandler::processGetMethod()

@@ -46,7 +46,7 @@ class RequestHandler
 
 	/* Request processing */
 	bool			processMethods();
-	void			processGetMethod();
+	bool			processGetMethod();
 	bool			processPostMethod();
 	/*POST Methods*/
 	//void	processPostMethod() ;
