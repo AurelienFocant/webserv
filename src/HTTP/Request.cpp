@@ -60,6 +60,7 @@ bool	Request::parseRequest() {
 		case (FIRST_LINE):
 			if (!parseHeader())
 				break ;
+			 // fall thru
 		case (PARSED):
 			if (_status_code == INIT_STATE)
 				handleBody();
