@@ -90,9 +90,13 @@ void	Connection::sendResponse()
 
 bool	Connection::hasTimedOut(void)
 {
-	// std::time_t	keepalive_time = 
-	return (false);
+	std::time_t	now = std::time(NULL);
 
+	if (std::difftime(now, _last_conn) > this->virtual_server.getKeepaliveTimeout())
+		return (true);
+	if (std::difftime(now, _first_conn) > this->virtual_server.getKeepaliveTime())
+		return (true);
+	return (false);
 }
 
 uint32_t	Connection::getEvent(void) const
