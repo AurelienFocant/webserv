@@ -158,8 +158,14 @@ void	RequestHandler::findLocation()
 		const std::string&	route_path = it->first;
 		const Location*		location = &(it->second);
 
-		//Check if the requested path begin with a Location name
-		if (_request_path.find(route_path, 0) == 0)
+		//Check if the requested path match an extension or begin with a Location name
+		if (route_path.back() == '$' && detectExtension())
+		{
+			_matched_location = location;
+			return ;
+
+		}
+		else if (_request_path.find(route_path, 0) == 0)
 		{
 			size_t route_len = route_path.length();
 
