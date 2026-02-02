@@ -292,9 +292,6 @@ bool	Webserv::clientHandler(Connection & conn)
 
 
 
-
-
-
 // Getters
 std::vector<VirtualServer>&	Webserv::getServers(void)
 {

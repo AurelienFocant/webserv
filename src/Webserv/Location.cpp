@@ -1,19 +1,6 @@
 #include "Location.hpp"
 #include "ConfigContext.hpp"
 
-#include <iostream>
-
-Location::Location()
-	: _name("")
-	, _root("")
-	, _redirect("")
-	, _redirect_code(0)
-	, _autoindex(false)
-	, _cgi_on(false)
-{
-	_indexes.push_back("index.html");
-}
-
 Location::Location(ConfigContext& ctxt)
 	: _name(ctxt.getLocationName())
 	, _root(ctxt.getRoot())
@@ -25,6 +12,7 @@ Location::Location(ConfigContext& ctxt)
 	, _cgi_on(ctxt.getCGI())
 {
 	this->setIndexes(ctxt.getIndexes());
+	_allowed_methods = ctxt.getAllowedMethods();
 }
 
 Location::Location(const Location& src)
@@ -36,6 +24,7 @@ Location::Location(const Location& src)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout(src._keepalive_timeout)
 	, _cgi_on(false)
+	, _allowed_methods(src._allowed_methods)
 {
 	this->setIndexes(src.getIndexes());
 }

@@ -2,48 +2,6 @@
 
 #include <iostream>
 
-Connection::Connection(int fd, const int& epoll_fd, std::time_t time, bool (Webserv::*f)(Connection & conn))
-	: _fd(fd)
-	, _epoll_fd(epoll_fd)
-	, _first_conn(time)
-	, _last_conn(0)
-	, handler(f)
-	, conn_closed(false)
-{
-}
-
-Connection::Connection( const Connection& src )
-	: _fd(src._fd)
-	, _epoll_fd(src._epoll_fd)
-	, _first_conn(src._first_conn)
-	, _last_conn(src._last_conn)
-	, handler(src.handler)
-	, conn_closed(src.conn_closed)
-{
-	(void) src;
-}
-
-Connection&	Connection::operator= ( const Connection& rhs )
-{
-	if (this != &rhs) {
-		_fd = rhs._fd;
-		_last_conn = rhs._last_conn;
-		_last_conn = rhs._last_conn;
-		handler = rhs.handler;
-		conn_closed = rhs.conn_closed;
-	}
-	return (*this);
-}
-
-Connection::~Connection( void )
-{
-}
-
-void	Connection::setEvent(uint32_t event)
-{
-	_event = event;
-}
-
 void	Connection::sendResponse()
 {
 	const char *data;
@@ -99,6 +57,13 @@ bool	Connection::hasTimedOut(void)
 	return (false);
 }
 
+
+// Getters Setters
+void	Connection::setEvent(uint32_t event)
+{
+	_event = event;
+}
+
 uint32_t	Connection::getEvent(void) const
 {
 	return (_event);
@@ -123,3 +88,42 @@ std::time_t Connection::getLastConnTime()	const
 {
 	return (_last_conn);
 }
+
+// Constructors and stuff
+Connection::Connection(int fd, const int& epoll_fd, std::time_t time, bool (Webserv::*f)(Connection & conn))
+	: _fd(fd)
+	, _epoll_fd(epoll_fd)
+	, _first_conn(time)
+	, _last_conn(0)
+	, handler(f)
+	, conn_closed(false)
+{
+}
+
+Connection::Connection( const Connection& src )
+	: _fd(src._fd)
+	, _epoll_fd(src._epoll_fd)
+	, _first_conn(src._first_conn)
+	, _last_conn(src._last_conn)
+	, handler(src.handler)
+	, conn_closed(src.conn_closed)
+{
+	(void) src;
+}
+
+Connection&	Connection::operator= ( const Connection& rhs )
+{
+	if (this != &rhs) {
+		_fd = rhs._fd;
+		_last_conn = rhs._last_conn;
+		_last_conn = rhs._last_conn;
+		handler = rhs.handler;
+		conn_closed = rhs.conn_closed;
+	}
+	return (*this);
+}
+
+Connection::~Connection( void )
+{
+}
+

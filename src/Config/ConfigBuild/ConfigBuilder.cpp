@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <sstream>
+#include <set>
 
 #include "ConfigBuilder.hpp"
 #include "DirectiveSpecs.hpp"
@@ -110,6 +111,7 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["keepalive_time"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["keepalive_timeout"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["return"]				= DirectiveSpecs(SERVER|LOCATION, 2, 2);
+	_direcSpecs["allowed_methods"]		= DirectiveSpecs(SERVER|LOCATION, 1, 3);
 }
 
 
@@ -124,6 +126,7 @@ void ConfigBuilder::_initHandlers()
 	_handlers["keepalive_time"]		= &ConfigBuilder::_handleKeepaliveTime;
 	_handlers["keepalive_timeout"]	= &ConfigBuilder::_handleKeepaliveTimeout;
 	_handlers["return"]				= &ConfigBuilder::_handleReturn;
+	_handlers["allowed_methods"]	= &ConfigBuilder::_handleAllowedMethods;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -216,6 +219,24 @@ void ConfigBuilder::_handleReturn(const DirectiveNode& d)
 
 	std::string	s(d.args[1]);
 	_getCurrentCtxt().setRedirect(s);
+}
+
+void ConfigBuilder::_handleAllowedMethods(const DirectiveNode& d)
+{
+	std::set<std::string>	allowed_methods;
+	for (size_t i = 0; i < d.args.size(); i++) {
+		std::string method = d.args[i];
+
+		if (allowed_methods.find(method) != allowed_methods.end())
+			_error(d.line, "duplicate method");
+
+		if (method == "GET" || method == "POST" || method == "DELETE")
+			allowed_methods.insert(method);
+		else
+			_error(d.line, "invalid method!");
+	}
+
+	_getCurrentCtxt().setAllowedMethods(allowed_methods);
 }
 
 

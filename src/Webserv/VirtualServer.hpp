@@ -23,6 +23,7 @@ class VirtualServer
 		std::time_t		_keepalive_timeout;
 
 		std::vector<std::string>		_indexes;
+		std::set<std::string>			_allowed_methods;
 		std::map<std::string, Location>	_locations;
 
 		void	_initDefaultErrorPages(void);
@@ -48,8 +49,8 @@ class VirtualServer
 		bool								getAutoindex(void) const;
 		void	   	 						setAutoindex(bool b);
 
-		std::time_t	getKeepaliveTime(void) const {return _keepalive_time;}
-		std::time_t	getKeepaliveTimeout(void) const {return _keepalive_timeout;}
+		std::time_t	getKeepaliveTime(void) const	{return _keepalive_time;}
+		std::time_t	getKeepaliveTimeout(void) const	{return _keepalive_timeout;}
 
 		VirtualServer	( void );
 		VirtualServer	(ConfigContext const& ctxt);
