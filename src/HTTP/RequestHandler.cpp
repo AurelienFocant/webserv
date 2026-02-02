@@ -1,4 +1,5 @@
 #include "RequestHandler.hpp"
+#include "Response.hpp"
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 
@@ -11,6 +12,7 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _root(currConn.virtual_server.getRoot())
 	, _request_path("")
 	, _resolved_path("")
+	, _query("")
 	, _matched_location(NULL)
 	, _is_directory(false)
 {
@@ -31,7 +33,8 @@ void	RequestHandler::handleRequest()
 
 	if (!extractPath() || !resolvePath() || !processMethods())
 	{
-		buildErrorResponse(_response.getStatusCode());
+		if (!hasRedirect())
+			buildErrorResponse(_response.getStatusCode());
 		return;
 	}
 }
@@ -50,9 +53,12 @@ bool	RequestHandler::extractPath()
 	//std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
 	//std::cout << "[DEBUG] Path " << _request_path << std::endl;
 
-	size_t queryPos = _request_path.find("?");
-	if (queryPos != std::string::npos)
-		_request_path = _request_path.substr(0, queryPos);
+	size_t query_pos = _request_path.find("?");
+	if (query_pos != std::string::npos)
+	{
+		_query = _request_path.substr(query_pos + 1);
+		_request_path = _request_path.substr(0, query_pos);
+	}
 	
 	return true;
 }
@@ -63,6 +69,10 @@ bool	RequestHandler::resolvePath()
  
 	if (_matched_location)
 	{
+		//Detect CGI
+		if (detectCgi())
+			_response.setBodyType(DYNAMIC);
+
 		//Config Redirections
 		if (handleConfigRedirect())
 			return false;
@@ -91,7 +101,7 @@ bool	RequestHandler::resolvePath()
 		_resolved_path = _root + _request_path;
 	}
 
-	//std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
+	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
 	if (!validatePath())
 		return false;
@@ -139,7 +149,6 @@ bool	RequestHandler::hasRedirect()
 		|| status == TEMPORARY_REDIRECT;
 }
 
-
 void	RequestHandler::findLocation()
 {
 	size_t		longest_match = 0;
@@ -173,6 +182,46 @@ void	RequestHandler::findLocation()
 		std::cout << "[DEBUG] No location matched: " << std::endl;
 }
 
+bool	RequestHandler::detectCgi()
+{
+	std::vector<std::string> scripts_supported;
+	scripts_supported.push_back(".py");
+	scripts_supported.push_back(".sh");
+
+	if (!_matched_location->getCGI())
+		return false;
+
+	std::cout << "REQUEST_PATH: " << _request_path << std::endl;
+	size_t dot_pos = _request_path.find_last_of('.');
+	if (dot_pos == std::string::npos)
+		return false;
+
+	std::string ext = _request_path.substr(dot_pos);
+
+	size_t info_pos = ext.find_first_of('/');
+
+	std::string path_info = "";
+	if (info_pos != std::string::npos)
+	{
+		path_info = ext.substr(info_pos);
+		ext = ext.substr(0, info_pos);
+	}
+
+	size_t location_size = _matched_location->getName().size();
+	std::string script_uri = _request_path.substr(location_size);
+	
+	std::cout << "[DEBUG]: "
+			<< "\nSCRIPT_URI: " << script_uri
+			<< "\nEXT: " << ext
+			<< "\nQUERY: " << _query
+			<< "\nPATH_INFO: " << path_info << std::endl;
+	// comparer ext a map cgi / bin ?
+	
+	//exit(2);
+	return true;
+
+}
+
 bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
@@ -197,12 +246,7 @@ bool	RequestHandler::validatePath()
 
 bool	RequestHandler::processMethods()
 {
-	if (hasRedirect())
-	{
-		std::cout << "[DEBUG] Redirect code: " << _response.getStatusCode()
-		<< " skip processMethods() " << std::endl;
-		return false;
-	}
+	// Verifier AUTHORIZED METHODS in locations
 
 	switch(_request.getMethod())
 	{
@@ -348,7 +392,7 @@ void	RequestHandler::buildErrorResponse(int status_code)
 bool	RequestHandler::loadErrorPage(int status_code, int& fd, size_t& size)
 {
 
-	std::map<int, std::string>::iterator it = _server.error_pages.find(status_code);
+	std::map<int, std::string>::const_iterator it = _server.error_pages.find(status_code);
 	if (it == _server.error_pages.end())
 		return false;
 	

@@ -22,11 +22,12 @@ class RequestHandler
 	/* Private Attributes */
 	const Request&			_request;
 	Response&				_response;
-	VirtualServer			_server;
+	const VirtualServer&	_server;
 
-	std::string				_root; // default root from _virtual_server -> a supprimer
+	std::string				_root;
 	std::string				_request_path; // request_uri sans query
-	std::string				_resolved_path; //defnitive path (after alias or override)
+	std::string				_resolved_path; //defnitive internal path (after alias or override)
+	std::string				_query;
 
 	const Location*			_matched_location;
 	bool					_is_directory;
@@ -38,6 +39,9 @@ class RequestHandler
 	bool			resolvePath();
 	bool			validatePath();
 	void			findLocation();
+
+	bool			detectCgi();
+
 
 	/*  Redirections */
 	bool			handleConfigRedirect();
@@ -76,7 +80,7 @@ class RequestHandler
 	public:
 
 	/* Constructors / Destructors */
-	RequestHandler	(Connection& currConn); // en const ref ou pointeur?
+	RequestHandler	(Connection& currConn);
 	~RequestHandler	();
 
 	/* Getters */

@@ -312,10 +312,10 @@ bool	Webserv::clientHandler(Connection & conn)
 			conn.virtual_server = _findCorrectServer(conn);
 			RequestHandler	reqHandl(conn);
 			reqHandl.handleRequest();
+			conn.request.cleanRequest();
 		}
 		conn.response.formatResponse();
 		conn.sendResponse();
-		conn.request.cleanRequest();
 	}
 
 	// update last_conn_timestamp;
