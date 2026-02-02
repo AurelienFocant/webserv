@@ -6,3 +6,4 @@ misc/compile_*
 a.out
 .github
 Session.vim
+data/webserv.nginx.conf
