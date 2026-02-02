@@ -43,7 +43,7 @@ void	RequestHandler::handleRequest()
 
 bool	RequestHandler::extractPath()
 {
-	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
+	if (_request.getRequestUri().empty() /* || _request.getRequestUri().at(0) != '/' */)
 	{
 		_response.setStatusCode(BAD_REQUEST);
 		return false;
@@ -208,10 +208,10 @@ bool	RequestHandler::detectCgi()
 	}
 
 	size_t location_size = _matched_location->getName().size();
-	std::string script_uri = _request_path.substr(location_size);
+	std::string script_name = _request_path.substr(location_size);
 	
 	std::cout << "[DEBUG]: "
-			<< "\nSCRIPT_URI: " << script_uri
+			<< "\nSCRIPT_NAME: " << script_name
 			<< "\nEXT: " << ext
 			<< "\nQUERY: " << _query
 			<< "\nPATH_INFO: " << path_info << std::endl;
@@ -226,15 +226,26 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
+	if (_resolved_path.find("/../") != std::string::npos)
+	{
+		_response.setStatusCode(403);
+        std::cerr << "[DEBUG] Potential Traversal Path: "
+		<< _resolved_path << std::endl;
+		return false;
+	}
+
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
-		if (errno == ENOENT)
+/* 		if (errno == ENOENT)
 			 _response.setStatusCode(NOT_FOUND);
 		else if (errno == EACCES)
 			_response.setStatusCode(FORBIDDEN);
 		else
 			_response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return false;
+		return false; */
+		std::cerr << "[DEBUG] stat() failed: " << strerror(errno) << std::endl;
+        std::cerr << "[DEBUG] Current working dir: ";
+        system("pwd");
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);
