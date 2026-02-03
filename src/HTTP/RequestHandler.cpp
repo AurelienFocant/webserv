@@ -218,23 +218,20 @@ bool	RequestHandler::detectCgi()
 		return false;
 	size_t ext_end = ext_start + ext_str.size();
 
-	std::string script_name = _request_path.substr(0, ext_end);
-/* 	size_t	slash_pos = script_name.find_last_of('/');
-	if (slash_pos != std::string::npos)
-		script_name = script_name.substr(slash_pos + 1) */;
+	std::string _script_name = _request_path.substr(0, ext_end);
 
-	std::string path_info = "";
+	_path_info = "";
 	if (ext_end < _request_path.size() && _request_path[ext_end] == '/')
 	{
-		path_info = _request_path.substr(ext_end);
+		_path_info = _request_path.substr(ext_end);
 		_request_path = _request_path.substr(0, ext_end);
 	}
 
-	std::cout << "[DEBUG]: "
-			<< "\nSCRIPT_NAME: " << script_name
+/* 	std::cout << "[DEBUG]: "
+			<< "\nSCRIPT_NAME: " << _script_name
 			<< "\nEXT: " << ext_str
 			<< "\nQUERY: " << _query
-			<< "\nPATH_INFO: " << path_info << std::endl;
+			<< "\nPATH_INFO: " << _path_info << std::endl; */
 	
 	return true;
 

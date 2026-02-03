@@ -22,12 +22,14 @@ class RequestHandler
 	/* Private Attributes */
 	const Request&			_request;
 	Response&				_response;
-	VirtualServer&	_server;
+	VirtualServer&			_server;
 
 	std::string				_root;
-	std::string				_request_path; // request_uri sans query
-	std::string				_resolved_path; //defnitive internal path (after alias or override)
+	std::string				_request_path;
+	std::string				_resolved_path;
 
+	std::string				_script_name;
+	std::string				_path_info;
 	std::string				_query;
 
 	const Location*			_matched_location;
