@@ -12,15 +12,18 @@ ConfigContext::ConfigContext(ContextType t)
 	, _root(DEFAULTROOT)
 	, _serverName(DEFAULTNAME)
 	, _locationName("")
-	, _locations()
 	, _autoindex(false)
 	, _keepalive_time(3600)
 	, _keepalive_timeout(75)
 	, _redirect_code(0)
 	, _redirect("")
 	, _cgi(false)
+	, _locations()
 {
 	_indexes.push_back("index.html");
+	_allowed_methods.insert("GET");
+	_allowed_methods.insert("POST");
+	_allowed_methods.insert("DELETE");
 }
 
 ConfigContext::ConfigContext(const ConfigContext &src)
@@ -29,14 +32,15 @@ ConfigContext::ConfigContext(const ConfigContext &src)
 	, _root(src._root)
 	, _serverName(src._serverName)
 	, _locationName(src._locationName)
-	, _locations(src._locations)
-	, _indexes(src._indexes)
 	, _autoindex(src._autoindex)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout(src._keepalive_timeout)
 	, _redirect_code(src._redirect_code)
 	, _redirect(src._redirect)
 	, _cgi(src._cgi)
+	, _indexes(src._indexes)
+	, _allowed_methods(src._allowed_methods)
+	, _locations(src._locations)
 {
 }
 
@@ -48,14 +52,15 @@ ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
         _root = rhs._root;
         _serverName = rhs._serverName;
 		_locationName = rhs._locationName;
-        _locations = rhs._locations;
-		_indexes = rhs._indexes;
 		_autoindex = rhs._autoindex;
 		_keepalive_time = rhs._keepalive_time;
 		_keepalive_timeout = rhs._keepalive_timeout;
 		_redirect_code = rhs._redirect_code;
 		_redirect = rhs._redirect;
 		_cgi = rhs._cgi;
+		_allowed_methods = rhs._allowed_methods;
+        _locations = rhs._locations;
+		_indexes = rhs._indexes;
 	}
 	return *this;
 }
@@ -75,8 +80,10 @@ void ConfigContext::inheritFrom(const ConfigContext &parent)
 	_autoindex = parent._autoindex;
 	_keepalive_time = parent._keepalive_time;
 	_keepalive_timeout = parent._keepalive_timeout;
-	_redirect = parent._redirect;
 	_redirect_code = parent._redirect_code;
+	_redirect = parent._redirect;
+	_cgi = parent._cgi;
+	_allowed_methods = parent._allowed_methods;
 }
 
 bool ConfigContext::isCGI(std::string location_name)
@@ -158,26 +165,4 @@ std::vector<std::string> const&	ConfigContext::getIndexes(void) const
 bool	ConfigContext::getAutoindex(void) const
 {
 	return (_autoindex);
-}
-
-void	ConfigContext::setAutoindex(bool b)
-{
-	_autoindex = b;
-}
-
-std::time_t	ConfigContext::getKeepalive_time() const
-{
-	return (_keepalive_time);
-}
-
-std::time_t	ConfigContext::getKeepalive_timeout() const
-{
-	return (_keepalive_timeout);
-}
-
-
-
-bool	ConfigContext::getCGI(void) const
-{
-	return (_cgi);
 }

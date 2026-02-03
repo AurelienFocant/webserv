@@ -19,10 +19,11 @@ class VirtualServer
 		std::string		_redirect;
 		int				_redirect_code;
 		bool			_autoindex;
-		std::time_t	_keepalive_time;
-		std::time_t	_keepalive_timeout;
+		std::time_t		_keepalive_time;
+		std::time_t		_keepalive_timeout;
 
 		std::vector<std::string>		_indexes;
+		std::set<std::string>			_allowed_methods;
 		std::map<std::string, Location>	_locations;
 
 		void	_initDefaultErrorPages(void);
@@ -47,6 +48,9 @@ class VirtualServer
 		std::vector<std::string> const&		getIndexes(void) const;
 		bool								getAutoindex(void) const;
 		void	   	 						setAutoindex(bool b);
+
+		std::time_t	getKeepaliveTime(void) const	{return _keepalive_time;}
+		std::time_t	getKeepaliveTimeout(void) const	{return _keepalive_timeout;}
 
 		VirtualServer	( void );
 		VirtualServer	(ConfigContext const& ctxt);

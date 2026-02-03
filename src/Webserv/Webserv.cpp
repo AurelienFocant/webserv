@@ -21,37 +21,7 @@ static	void sigintHandler(int num)
 	g_signum = num;
 }
 
-Webserv::Webserv( void )
-	: _configPath(defaultConfigPath)
-{
-}
-
-Webserv::Webserv(char* configPath)
-	: _configPath(defaultConfigPath)
-{
-	if (configPath) {
-		_configPath = configPath;
-	}
-}
-
-Webserv::Webserv( const Webserv& src )
-{
-	_configPath = src._configPath;
-}
-
-Webserv&	Webserv::operator=( const Webserv& rhs )
-{
-	if (this != &rhs) {
-		_configPath = rhs._configPath;
-	}
-	return (*this);
-}
-
-Webserv::~Webserv( void )
-{
-	std::cout << "Webserv Object Destroyed" << std::endl;
-}
-
+// Config parsing and reading
 void	Webserv::_openConfig(void)
 {
 	_configFile.open(_configPath.c_str());
@@ -69,7 +39,6 @@ static std::string	_fileToString(std::ifstream & file)
 	}
 	return (config);
 }
-
 
 void	Webserv::_parseConfig(void)
 {
@@ -94,6 +63,79 @@ void	Webserv::readConfig()
 	_parseConfig();
 }
 
+
+// Utils
+std::string	_receiveLoop(int fd)
+{
+	// TO BE REDONE !! //
+
+	int		bytes_read; 
+	char	buf[BUFFER_SIZE];
+	std::string	s;
+
+	while ((bytes_read = recv(fd, &buf, BUFFER_SIZE, 0)) > 0) {
+		s.append(buf, bytes_read);
+	}
+	return (s);
+}
+
+void	Webserv::_closeConnection(Connection & conn)
+{
+	int	fd = conn.getFd();
+
+	epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+	_connections.erase(fd);
+	close(fd);
+}
+
+void	Webserv::_closeStaleConnections(void)
+{
+	std::map<int, Connection>::iterator	it;
+
+	for (it = _connections.begin(); it != _connections.end(); it++) {
+		if (it->second.conn_closed)
+			return (_closeConnection(it->second));
+		if (it->second.hasTimedOut())
+			return (_closeConnection(it->second));
+	}
+}
+
+VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
+{
+	//Check for the existence of Host in Request for HTTP/1.1?
+	sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+
+	//get local port
+	if (getsockname(conn.getFd(), (sockaddr*) &addr, &len) < 0)
+		throw std::runtime_error("getsockname failed");
+	unsigned int port = ntohs(addr.sin_port);
+
+	std::string	host = conn.request.getHeaderValues("host").at(0);
+
+	size_t	colon = host.find(':');
+	if (colon != std::string::npos)
+		host = host.substr(0, colon);
+
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getPort() == port && _servers[i].getServName() == host)
+				return _servers[i];
+	}
+
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].getPort() == port)
+			return _servers[i];
+	}
+
+	return (getServer(0)); // return first server as default server (HTTP/1.0) if non occurence or error? Need testing
+	// return error si pas de port qui correspond
+}
+
+
+
+// Setting up listening sockets
 void	Webserv::initWebServer()
 {
 	_epoll_fd = epoll_create(1);
@@ -138,27 +180,7 @@ void	Webserv::initWebServer()
 	}
 }
 
-void	Webserv::_closeConnection(Connection & conn)
-{
-	(void) conn;
-	// ?? connection to be closed
-		// ?? epoll_ctl DELETE connection from epoll_wait
-		// close(fd);
-		// delete from _connections map()
-}
-
-void	Webserv::_closeStaleConnections(void)
-{
-	std::map<int, Connection>::iterator	it;
-
-	for (it = _connections.begin(); it != _connections.end(); it++) {
-		if (it->second.conn_closed)
-			return (_closeConnection(it->second));
-		if (it->second.hasTimedOut())
-			return (_closeConnection(it->second));
-	}
-}
-
+// Main loop
 void	Webserv::run()
 {
 	// for (int i = 0; i < 20; i++) {
@@ -192,16 +214,6 @@ void	Webserv::run()
 	}
 }
 
-std::vector<VirtualServer>&	Webserv::getServers(void)
-{
-	return (_servers);
-}
-
-VirtualServer&	Webserv::getServer(int idx)
-{
-	return (_servers.at(idx));
-}
-
 bool	Webserv::listenHandler(Connection & conn)
 {
 	int clientSocket = accept(conn.getFd(), NULL, 0);
@@ -229,64 +241,18 @@ bool	Webserv::listenHandler(Connection & conn)
 	return (true);
 }
 
-std::string	_receiveLoop(int fd)
-{
-	// TO BE REDONE !! //
-
-	int		bytes_read; 
-	char	buf[BUFFER_SIZE];
-	std::string	s;
-
-	while ((bytes_read = recv(fd, &buf, BUFFER_SIZE, 0)) > 0) {
-		s.append(buf, bytes_read);
-	}
-	return (s);
-}
-
-
-VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
-{
-	//Check for the existence of Host in Request for HTTP/1.1?
-	sockaddr_in addr;
-	socklen_t len = sizeof(addr);
-
-	//get local port
-	if (getsockname(conn.getFd(), (sockaddr*) &addr, &len) < 0)
-		throw std::runtime_error("getsockname failed");
-	unsigned int port = ntohs(addr.sin_port);
-
-	std::string	host = conn.request.getHeaderValue("host");
-
-	size_t	colon = host.find(':');
-	if (colon != std::string::npos)
-		host = host.substr(0, colon);
-
-	for (size_t i = 0; i < _servers.size(); i++)
-	{
-		if (_servers[i].getPort() == port && _servers[i].getServName() == host)
-				return _servers[i];
-	}
-
-	for (size_t i = 0; i < _servers.size(); i++)
-	{
-		if (_servers[i].getPort() == port)
-			return _servers[i];
-	}
-
-	return (getServer(0)); // return first server as default server (HTTP/1.0) if non occurence or error? Need testing
-	// return error si pas de port qui correspond
-}
-
 bool	Webserv::clientHandler(Connection & conn)
 {
 	// client close gracefully
 /* 	if (conn.getEvent() & EPOLLRDHUP) {
 		std::cout << "[Error] RDHUP" <<std::endl; 
 	}
+
 	// error
 	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
 		std::cout << "[Error] HUP or ERR" <<std::endl; 
-	} */
+		_closeConnection(conn);
+	}
 
 	if (conn.getEvent() & EPOLLIN) {
 
@@ -319,6 +285,52 @@ bool	Webserv::clientHandler(Connection & conn)
 	}
 
 	// update last_conn_timestamp;
+	conn.setLastConnTime(std::time(NULL));
 
 	return (true);
+}
+
+
+
+// Getters
+std::vector<VirtualServer>&	Webserv::getServers(void)
+{
+	return (_servers);
+}
+
+VirtualServer&	Webserv::getServer(int idx)
+{
+	return (_servers.at(idx));
+}
+
+// Constructors and stuff
+Webserv::Webserv( void )
+	: _configPath(defaultConfigPath)
+{
+}
+
+Webserv::Webserv(char* configPath)
+	: _configPath(defaultConfigPath)
+{
+	if (configPath) {
+		_configPath = configPath;
+	}
+}
+
+Webserv::Webserv( const Webserv& src )
+{
+	_configPath = src._configPath;
+}
+
+Webserv&	Webserv::operator=( const Webserv& rhs )
+{
+	if (this != &rhs) {
+		_configPath = rhs._configPath;
+	}
+	return (*this);
+}
+
+Webserv::~Webserv( void )
+{
+	std::cout << "Webserv Object Destroyed" << std::endl;
 }

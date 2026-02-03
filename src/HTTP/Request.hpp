@@ -6,6 +6,7 @@
 # include <iostream>
 # include <sstream>
 # include <string>
+# include <vector>
 # include <map>
 # include <utility>
 
@@ -40,8 +41,8 @@ class	Request	: private HTTPTokenizer {
 		bool			isCompleted() const ;
 		t_HttpCode		getStatusCode() const ;
 
-		const std::multimap<std::string, std::string>&	getHeadersValue() const {return (_headers);}
-		std::string										getHeaderValue(const std::string& key) const;
+		std::vector<std::string>	getHeaderValues(std::string header_name) const ;
+		const std::multimap<std::string, std::string>&	getHeaders() const ;
 
 	private:
 	/*Private Attributes*/
@@ -87,7 +88,7 @@ class	Request	: private HTTPTokenizer {
 		bool	bodyHandlerContentLength() ;
 		bool	bodyHandlerMultipart() ;
 
-		std::string	normalizeHeadersKey(std::string argument) ;
+		std::string	normalizeHeadersKey(std::string argument) const ;
 		void	safeInsertion(const std::string& key, const std::string& value) ;
 		void	detectImportantValue(std::string& argument, std::string value) ;
 

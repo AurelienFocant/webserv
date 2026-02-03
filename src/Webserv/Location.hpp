@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <set>
 
 class ConfigContext;
 
@@ -16,11 +17,13 @@ class Location
 	std::string	_redirect;
 	int			_redirect_code;
 	bool		_autoindex;
-	std::vector<std::string>	_indexes;
 	std::time_t	_keepalive_time;
 	std::time_t	_keepalive_timeout;
 
 	bool		_cgi_on;
+
+	std::vector<std::string>	_indexes;
+	std::set<std::string>		_allowed_methods;
 
 
 	public:
@@ -42,9 +45,10 @@ class Location
 	void	setAlias(const std::string& alias) {_alias = alias;}
 	void	setIndexes(const std::vector<std::string>& indexes) {_indexes = indexes;}
 	void	setAutoIndex(bool autoindex) {_autoindex = autoindex;}
+	std::set<std::string>	getAllowedMethods(void) const	{return _allowed_methods;}
+	void					setAllowedMethods(std::set<std::string> m) {_allowed_methods = m;}
 
 
-	Location	();
 	Location	(ConfigContext& ctxt);
 	Location	(const Location& other);
 	Location&	operator= (const Location& rhs);

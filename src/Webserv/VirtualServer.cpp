@@ -26,6 +26,7 @@ VirtualServer::VirtualServer(ConfigContext const& ctxt)
 	, _locations(ctxt.getLocations())
 {
 	_indexes = ctxt.getIndexes();
+	_allowed_methods = ctxt.getAllowedMethods();
 	initDefaultConfig();
 }
 
@@ -38,6 +39,7 @@ VirtualServer::VirtualServer(const VirtualServer& src)
 	, _autoindex(src._autoindex)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout(src._keepalive_timeout)
+	, _allowed_methods(src._allowed_methods)
 	, _locations(src._locations)
 {
 	this->setIndexes(src.getIndexes());
@@ -82,7 +84,8 @@ const Location& VirtualServer::getLocationAt(std::string key) const
 
 void VirtualServer::setLocationsAt(std::string key, Location & loc)
 {
-	_locations[key] = loc;
+	// _locations[key] = loc;
+	_locations.insert(std::make_pair(key, loc));
 }
 
 void	VirtualServer::setRoot(std::string root)

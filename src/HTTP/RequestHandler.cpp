@@ -2,6 +2,7 @@
 #include "Response.hpp"
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
+#include "cgi.hpp"
 
 /* ////////////REQUEST HANDLER////////////////// */
 
@@ -300,15 +301,23 @@ bool	RequestHandler::processMethods()
 	switch(_request.getMethod())
 	{
 		case GET:
-			return processGetMethod();
-/* 		case POST:
-			return processPostMethod();
-		case DELETE:
-			return processDeleteMethod(); */
+			processGetMethod();
+			break ;
+/*
+ 		case POST:
+			processPostMethod();
+			break ;
+*/
+/*
+			case DELETE:
+			processDeleteMethod();
+			break ;
+*/
 		default: 
 			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
 			return false;
 	}
+	return (true);
 }
 
 bool	RequestHandler::processGetMethod()
@@ -336,6 +345,26 @@ bool	RequestHandler::processGetMethod()
 
 	return true;
 }
+
+bool	RequestHandler::processPostMethod() {
+//	if (_matched_location->getCGI()) {
+//		char **env = cgi::buildCgiEnv(_request);
+//		cgi::execute(*this, _response, env);
+//	}
+//	if (_matched_location == "createuser")
+//		utils::createUser();
+//	if (_matched_location == "comment")
+	//	use script create comment;
+//	if (_matched_location == "createuser")
+	return (true);		
+}
+
+/*
+void	Request::processDelMethod() {
+	if (_matched_location == "comment")
+	//	use script delete comment;
+}
+*/
 
 /* INDEX/DIRECTORY HANDLING */
 

@@ -40,6 +40,7 @@ class ConfigBuilder
 		void _handleKeepaliveTime(const DirectiveNode& d);
 		void _handleKeepaliveTimeout(const DirectiveNode& d);
 		void _handleReturn(const DirectiveNode& d);
+		void _handleAllowedMethods(const DirectiveNode& d);
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&				_getCurrentCtxt(void);
