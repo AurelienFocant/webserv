@@ -243,9 +243,9 @@ bool	Webserv::listenHandler(Connection & conn)
 
 bool	Webserv::clientHandler(Connection & conn)
 {
-	// client closed gracefully
-	if (conn.getEvent() & EPOLLRDHUP) {
-		_closeConnection(conn);
+	// client close gracefully
+/* 	if (conn.getEvent() & EPOLLRDHUP) {
+		std::cout << "[Error] RDHUP" <<std::endl; 
 	}
 
 	// error
@@ -253,7 +253,7 @@ bool	Webserv::clientHandler(Connection & conn)
 		std::cout << "[Error] HUP or ERR" <<std::endl; 
 		_closeConnection(conn);
 	}
-
+*/
 	if (conn.getEvent() & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
@@ -278,10 +278,10 @@ bool	Webserv::clientHandler(Connection & conn)
 			conn.virtual_server = _findCorrectServer(conn);
 			RequestHandler	reqHandl(conn);
 			reqHandl.handleRequest();
+			conn.request.cleanRequest();
 		}
 		conn.response.formatResponse();
 		conn.sendResponse();
-		conn.request.cleanRequest();
 	}
 
 	// update last_conn_timestamp;

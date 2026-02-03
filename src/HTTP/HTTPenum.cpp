@@ -46,6 +46,23 @@ t_progress	progressFromString(const std::string& s)  {
 	else									return UNKNOWN_STATE;
 }
 
+std::string extensionToString(t_extension code)  {
+    switch (code) {
+        case NO_EXT:                        return "";
+        case PY:                            return ".py";
+        case SH:                            return ".sh";
+        default:                            return "unknown";
+    }
+}
+
+t_extension extensionFromString(const std::string& s)  {
+    if (s == ".py")           return PY;
+    else if (s == ".sh")      return SH;
+    else                        return UNKNOWN_EXT;
+}
+
+
+
 std::string httpStatusToString(t_HttpCode code)  {
     switch (code)  {
 		case INIT_STATE:					  return "Initialized";

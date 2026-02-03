@@ -13,6 +13,12 @@
 
 #define BUFFER_SIZE 8192
 
+enum	bodyType {
+	STATIC,
+	DYNAMIC,
+	MEMORY
+};
+
 class	Response
 {
 	public:
@@ -28,12 +34,6 @@ class	Response
 		SEND_HEADER,
 		SEND_BODY,
 		DONE,
-	};
-
-	enum	bodyType {
-		STATIC,
-		DYNAMIC,
-		MEMORY
 	};
 
 	/*Publics Methods*/
@@ -52,6 +52,7 @@ class	Response
 
 	/*Setters - Getters*/
 	void				setState(int state);
+	void				setBodyType(bodyType type);
 	void				setStatusCode(int status_code);
 	void				setBodyFd(int fd);
 	void				setBodySize(int size);

@@ -1,4 +1,5 @@
 #include "RequestHandler.hpp"
+#include "Response.hpp"
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 #include "cgi.hpp"
@@ -12,7 +13,9 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _root(currConn.virtual_server.getRoot())
 	, _request_path("")
 	, _resolved_path("")
+	, _query("")
 	, _matched_location(NULL)
+	, _matched_extension(NO_EXT)
 	, _is_directory(false)
 {
 	_response.setStatusCode(_request.getStatusCode());
@@ -32,7 +35,8 @@ void	RequestHandler::handleRequest()
 
 	if (!extractPath() || !resolvePath() || !processMethods())
 	{
-		buildErrorResponse(_response.getStatusCode());
+		if (!hasRedirect())
+			buildErrorResponse(_response.getStatusCode());
 		return;
 	}
 }
@@ -41,7 +45,7 @@ void	RequestHandler::handleRequest()
 
 bool	RequestHandler::extractPath()
 {
-	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
+	if (_request.getRequestUri().empty() /* || _request.getRequestUri().at(0) != '/' */)
 	{
 		_response.setStatusCode(BAD_REQUEST);
 		return false;
@@ -51,9 +55,12 @@ bool	RequestHandler::extractPath()
 	//std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
 	//std::cout << "[DEBUG] Path " << _request_path << std::endl;
 
-	size_t queryPos = _request_path.find("?");
-	if (queryPos != std::string::npos)
-		_request_path = _request_path.substr(0, queryPos);
+	size_t query_pos = _request_path.find("?");
+	if (query_pos != std::string::npos)
+	{
+		_query = _request_path.substr(query_pos + 1);
+		_request_path = _request_path.substr(0, query_pos);
+	}
 	
 	return true;
 }
@@ -64,6 +71,10 @@ bool	RequestHandler::resolvePath()
  
 	if (_matched_location)
 	{
+		//Detect CGI
+		if (detectCgi())
+			_response.setBodyType(DYNAMIC);
+
 		//Config Redirections
 		if (handleConfigRedirect())
 			return false;
@@ -92,13 +103,15 @@ bool	RequestHandler::resolvePath()
 		_resolved_path = _root + _request_path;
 	}
 
-	//std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
+	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
 	if (!validatePath())
 		return false;
 
 	if (_is_directory && handleTrailingSlash())
 		return false;
+
+	//exit(2);
 
 	return true;
 
@@ -140,9 +153,9 @@ bool	RequestHandler::hasRedirect()
 		|| status == TEMPORARY_REDIRECT;
 }
 
-
 void	RequestHandler::findLocation()
 {
+	std::string	ext;
 	size_t		longest_match = 0;
 
 	for (std::map<std::string, Location>::const_iterator it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
@@ -150,8 +163,24 @@ void	RequestHandler::findLocation()
 		const std::string&	route_path = it->first;
 		const Location*		location = &(it->second);
 
-		//Check if the requested path begin with a Location name
-		if (_request_path.find(route_path, 0) == 0)
+
+		//Check if the requested path match an extension or begin with a Location name
+		if (route_path[route_path.size() -1] == '$')
+		{
+			ext = route_path.substr(0, route_path.size() -1);
+			size_t ext_start = _request_path.find(ext);
+			if (ext_start != std::string::npos)
+			{
+				size_t ext_end = ext_start + ext.size();
+				if (ext_end == _request_path.size() || _request_path[ext_end] == '/')
+				{
+					_matched_location = location;
+					_matched_extension = extensionFromString(ext);
+					break ;
+				}
+			}
+		}
+		else if (_request_path.find(route_path, 0) == 0)
 		{
 			size_t route_len = route_path.length();
 
@@ -174,9 +203,75 @@ void	RequestHandler::findLocation()
 		std::cout << "[DEBUG] No location matched: " << std::endl;
 }
 
+bool	RequestHandler::detectCgi()
+{
+/* 	if (!_matched_location->getCGI())
+		return false; */
+	
+	if (_matched_extension == UNKNOWN_EXT)
+		return false;
+
+	std::string ext_str = extensionToString(_matched_extension);
+
+	size_t ext_start = _request_path.find(ext_str);
+	if (ext_start == std::string::npos)
+		return false;
+	size_t ext_end = ext_start + ext_str.size();
+
+	std::string script_name = _request_path.substr(0, ext_end);
+/* 	size_t	slash_pos = script_name.find_last_of('/');
+	if (slash_pos != std::string::npos)
+		script_name = script_name.substr(slash_pos + 1) */;
+
+	std::string path_info = "";
+	if (ext_end < _request_path.size() && _request_path[ext_end] == '/')
+	{
+		path_info = _request_path.substr(ext_end);
+		_request_path = _request_path.substr(0, ext_end);
+	}
+
+	std::cout << "[DEBUG]: "
+			<< "\nSCRIPT_NAME: " << script_name
+			<< "\nEXT: " << ext_str
+			<< "\nQUERY: " << _query
+			<< "\nPATH_INFO: " << path_info << std::endl;
+	
+	return true;
+
+}
+
+bool	RequestHandler::normalizePath()
+{
+	// TO DO 
+
+	// percent encoding?
+
+	// "./" delete
+
+
+	// "../" level up
+
+
+	// "//" become "/"
+
+	return true;
+}
+
+
 bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
+
+	if (_resolved_path.find("/../") != std::string::npos)
+	{
+		_response.setStatusCode(403);
+        std::cerr << "[DEBUG] Potential Traversal Path: "
+		<< _resolved_path << std::endl;
+		return false;
+	}
+
+	// normalizePath()
+
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
@@ -187,6 +282,9 @@ bool	RequestHandler::validatePath()
 		else
 			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return false;
+/* 		std::cerr << "[DEBUG] stat() failed: " << strerror(errno) << std::endl;
+        std::cerr << "[DEBUG] Current working dir: ";
+        system("pwd") */;
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);
@@ -198,12 +296,7 @@ bool	RequestHandler::validatePath()
 
 bool	RequestHandler::processMethods()
 {
-	if (hasRedirect())
-	{
-		std::cout << "[DEBUG] Redirect code: " << _response.getStatusCode()
-		<< " skip processMethods() " << std::endl;
-		return false;
-	}
+	// Verifier AUTHORIZED METHODS in locations
 
 	switch(_request.getMethod())
 	{
@@ -377,7 +470,7 @@ void	RequestHandler::buildErrorResponse(int status_code)
 bool	RequestHandler::loadErrorPage(int status_code, int& fd, size_t& size)
 {
 
-	std::map<int, std::string>::iterator it = _server.error_pages.find(status_code);
+	std::map<int, std::string>::const_iterator it = _server.error_pages.find(status_code);
 	if (it == _server.error_pages.end())
 		return false;
 	
