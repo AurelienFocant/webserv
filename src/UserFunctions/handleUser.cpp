@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   handleUser.cpp                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/03 16:18:00 by stempels          #+#    #+#             */
+/*   Updated: 2026/02/03 16:56:12 by stempels         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "handleUser.hpp"
 
 static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& output) ;
@@ -8,83 +20,73 @@ static bool	isSafeName(const std::string& name) ;
 static bool	userExistInCsv(const std::string& csv, const std::string& name) ;
 static bool	addUserToCsv(const std::string& csv, const std::string& name, const std::string& password) ;
 static bool	delUserInCsv(const std::string& csv, const std::string& user) ;
+static bool	removeTree(const std::string& path) ;
 
-bool	handleUser::createNewUser(const RequestHandler& handler) {
+t_HttpCode	handleUser::createNewUser(const RequestHandler& handler) {
 	const std::string	db_root = "./data/dB";
 	const std::string	csv_path = db_root + "/users_login.csv";
 
 	std::map<std::string, std::string>	key_value;
-	key_value = parseFormUrlEncoded(handler._request.getBody());
+	const Request	request = handler.getRequest();
+	parseFormUrlEncoded(request.getBody(), key_value);
 
 	const std::string	user_name = key_value.count("username") ? key_value["username"] : "";
 	const std::string	user_password = key_value.count("password") ? key_value["password"] : "";
 
 	if (isSafeName(user_name) || user_password.empty()) {
-		handler._response.setStatusCode(BAD_REQUEST);
-		return (false);
+		return (BAD_REQUEST);
 	}
 
 	if (!dirExist(db_root)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return (false);
+		return (INTERNAL_SERVER_ERROR);
 	}
-	if (userInCsv(csv_path, username)) {
-		handler._response.setStatusCode(BAD_REQUEST);
-		return (false);
+	if (userExistInCsv(csv_path, user_name)) {
+		return (BAD_REQUEST);
 	}
 	if (dirExist(db_root + "/" + user_name)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return (false);
+		return (INTERNAL_SERVER_ERROR);
 	}
 	else {
-		if (mkdir(db_root + "/" + user_name, 0755)) {
-			handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
-			return (false);
+		if (mkdir((db_root + "/" + user_name).c_str(), 0755)) {
+			return (INTERNAL_SERVER_ERROR);
 		}
 	}
 	if (!addUserToCsv(csv_path, user_name, user_password)) {
-		rm(db_root + "/" + user_name);
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return (false);
+		remove((db_root + "/" + user_name).c_str());
+		return (INTERNAL_SERVER_ERROR);
 	}
-	handler._response.setStatusCode(OK);
-	return (true);
+	return (OK);
 }
 
-bool	handleUser::deleteUser() {
+t_HttpCode	handleUser::deleteUser(const Request& request) {
 	const std::string	db_root = "./data/dB";
 	const std::string	csv_path = db_root + "/users_longin.csv";
 
 	std::map<std::string, std::string>	key_value;
-	key_value = parseFormUrlEncoded(handler._request.getBody());
+	parseFormUrlEncoded(request.getBody(), key_value);
 
 	const std::string	user_name = key_value.count("username") ? key_value["username"] : "";
 	const std::string	user_password = key_value.count("password") ? key_value["password"] : "";
 
 	if (isSafeName(user_name) || user_password.empty()) {
-		handler._response.setStatusCode(BAD_REQUEST);
-		return (false);
+		return (BAD_REQUEST);
 	}
 
 	if (!dirExist(db_root)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return (false);
+		return (INTERNAL_SERVER_ERROR);
 	}
 	const std::string	user_dir = db_root + "/" + user_name;
 	if (!removeTree(user_dir)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return (false);
+		return (INTERNAL_SERVER_ERROR);
 	}
-	if (!delUserInCsv(csv_path, username)) {
-		handler._response.setStatusCode(BAD_REQUEST);
-		return (false);
+	if (!delUserInCsv(csv_path, user_name)) {
+		return (BAD_REQUEST);
 	}
-	handler._response.setStatusCode(OK);
-	return (true);
+	return (OK);
 }
 
 
-static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& output) {
+static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& out) {
 	size_t	pos = 0;
 	while (pos < body.size()) {
 		size_t sep = body.find('&', pos);
@@ -92,7 +94,7 @@ static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, s
 			sep = body.size();
 
 		std::string	pair = body.substr(pos, sep - pos);
-		size_t eq = pairfind('=');
+		size_t eq = pair.find('=');
 
 		std::string	key = (eq == std::string::npos) ? pair : pair.substr(0, eq);
 		std::string	value = (eq == std::string::npos) ? "" : pair.substr(eq + 1);
@@ -112,7 +114,7 @@ static std::string	urlDecode(const std::string& str) {
 	output.reserve(str.size());
 
 	for (size_t i = 0; i < str.size(); ++i) {
-		if (str.at(i) == "+")
+		if (str.at(i) == '+')
 			output += ' ';
 		else if (str.at(i) == '%' && i + 2 < str.size()) {
 			int hi = hexVal(str.at(i + 1));
@@ -144,8 +146,8 @@ static int	hexVal(char c) {
 static bool	isSafeName(const std::string& name) {
 	if (name.empty())
 		return (false);
-	size_t	i = 0;
-	std::string::const_iterator it = name.being();
+	//size_t	i = 0;
+	std::string::const_iterator it = name.begin();
 	while (it != name.end()) {
 		if (!(std::isdigit(*it)
 			|| std::isalpha(*it)
@@ -165,8 +167,8 @@ static bool	dirExist(const std::string& name) {
 }
 
 static bool	removeTree(const std::string& path) {
-	struc stat	st;
-	if (lstat(path,c_str(), &st) != 0) {
+	struct stat	st;
+	if (lstat(path.c_str(), &st) != 0) {
 		if (errno == ENOENT)
 			return (true);
 		return (false);
@@ -176,7 +178,7 @@ static bool	removeTree(const std::string& path) {
 		DIR* dir = opendir(path.c_str());
 		if (!dir)
 			return (false);
-		struct dirent* ent;
+		struct dirent* ent = NULL;
 		while ((ent == readdir(dir)) != 0) {
 			const char* name = ent->d_name;
 			if (!name)
@@ -191,7 +193,7 @@ static bool	removeTree(const std::string& path) {
 		}
 		closedir(dir);
 
-		if (rmdir(pathc_str()) != 0) {
+		if (rmdir(path.c_str()) != 0) {
 			if (errno == ENOENT)
 				return (true);
 			return (false);
@@ -215,7 +217,7 @@ static bool	userExistInCsv(const std::string& csv, const std::string& name) {
 		if (line.empty())
 			continue ;
 		size_t	comma = line.find(',');
-		if (line.compare(name, 0, comma) == 0)
+		if (line.compare(0, comma, name) == 0)
 			return (true);
 	}
 	return (false);
@@ -225,13 +227,13 @@ static bool	addUserToCsv(const std::string& csv, const std::string& name, const 
 	std::ofstream	stream(csv.c_str(), std::ios::out | std::ios::app);
 	if (!stream.is_open())
 		return (false);
-	stream << username << "," << password << "\n";
+	stream << name << "," << password << "\n";
 	return (stream.good());
 }
 
 static bool	delUserInCsv(const std::string& csv, const std::string& user) {
-	std::ifstream	in(csv.c_str());
-	if (!in.is_open())
+	std::ifstream	stream(csv.c_str());
+	if (!stream.is_open())
 		return (false);
 	const std::string	tmp_path = csv + ".tmp";
 	std::ofstream	out(tmp_path.c_str(), std::ios::out | std::ios::trunc);
@@ -244,7 +246,7 @@ static bool	delUserInCsv(const std::string& csv, const std::string& user) {
 		if (line.empty())
 			continue ;
 		size_t	comma = line.find(',');
-		if (line.compare(name, 0, comma) == 0) {
+		if (line.compare(0, comma, user) == 0) {
 			removed = true;
 			continue ;
 		}

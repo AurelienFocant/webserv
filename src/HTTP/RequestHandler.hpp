@@ -95,6 +95,8 @@ class RequestHandler
 
 	/* Getters */
 	std::string		getRoot() const {return _root;}
+	const Request&	getRequest() const ;
+	const Response&	getResponse() const ;
 
 	/* Public Methods */
 	void			handleRequest();
