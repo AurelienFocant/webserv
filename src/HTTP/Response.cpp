@@ -269,6 +269,11 @@ void	Response::setBodyContent(const std::string& content)
 	_body_sent = 0;
 }
 
+void	Response::setBodyType(bodyType type)
+{
+	_body_type = type;
+}
+
 void	Response::resetBuffer()
 {
 	_buffer_size = 0;

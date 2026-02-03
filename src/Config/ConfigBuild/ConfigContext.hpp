@@ -3,6 +3,7 @@
 #include <map>
 #include "VirtualServer.hpp"
 #include <ctime>
+#include <set>
 
 enum ContextType {
     MAIN = 1,
@@ -18,15 +19,16 @@ class ConfigContext {
 		std::string _root;
 		std::string _serverName;
 		std::string _locationName;
-		std::map<std::string, Location> _locations;
-		std::vector<std::string>		_indexes;
 		bool		_autoindex;
 		std::time_t	_keepalive_time;
 		std::time_t	_keepalive_timeout;
 		int			_redirect_code;
 		std::string	_redirect;
-
 		bool		_cgi;
+
+		std::vector<std::string>		_indexes;
+		std::set<std::string>			_allowed_methods;
+		std::map<std::string, Location> _locations;
 
 	public:
 		void	inheritFrom(const ConfigContext &parent);
@@ -48,18 +50,18 @@ class ConfigContext {
 		void							setIndexes(std::vector<std::string> const& src);
 		std::vector<std::string> const&	getIndexes(void) const;
 		bool		getAutoindex(void) const;
-		void		setAutoindex(bool b);
-		int			getRedirectCode(void) const {return _redirect_code;}
-		void		setRedirectCode(int code) {_redirect_code = code;}
-		std::string	getRedirect(void) const {return _redirect;}
-		void		setRedirect(std::string redirect) {_redirect = redirect;}
-		std::time_t	getKeepalive_time() const;
-		void		setKeepalive_time(std::time_t t) {_keepalive_time = t;}
-		std::time_t	getKeepalive_timeout() const;
+		void		setAutoindex(bool b)		{_autoindex = b;}
+		int			getRedirectCode(void) const	{return _redirect_code;}
+		void		setRedirectCode(int code)	{_redirect_code = code;}
+		std::string	getRedirect(void) const		{return _redirect;}
+		void		setRedirect(std::string redirect)	{_redirect = redirect;}
+		std::time_t	getKeepalive_time() const			{return _keepalive_time;}
+		void		setKeepalive_time(std::time_t t)	{_keepalive_time = t;}
+		std::time_t	getKeepalive_timeout() const		{return _keepalive_timeout;}
 		void		setKeepalive_timeout(std::time_t t) {_keepalive_timeout = t;}
-
-
-		bool		getCGI() const;
+		std::set<std::string>	getAllowedMethods(void) const	{return _allowed_methods;}
+		void					setAllowedMethods(std::set<std::string> m) {_allowed_methods = m;}
+		bool		getCGI() const {return _cgi;}
 
 		ConfigContext(void);
 		ConfigContext(ContextType t);
