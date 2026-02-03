@@ -210,7 +210,7 @@ void	Webserv::run()
 		}
 
 		// check keepalive_timeout and keepalive_time
-		_closeStaleConnections();
+		//_closeStaleConnections();
 	}
 }
 
