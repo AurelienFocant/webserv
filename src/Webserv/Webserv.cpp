@@ -253,7 +253,7 @@ bool	Webserv::clientHandler(Connection & conn)
 		std::cout << "[Error] HUP or ERR" <<std::endl; 
 		_closeConnection(conn);
 	}
-
+*/
 	if (conn.getEvent() & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
