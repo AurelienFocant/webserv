@@ -29,8 +29,6 @@ class RequestHandler
 	std::string				_resolved_path; //defnitive internal path (after alias or override)
 
 	std::string				_query;
-	int						_extension;
-
 
 	const Location*			_matched_location;
 	t_extension				_matched_extension;
