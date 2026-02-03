@@ -14,6 +14,7 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _resolved_path("")
 	, _query("")
 	, _matched_location(NULL)
+	, _matched_extension(NO_EXT)
 	, _is_directory(false)
 {
 	_response.setStatusCode(_request.getStatusCode());
@@ -109,6 +110,8 @@ bool	RequestHandler::resolvePath()
 	if (_is_directory && handleTrailingSlash())
 		return false;
 
+	//exit(2);
+
 	return true;
 
 }
@@ -151,6 +154,7 @@ bool	RequestHandler::hasRedirect()
 
 void	RequestHandler::findLocation()
 {
+	std::string	ext;
 	size_t		longest_match = 0;
 
 	for (std::map<std::string, Location>::const_iterator it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
@@ -158,12 +162,22 @@ void	RequestHandler::findLocation()
 		const std::string&	route_path = it->first;
 		const Location*		location = &(it->second);
 
-		//Check if the requested path match an extension or begin with a Location name
-		if (route_path.back() == '$' && detectExtension())
-		{
-			_matched_location = location;
-			return ;
 
+		//Check if the requested path match an extension or begin with a Location name
+		if (route_path[route_path.size() -1] == '$')
+		{
+			ext = route_path.substr(0, route_path.size() -1);
+			size_t ext_start = _request_path.find(ext);
+			if (ext_start != std::string::npos)
+			{
+				size_t ext_end = ext_start + ext.size();
+				if (ext_end == _request_path.size() || _request_path[ext_end] == '/')
+				{
+					_matched_location = location;
+					_matched_extension = extensionFromString(ext);
+					break ;
+				}
+			}
 		}
 		else if (_request_path.find(route_path, 0) == 0)
 		{
@@ -190,43 +204,58 @@ void	RequestHandler::findLocation()
 
 bool	RequestHandler::detectCgi()
 {
-	std::vector<std::string> scripts_supported;
-	scripts_supported.push_back(".py");
-	scripts_supported.push_back(".sh");
-
-	if (!_matched_location->getCGI())
+/* 	if (!_matched_location->getCGI())
+		return false; */
+	
+	if (_matched_extension == UNKNOWN_EXT)
 		return false;
 
-	std::cout << "REQUEST_PATH: " << _request_path << std::endl;
-	size_t dot_pos = _request_path.find_last_of('.');
-	if (dot_pos == std::string::npos)
+	std::string ext_str = extensionToString(_matched_extension);
+
+	size_t ext_start = _request_path.find(ext_str);
+	if (ext_start == std::string::npos)
 		return false;
+	size_t ext_end = ext_start + ext_str.size();
 
-	std::string ext = _request_path.substr(dot_pos);
-
-	size_t info_pos = ext.find_first_of('/');
+	std::string script_name = _request_path.substr(0, ext_end);
+/* 	size_t	slash_pos = script_name.find_last_of('/');
+	if (slash_pos != std::string::npos)
+		script_name = script_name.substr(slash_pos + 1) */;
 
 	std::string path_info = "";
-	if (info_pos != std::string::npos)
+	if (ext_end < _request_path.size() && _request_path[ext_end] == '/')
 	{
-		path_info = ext.substr(info_pos);
-		ext = ext.substr(0, info_pos);
+		path_info = _request_path.substr(ext_end);
+		_request_path = _request_path.substr(0, ext_end);
 	}
 
-	size_t location_size = _matched_location->getName().size();
-	std::string script_name = _request_path.substr(location_size);
-	
 	std::cout << "[DEBUG]: "
 			<< "\nSCRIPT_NAME: " << script_name
-			<< "\nEXT: " << ext
+			<< "\nEXT: " << ext_str
 			<< "\nQUERY: " << _query
 			<< "\nPATH_INFO: " << path_info << std::endl;
-	// comparer ext a map cgi / bin ?
 	
-	//exit(2);
 	return true;
 
 }
+
+bool	RequestHandler::normalizePath()
+{
+	// TO DO 
+
+	// percent encoding?
+
+	// "./" delete
+
+
+	// "../" level up
+
+
+	// "//" become "/"
+
+	return true;
+}
+
 
 bool	RequestHandler::validatePath()
 {
@@ -240,18 +269,21 @@ bool	RequestHandler::validatePath()
 		return false;
 	}
 
+	// normalizePath()
+
+
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
-/* 		if (errno == ENOENT)
+		if (errno == ENOENT)
 			 _response.setStatusCode(NOT_FOUND);
 		else if (errno == EACCES)
 			_response.setStatusCode(FORBIDDEN);
 		else
 			_response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return false; */
-		std::cerr << "[DEBUG] stat() failed: " << strerror(errno) << std::endl;
+		return false;
+/* 		std::cerr << "[DEBUG] stat() failed: " << strerror(errno) << std::endl;
         std::cerr << "[DEBUG] Current working dir: ";
-        system("pwd");
+        system("pwd") */;
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);

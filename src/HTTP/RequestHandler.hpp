@@ -22,14 +22,18 @@ class RequestHandler
 	/* Private Attributes */
 	const Request&			_request;
 	Response&				_response;
-	const VirtualServer&	_server;
+	VirtualServer&	_server;
 
 	std::string				_root;
 	std::string				_request_path; // request_uri sans query
 	std::string				_resolved_path; //defnitive internal path (after alias or override)
+
 	std::string				_query;
+	int						_extension;
+
 
 	const Location*			_matched_location;
+	t_extension				_matched_extension;
 	bool					_is_directory;
 
 	/* Private Methods */
@@ -37,6 +41,7 @@ class RequestHandler
 	/* Path processing */
 	bool			extractPath();
 	bool			resolvePath();
+	bool			normalizePath();
 	bool			validatePath();
 	void			findLocation();
 

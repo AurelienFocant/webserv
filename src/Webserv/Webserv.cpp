@@ -280,13 +280,13 @@ VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
 bool	Webserv::clientHandler(Connection & conn)
 {
 	// client close gracefully
-	if (conn.getEvent() & EPOLLRDHUP) {
+/* 	if (conn.getEvent() & EPOLLRDHUP) {
 		std::cout << "[Error] RDHUP" <<std::endl; 
 	}
 	// error
 	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
 		std::cout << "[Error] HUP or ERR" <<std::endl; 
-	}
+	} */
 
 	if (conn.getEvent() & EPOLLIN) {
 

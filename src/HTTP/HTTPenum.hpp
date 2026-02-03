@@ -27,6 +27,13 @@ typedef	enum s_progress {	//Enum for request traitment progression -> UNKNOWN_ST
 			UNKNOWN_STATE
 }		t_progress;
 
+typedef	enum s_extension {		//Enum for SCRIPT EXTENSIONS -> UNKNOWN_EXT must be the last one
+	NO_EXT = -1,
+	PY = 0,
+	SH = 1,
+	UNKNOWN_EXT
+}		t_extension;
+
 typedef enum s_httpCode {	//Enum for HTTP Status codes
 	// ERROR_TYPE = 			Error_code	http version
 	INIT_STATE						= -1,
@@ -90,8 +97,14 @@ t_method	methodFromString(const std::string&	string) ;
 std::string	progressToString(t_progress code) ;
 t_progress	progressFromString(const std::string& string) ;
 
+//t_extension enum
+std::string extensionToString(t_extension code)  ;
+t_extension extensionFromString(const std::string& string) ;
+
 //t_httpCode enum
 std::string httpStatusToString(t_HttpCode code)  ;
 t_HttpCode httpStatusFromString(const std::string& string) ;
+
+
 
 #endif
