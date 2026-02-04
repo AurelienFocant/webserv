@@ -42,54 +42,81 @@ bool	Request::cleanRequest() {
 }
 
 /*Public Methods*/
+
+// Parsing the request, progression status allow the parsing to stop and restart as the data arrive.
+// _progress is set to the next case VALUE by each completed parsing operation --> see Httpenum.hpp for the list.
+// _progress is set to PARSER_ERROR if an error in the request is detected.
+// _progress is set to INTERNAL_SERVER_ERROR if the parser encounter a logic flow problem.
+
 bool	Request::parseRequest() {
+	// if more token are needed or available, create and add them to token list.
 	if (_progress < PARSED)
 		HTTPTokenizer::scanTokens();
 	_list_it = _token_list.begin();
 	
-	std::cout << "Request.cpp -l63:\n" << _token_list;
+	std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.
 
-	//Parsing for mandatory first line information
-	if	(!parseFirstLine()) {
-		_complete = true;
-		_status_code = BAD_REQUEST;
+	//iterate and consume token list
+	while (_progress < PARSED && (_list_it != _token_list.end() && _list_it->tkType != EOC)) { 
+		switch (_progress) {
+			case (START):
+				setMethod();
+				break ;
+			case (METHOD):
+				setRequestUri();
+				break ;
+			case (URI):
+				if (setHttpVersion())
+				break ;
+			case (VERSION):
+				if ((*_list_it).tkType == EOL)
+					_progress = FIRST_LINE;
+				break ;
+			case (FIRST_LINE):
+				parseHeader();
+				break ;
+			case (PARSER_ERROR):
+				_complete = true;
+				_progress = DONE;
+				_status_code = BAD_REQUEST;
+				break ;
+			default:
+				_complete = true;
+				_progress = DONE;
+				_status_code = INTERNAL_SERVER_ERROR;
+		}
 	}
 
-	//Parsing headers information
+	if (_progress == PARSED)
+		handleBody();
+
 	switch (_progress) {
-		case (FIRST_LINE):
-			if (!parseHeader())
-				break ;
-			 // fall thru
-		case (PARSED):
-			if (_status_code == INIT_STATE)
-				handleBody();
+		case (DONE):
 			break ;
 		case (BODY_HANDLING):
-			if (_status_code == INIT_STATE) {
-				if ((this->*_body_handler)()) {
-					// SOMETHING
-				}
-			}
+			(this->*_body_handler)();
 			break ;
 		case (PARSER_ERROR):
-			_progress = PARSER_ERROR;
 			_complete = true;
+			_progress = DONE;
 			_status_code = BAD_REQUEST;
 			break ;
 		default:
-			_progress = PARSER_ERROR;
 			_complete = true;
+			_progress = DONE;
 			_status_code = INTERNAL_SERVER_ERROR;
 	}
+
 	removeEOC();
 
-	std::cout << "Request.cpp -l95: " << _progress << std::endl;
+	std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
+
 	if (_complete)
 		cleanTokenList();
 	return (_complete);
 }
 
+/*
 bool	Request::parseFirstLine() {
 	while (_progress != PARSER_ERROR && _progress < FIRST_LINE && _list_it != _token_list.end()) {
 		switch (_progress) {
@@ -120,6 +147,7 @@ bool	Request::parseFirstLine() {
 	else
 		return (true);
 }
+*/
 
 bool	Request::handleBody() {
 	extractHeadersInformations();
@@ -130,13 +158,12 @@ bool	Request::handleBody() {
 		return (_complete);
 	}*/
 	if (_method == GET) { //Check for GET request
-		if (_progress == PARSED) {
-			_progress = DONE;
-			_complete = true;
-			_status_code = OK;
-		}
+		_progress = DONE;
+		_complete = true;
+		_status_code = OK;
 	}
 	else if (_method == POST) { //Parsing body if POST request
+		_progress = BODY_HANDLING;
 		defineBodyExtractionHandler();
 	}
 	else {
@@ -376,55 +403,36 @@ const std::multimap<std::string, std::string>&	Request::getHeaders() const {
 
 /*Setters*/
 bool	Request::setMethod() {
-	if (_progress == PARSER_ERROR)
-		return (false);
-	t_Token	token = *_list_it;
-	if (token.tkType != WORD) {
-		_progress = PARSER_ERROR;
-		return (false);
+	if ((*_list_it).tkType == WORD) {
+		_method = methodFromString((*_list_it).lexeme);
+		_list_it++;
+		_progress = METHOD;
+		return (true);
 	}
-	_method = methodFromString(token.lexeme);
-	_list_it++;
-	_progress = METHOD;
-	return (true);
+	_progress = PARSER_ERROR;
+	return (false);
 }
 
 bool	Request::setRequestUri() {
-	if (_progress == PARSER_ERROR)
-		return (false);
-	t_Token	token = *_list_it;
-	switch (token.tkType) {
-		case (EOC):
-			break ;
-		case (WORD):
-			_request_uri = token.lexeme;
-			_list_it++;
-			_progress = URI;
-			break ;
-		default:
-			_progress = PARSER_ERROR;
-			return (false);
+	if ((*_list_it).tkType == WORD) {
+		_request_uri = (*_list_it).lexeme;
+		_list_it++;
+		_progress = URI;
+		return (true);
 	}
-	return (true);
+	_progress = PARSER_ERROR;
+	return (false);
 }
 
 bool	Request::setHttpVersion() {
-	if (_progress == PARSER_ERROR)
-		return (false);
-	t_Token	token = *_list_it;
-	switch (token.tkType) {
-		case (EOC):
-			break ;
-		case (WORD):
-			_http_version = token.lexeme;
+	if ((*_list_it).tkType == WORD) {
+			_http_version = (*_list_it).lexeme;
 			_list_it++;
 			_progress = VERSION;
-			break ;
-		default:
-			_progress = PARSER_ERROR;
-			return (false);
+		return (true);
 	}
-	return (true);
+	_progress = PARSER_ERROR;
+	return (false);
 }
 
 /*
