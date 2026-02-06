@@ -66,7 +66,7 @@ bool	Request::parseRequest() {
 				setRequestUri();
 				break ;
 			case (URI):
-				if (setHttpVersion())
+				setHttpVersion();
 				break ;
 			case (VERSION):
 				if ((*_list_it).tkType == EOL)
@@ -89,12 +89,12 @@ bool	Request::parseRequest() {
 
 	if (_progress == PARSED)
 		handleBody();
-
-	switch (_progress) {
+	if (_progress == BODY_HANDLING)
+		(this->*_body_handler)();
+/*	switch (_progress) {
 		case (DONE):
 			break ;
 		case (BODY_HANDLING):
-			(this->*_body_handler)();
 			break ;
 		case (PARSER_ERROR):
 			_complete = true;
@@ -106,8 +106,8 @@ bool	Request::parseRequest() {
 			_progress = DONE;
 			_status_code = INTERNAL_SERVER_ERROR;
 	}
-
-	removeEOC();
+*/
+//	removeEOC();
 
 	std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
 
@@ -248,7 +248,7 @@ bool	Request::parseHeader() {
 	if (_list_it == _token_list.end() || _list_it->tkType == EOC)
 		return (true);
 	int	nbr_eol = 0;
-	while (_progress != PARSER_ERROR && nbr_eol != 2 && _list_it->tkType != EOC) {
+	while (_progress != PARSER_ERROR && nbr_eol != 2 && (_list_it != _token_list.end() && _list_it->tkType != EOC)) {
 		switch (_list_it->tkType) {
 			case (WORD):
 				nbr_eol = 0;
@@ -277,7 +277,7 @@ bool	Request::parseHeader() {
 	}
 	if (nbr_eol == 2)
 		_progress = PARSED;
-	removeEOC();
+//	removeEOC();
 	if (_progress != PARSED)
 		return (false);
 	return (true);

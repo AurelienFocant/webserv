@@ -1,11 +1,11 @@
 #include "HTTPTokenizer.hpp"
 
 HTTPTokenizer::HTTPTokenizer() : Tokenizer() {
-	_tokenizing = 0;
+	cleanTokenList();
 }
 
 HTTPTokenizer::HTTPTokenizer(std::string const& input) : Tokenizer(input) {
-	_tokenizing = 0;
+	cleanTokenList();
 }
 
 HTTPTokenizer::~HTTPTokenizer() {
@@ -15,8 +15,7 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 	t_Token	new_token;
 
 	//Tokenizing first line of request
-	int	nbr_eol = 0;
-	while (_tokenizing < 4 && _it != _input.end() && nbr_eol == 0) {
+	while (_tokenizing < 4 && _it != _input.end() && _nbr_eol == 0) {
 		switch (*_it) {
 			case (' '):
 				_input.erase(0, 1);
@@ -29,7 +28,7 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 					_token_list.push_back(new_token);
 					_it -= 1;
 					_input.erase(0, 2);
-					nbr_eol = 1;
+					_nbr_eol = 1;
 				}
 				else {
 					new_token.tkType = ERROR;
@@ -47,19 +46,19 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 				_tokenizing++;
 		}
 	}
-	nbr_eol = 0;
+//	nbr_eol = 0;
 	//Tokenizing Header
-	while (_it != _input.end() && nbr_eol != 2) {
+	while (_it != _input.end() && _nbr_eol < 2) {
 		switch (*_it) {
 			case (':'):
-				nbr_eol = 0;
+				_nbr_eol = 0;
 				new_token.tkType = COLON;
 				new_token.lexeme = ":";
 				_token_list.push_back(new_token);
 				_input.erase(0, 1);
 				break ;
 			case (','):
-				nbr_eol = 0;
+				_nbr_eol = 0;
 				new_token.tkType = COMA;
 				new_token.lexeme = ",";
 				_token_list.push_back(new_token);
@@ -68,7 +67,7 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 			case ('\r'):
 				advance();
 				if (peek() == '\n') {
-					nbr_eol++;
+					_nbr_eol++;
 					new_token.tkType = EOL;
 					new_token.lexeme = "\\r\\n";
 					_token_list.push_back(new_token);
@@ -85,7 +84,7 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 				}
 				break ;
 			default:
-				nbr_eol = 0;
+				_nbr_eol = 0;
 				new_token.tkType = WORD;
 				if (_token_list.back().tkType == COLON || _token_list.back().tkType == COMA)
 					new_token.lexeme = getWord(",\r");
@@ -104,12 +103,13 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 		_token_list.push_back(new_token);
 	}
 */
-	if (_it == _input.end()) {
+/*	if (_it == _input.end()) {
 		new_token.tkType = EOC;
 		new_token.lexeme = "\0";
 		_token_list.push_back(new_token);
 	}
-	_list_it = _token_list.begin();
+*/
+//	_list_it = _token_list.begin();
 	return (_token_list);
 }
 
@@ -149,6 +149,7 @@ std::string	HTTPTokenizer::extractInput(char character) {
 void	HTTPTokenizer::cleanTokenList() {
 	_token_list.clear();
 	_tokenizing = 0;
+	_nbr_eol = 0;
 }
 
 bool	HTTPTokenizer::addInput(std::string input) {
