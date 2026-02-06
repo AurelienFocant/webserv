@@ -11,7 +11,9 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
 	, _root(currConn.virtual_server.getRoot())
+	, _cage_root("")
 	, _request_path("")
+	, _normalized_path("")
 	, _resolved_path("")
 	, _query("")
 	, _matched_location(NULL)
@@ -67,6 +69,8 @@ bool	RequestHandler::extractPath()
 
 bool	RequestHandler::resolvePath()
 {
+	_cage_root = _root;
+
 	findLocation();
  
 	if (_matched_location)
@@ -78,11 +82,15 @@ bool	RequestHandler::resolvePath()
 		//Config Redirections
 		if (handleConfigRedirect())
 			return false;
-		else if (!_matched_location->getAlias().empty())
+
+		if (!normalizePath())
+			return false;
+		
+		if (!_matched_location->getAlias().empty())
 		{
 			//Alias : replace prefix of location
 			std::string	location_path = _matched_location->getName();
-			std::string	remaining_path = _request_path.substr(location_path.length());
+			std::string	remaining_path = _request_path.substr(location_path.size());
 			_resolved_path = _matched_location->getAlias() + remaining_path;
 		}
 		else if (!_matched_location->getRoot().empty())
@@ -108,11 +116,6 @@ bool	RequestHandler::resolvePath()
 	if (!validatePath())
 		return false;
 
-	if (_is_directory && handleTrailingSlash())
-		return false;
-
-	//exit(2);
-
 	return true;
 
 }
@@ -132,7 +135,10 @@ bool	RequestHandler::handleConfigRedirect()
 
 bool	RequestHandler::handleTrailingSlash()
 {
-	if (_request_path[_request_path.length() - 1] == '/')
+	//if (_matched_location && _matched_location->virtual)
+	//	return true;
+
+	if (_request_path[_request_path.size() - 1] == '/')
 		return false;
 
 	std::string redirect_uri = _request_path + "/";
@@ -182,16 +188,17 @@ void	RequestHandler::findLocation()
 		}
 		else if (_request_path.find(route_path, 0) == 0)
 		{
-			size_t route_len = route_path.length();
+			size_t route_len = route_path.size();
 
 			// Test if it's a real match, not just a partial prefix
-			if (_request_path.length() == route_len || _request_path[route_len] == '/')
+			if (_request_path.size() == route_len || _request_path[route_len] == '/')
 			{
 				//Keep the longest match
 				if (route_len > longest_match)
 				{
-					longest_match = route_path.length();
+					longest_match = route_path.size();
 					_matched_location = location;
+					_cage_root = location->getName();
 				}
 			}
 		}
@@ -208,7 +215,7 @@ bool	RequestHandler::detectCgi()
 /* 	if (!_matched_location->getCGI())
 		return false; */
 	
-	if (_matched_extension == UNKNOWN_EXT)
+	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
 		return false;
 
 	std::string ext_str = extensionToString(_matched_extension);
@@ -239,18 +246,38 @@ bool	RequestHandler::detectCgi()
 
 bool	RequestHandler::normalizePath()
 {
-	// TO DO 
+	std::cout << "Cage root :" << _cage_root << std::endl;
+	std::cout << "Request path :" << _request_path << std::endl;
 
-	// percent encoding?
+	_normalized_path = _request_path.substr(_cage_root.size());
+	std::vector<std::string> segments;
 
-	// "./" delete
+	size_t pos = 0;
+	size_t start = 0;
+	while ((pos = _normalized_path.find('/', start)) != std::string::npos && pos < _normalized_path.size())
+	{
+		std::string seg = _normalized_path.substr(start, pos -start);
+		if (seg.empty() || (seg.at(0) == '.' && seg.size() == 1))
+		{
+			start = pos + 1;
+			continue;
+		}
+		if (seg == ".." )
+		{
+			if (segments.empty())
+			{
+				std::cerr << "ERROR" << std::endl;
+				_response.setStatusCode(403);
+				return false;
+			}
+			segments.pop_back();
+		}
+		else
+			segments.push_back(seg);
+		start = pos + 1;
+	}
 
-
-	// "../" level up
-
-
-	// "//" become "/"
-
+	std::cout << "Success" << std::endl;
 	return true;
 }
 
@@ -259,6 +286,8 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
+	//if (_matched_location->virtual)
+	//	return true;
 	if (_resolved_path.find("/../") != std::string::npos)
 	{
 		_response.setStatusCode(403);
@@ -266,8 +295,6 @@ bool	RequestHandler::validatePath()
 		<< _resolved_path << std::endl;
 		return false;
 	}
-
-	// normalizePath()
 
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
@@ -285,6 +312,9 @@ bool	RequestHandler::validatePath()
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);
+
+	if (_is_directory && handleTrailingSlash())
+		return false;
 
 	return true;
 }
@@ -410,8 +440,9 @@ void	RequestHandler::buildFileResponse(int fd)
 
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Type", getContentType(_resolved_path));
 	_response.setHeader("Content-Length", intToString(target_size));
+	_response.setHeader("Content-Type", getContentType(_resolved_path));
+	_response.setHeader("Date", getTime());
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
 }
@@ -420,8 +451,9 @@ void	RequestHandler::buildHtmlResponse(const std::string& content)
 {
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Type", "text/html");
 	_response.setHeader("Content-Length", intToString(content.size()));
+	_response.setHeader("Content-Length", intToString(content.size()));
+	_response.setHeader("Date", getTime());
 	_response.setBodyContent(content);
 	_response.setBodySize(content.size());
 }
@@ -432,6 +464,8 @@ void	RequestHandler::buildRedirectResponse(int status_code, const std::string& r
 	_response.setHttpVersion(_request.getHttpVersion());
 	_response.setHeader("Location", redirect_uri);
 	_response.setHeader("Content-Length", "0");
+	_response.setHeader("Date", getTime());
+
 }
 
 void	RequestHandler::buildErrorResponse(int status_code)
@@ -443,8 +477,9 @@ void	RequestHandler::buildErrorResponse(int status_code)
 	{
 		_response.setStatusCode(status_code);
 		_response.setHttpVersion(_request.getHttpVersion());
-		_response.setHeader("Content-Type", "text/html");
 		_response.setHeader("Content-Length", intToString(file_size));
+		_response.setHeader("Content-Type", "text/html");
+		_response.setHeader("Date", getTime());
 		_response.setBodyFd(fd);
 		_response.setBodySize(file_size);
 	}
@@ -500,6 +535,14 @@ std::string	RequestHandler::generateDefaultError(int status_code)
 }
 
 /* UTILS */
+
+std::string	RequestHandler::getTime()
+{
+	time_t timestamp;
+	std::time(&timestamp);
+
+	return std::ctime(&timestamp);
+}
 
 bool	RequestHandler::isDirectory(const std::string& path)
 {

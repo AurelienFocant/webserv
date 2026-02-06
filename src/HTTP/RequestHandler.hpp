@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <ctime>
 
 #include "Connection.hpp"
 #include "Request.hpp"
@@ -25,7 +26,9 @@ class RequestHandler
 	VirtualServer&			_server;
 
 	std::string				_root;
+	std::string				_cage_root;
 	std::string				_request_path;
+	std::string				_normalized_path;
 	std::string				_resolved_path;
 
 	std::string				_script_name;
@@ -41,10 +44,10 @@ class RequestHandler
 	/* Path processing */
 	bool			extractPath();
 	bool			resolvePath();
-	bool			normalizePath();
 	bool			validatePath();
 	void			findLocation();
 
+	bool			normalizePath();
 	bool			detectCgi();
 
 
@@ -75,6 +78,8 @@ class RequestHandler
 	/* Errors */
 	bool			loadErrorPage(int status_code, int& fd, size_t& size);
 	std::string		generateDefaultError(int status_code);
+
+	std::string		getTime();
 
 	/* File operations */
 	int				openReadFile(const std::string& path);
