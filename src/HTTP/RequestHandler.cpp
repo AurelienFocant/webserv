@@ -288,14 +288,6 @@ bool	RequestHandler::validatePath()
 
 	//if (_matched_location->virtual)
 	//	return true;
-	if (_resolved_path.find("/../") != std::string::npos)
-	{
-		_response.setStatusCode(403);
-        std::cerr << "[DEBUG] Potential Traversal Path: "
-		<< _resolved_path << std::endl;
-		return false;
-	}
-
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
@@ -306,9 +298,6 @@ bool	RequestHandler::validatePath()
 		else
 			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return false;
-/* 		std::cerr << "[DEBUG] stat() failed: " << strerror(errno) << std::endl;
-        std::cerr << "[DEBUG] Current working dir: ";
-        system("pwd") */;
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);
