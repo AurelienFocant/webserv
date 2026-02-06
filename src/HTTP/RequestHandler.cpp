@@ -212,6 +212,9 @@ bool	RequestHandler::detectCgi()
 	if (_matched_extension == UNKNOWN_EXT)
 		return false;
 
+	if (_matched_extension == NO_EXT)
+		return false;
+
 	std::string ext_str = extensionToString(_matched_extension);
 
 	size_t ext_start = _request_path.find(ext_str);

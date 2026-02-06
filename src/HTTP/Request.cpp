@@ -394,6 +394,8 @@ std::vector<std::string>	Request::getHeaderValues(std::string header_name) const
 		values.push_back(it->second);
 		++it;
 	}
+	if (values.empty())
+		values.insert(values.begin(), "");
 	return (values);
 }
 
