@@ -46,7 +46,7 @@ void	RequestHandler::handleRequest()
 
 bool	RequestHandler::extractPath()
 {
-	if (_request.getRequestUri().empty() /* || _request.getRequestUri().at(0) != '/' */)
+	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
 	{
 		_response.setStatusCode(BAD_REQUEST);
 		return false;
@@ -68,8 +68,6 @@ bool	RequestHandler::extractPath()
 
 bool	RequestHandler::resolvePath()
 {
-	_cage_root = _root;
-
 	findLocation();
  
 	if (_matched_location)
@@ -282,8 +280,9 @@ bool	RequestHandler::normalizePath()
 	std::string	decoded_path = decodePath(_request_path);
 	std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
-
+	// fonction meme hors location car _cage_root est initialise a "";
 	std::string temp_path = decoded_path.substr(_cage_root.size());
+
 	if (!temp_path.empty() && temp_path[0] != '/')
 		temp_path = "/" + temp_path;
 
@@ -325,15 +324,15 @@ bool	RequestHandler::normalizePath()
 	}
 
 	temp_path = _cage_root;
+
 	for (size_t i = 0; i < segments.size(); i++)
 		temp_path += "/" + segments[i];
-	
-	if (trailing_slash)
+
+	if (temp_path.empty() || (trailing_slash && temp_path.size() != 1))
 		temp_path += '/';
 	
 	_request_path = temp_path;
 
-	std::cout << "Success" << std::endl;
 	std::cout << "[DEBUG] Normalized path " << _request_path << std::endl;
 
 	return true;
