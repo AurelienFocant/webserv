@@ -29,7 +29,6 @@ class RequestHandler
 	std::string				_root;
 	std::string				_cage_root;
 	std::string				_request_path;
-	//std::string				_normalized_path;
 	std::string				_resolved_path;
 
 	std::string				_script_name;

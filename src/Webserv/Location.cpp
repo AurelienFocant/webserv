@@ -10,6 +10,7 @@ Location::Location(ConfigContext& ctxt)
 	, _keepalive_time(ctxt.getKeepalive_time())
 	, _keepalive_timeout(ctxt.getKeepalive_timeout())
 	, _cgi_on(ctxt.getCGI())
+	//, _virtual(ctxt.getVirtual())
 {
 	this->setIndexes(ctxt.getIndexes());
 	_allowed_methods = ctxt.getAllowedMethods();
@@ -23,7 +24,7 @@ Location::Location(const Location& src)
 	, _autoindex(src._autoindex)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout(src._keepalive_timeout)
-	, _cgi_on(false)
+	, _cgi_on(src._cgi_on)
 	, _allowed_methods(src._allowed_methods)
 {
 	this->setIndexes(src.getIndexes());

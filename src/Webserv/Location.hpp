@@ -21,6 +21,7 @@ class Location
 	std::time_t	_keepalive_timeout;
 
 	bool		_cgi_on;
+	bool		_virtual;
 
 	std::vector<std::string>	_indexes;
 	std::set<std::string>		_allowed_methods;

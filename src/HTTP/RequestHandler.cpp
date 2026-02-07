@@ -182,9 +182,9 @@ void	RequestHandler::findLocation()
 				size_t ext_end = ext_start + ext.size();
 				if (ext_end == _request_path.size() || _request_path[ext_end] == '/')
 				{
-					_matched_location = location;
-					_matched_extension = extensionFromString(ext);
-					break ;
+					//_matched_location = location;
+					if (_matched_extension == NO_EXT)
+						_matched_extension = extensionFromString(ext);
 				}
 			}
 		}
@@ -206,6 +206,7 @@ void	RequestHandler::findLocation()
 		}
 	}
 
+	std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
 	if (_matched_location)
 		std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
 	else
@@ -244,7 +245,7 @@ std::string	RequestHandler::decodePath(const std::string& encoded)
 {
 	std::string decoded;
 
-	//avoid useless reallocations
+	//avoid useless reallocations (borne superieure)
 	decoded.reserve(_request_path.size());
 
 	for (size_t i = 0; i < encoded.size(); i++)
