@@ -13,7 +13,6 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _root(currConn.virtual_server.getRoot())
 	, _cage_root("")
 	, _request_path("")
-	, _normalized_path("")
 	, _resolved_path("")
 	, _query("")
 	, _matched_location(NULL)
@@ -107,6 +106,9 @@ bool	RequestHandler::resolvePath()
 	}
 	else
 	{
+		if (!normalizePath())
+			return false;
+
 		//Default root
 		_resolved_path = _root + _request_path;
 	}
@@ -233,15 +235,39 @@ bool	RequestHandler::detectCgi()
 		_path_info = _request_path.substr(ext_end);
 		_request_path = _request_path.substr(0, ext_end);
 	}
-
-/* 	std::cout << "[DEBUG]: "
-			<< "\nSCRIPT_NAME: " << _script_name
-			<< "\nEXT: " << ext_str
-			<< "\nQUERY: " << _query
-			<< "\nPATH_INFO: " << _path_info << std::endl; */
 	
 	return true;
 
+}
+
+std::string	RequestHandler::decodePath(const std::string& encoded)
+{
+	std::string decoded;
+
+	//avoid useless reallocations
+	decoded.reserve(_request_path.size());
+
+	for (size_t i = 0; i < encoded.size(); i++)
+	{
+		if (encoded[i] == '%' && i + 2 < encoded.size())
+		{
+			std::string	hex = encoded.substr(i + 1, 2);
+
+			std::stringstream ss(hex);
+			int	value;
+			if (ss >> std::hex >> value)
+			{
+				decoded += static_cast<char>(value);
+				i += 2;
+			}
+			else
+				decoded += encoded[i];
+		}
+		else
+			decoded += encoded[i];
+	}
+
+	return decoded;
 }
 
 bool	RequestHandler::normalizePath()
@@ -249,24 +275,41 @@ bool	RequestHandler::normalizePath()
 	std::cout << "Cage root :" << _cage_root << std::endl;
 	std::cout << "Request path :" << _request_path << std::endl;
 
-	_normalized_path = _request_path.substr(_cage_root.size());
+	std::string	decoded_path = decodePath(_request_path);
+	std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
+
+
+	std::string temp_path = decoded_path.substr(_cage_root.size());
+	if (!temp_path.empty() && temp_path[0] != '/')
+		temp_path = "/" + temp_path;
+
+	bool trailing_slash = (!temp_path.empty() 
+		&& temp_path[temp_path.size() - 1] == '/');
+
+	if (!trailing_slash)
+		temp_path += '/';
+
+	std::cout << "[DEBUG] Path to normalize " << temp_path << std::endl;
+
 	std::vector<std::string> segments;
 
 	size_t pos = 0;
 	size_t start = 0;
-	while ((pos = _normalized_path.find('/', start)) != std::string::npos && pos < _normalized_path.size())
+
+	while ((pos = temp_path.find('/', start)) != std::string::npos && pos < temp_path.size())
 	{
-		std::string seg = _normalized_path.substr(start, pos -start);
+		std::string seg = temp_path.substr(start, pos -start);
+
 		if (seg.empty() || (seg.at(0) == '.' && seg.size() == 1))
 		{
 			start = pos + 1;
 			continue;
 		}
-		if (seg == ".." )
+		else if (seg == ".." )
 		{
 			if (segments.empty())
 			{
-				std::cerr << "ERROR" << std::endl;
+				std::cerr << "[ERROR] Path traversal attempt" << std::endl;
 				_response.setStatusCode(403);
 				return false;
 			}
@@ -277,7 +320,18 @@ bool	RequestHandler::normalizePath()
 		start = pos + 1;
 	}
 
+	temp_path = _cage_root;
+	for (size_t i = 0; i < segments.size(); i++)
+		temp_path += "/" + segments[i];
+	
+	if (trailing_slash)
+		temp_path += '/';
+	
+	_request_path = temp_path;
+
 	std::cout << "Success" << std::endl;
+	std::cout << "[DEBUG] Normalized path " << _request_path << std::endl;
+
 	return true;
 }
 

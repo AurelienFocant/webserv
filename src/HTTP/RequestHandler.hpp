@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <sstream>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -28,7 +29,7 @@ class RequestHandler
 	std::string				_root;
 	std::string				_cage_root;
 	std::string				_request_path;
-	std::string				_normalized_path;
+	//std::string				_normalized_path;
 	std::string				_resolved_path;
 
 	std::string				_script_name;
@@ -47,6 +48,7 @@ class RequestHandler
 	bool			validatePath();
 	void			findLocation();
 
+	std::string		decodePath(const std::string& encoded);
 	bool			normalizePath();
 	bool			detectCgi();
 
