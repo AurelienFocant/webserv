@@ -49,7 +49,7 @@ class RequestHandler
 
 	std::string		decodePath(const std::string& encoded);
 	bool			normalizePath();
-	bool			detectCgi();
+	bool			detectCGI();
 
 
 	/*  Redirections */
@@ -61,7 +61,11 @@ class RequestHandler
 	bool			processMethods();
 	bool			processGetMethod();
 	bool			processPostMethod();
-	/*POST Methods*/
+
+	/* GET Method */
+	bool			executeCGI(); // a implementer
+
+	/*POST Method*/
 	//void	processPostMethod() ;
 	bool			createNewUser() ;
 

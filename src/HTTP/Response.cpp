@@ -269,6 +269,11 @@ void	Response::setBodyContent(const std::string& content)
 	_body_sent = 0;
 }
 
+bodyType	Response::getBodyType() const
+{
+	return _body_type;
+}
+
 void	Response::setBodyType(bodyType type)
 {
 	_body_type = type;

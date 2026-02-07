@@ -75,7 +75,7 @@ bool	RequestHandler::resolvePath()
 	if (_matched_location)
 	{
 		//Detect CGI
-		if (detectCgi())
+		if (detectCGI())
 			_response.setBodyType(DYNAMIC);
 
 		//Config Redirections
@@ -144,8 +144,8 @@ bool	RequestHandler::handleTrailingSlash()
 		return false;
 
 	std::string redirect_uri = _request_path + "/";
-	//if query??
-
+	if (!_query.empty())
+		redirect_uri += '?' + _query;
 	buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
 
 	return true;
@@ -213,7 +213,7 @@ void	RequestHandler::findLocation()
 		std::cout << "[DEBUG] No location matched: " << std::endl;
 }
 
-bool	RequestHandler::detectCgi()
+bool	RequestHandler::detectCGI()
 {
 /* 	if (!_matched_location->getCGI())
 		return false; */
@@ -246,7 +246,7 @@ std::string	RequestHandler::decodePath(const std::string& encoded)
 	std::string decoded;
 
 	//avoid useless reallocations (borne superieure)
-	decoded.reserve(_request_path.size());
+	decoded.reserve(encoded.size());
 
 	for (size_t i = 0; i < encoded.size(); i++)
 	{
@@ -254,12 +254,15 @@ std::string	RequestHandler::decodePath(const std::string& encoded)
 		{
 			std::string	hex = encoded.substr(i + 1, 2);
 
-			std::stringstream ss(hex);
-			int	value;
-			if (ss >> std::hex >> value)
+			if (std::isxdigit(hex[0]) && std::isxdigit(hex[1]))
 			{
-				decoded += static_cast<char>(value);
-				i += 2;
+				std::stringstream ss(hex);
+				int	value;
+				if (ss >> std::hex >> value)
+				{
+					decoded += static_cast<char>(value);
+					i += 2;
+				}
 			}
 			else
 				decoded += encoded[i];
@@ -393,6 +396,10 @@ bool	RequestHandler::processMethods()
 
 bool	RequestHandler::processGetMethod()
 {
+	if (_response.getBodyType() == DYNAMIC)
+		return executeCGI();
+
+	//STATIC
 	if (_is_directory)
 	{
 		if (!resolveIndex())
@@ -414,6 +421,11 @@ bool	RequestHandler::processGetMethod()
 
 	buildFileResponse(fd);
 
+	return true;
+}
+
+bool RequestHandler::executeCGI()
+{
 	return true;
 }
 
@@ -496,7 +508,7 @@ void	RequestHandler::buildHtmlResponse(const std::string& content)
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
 	_response.setHeader("Content-Length", intToString(content.size()));
-	_response.setHeader("Content-Length", intToString(content.size()));
+	_response.setHeader("Content-Type", getContentType(_resolved_path));
 	_response.setHeader("Date", getTime());
 	_response.setBodyContent(content);
 	_response.setBodySize(content.size());
@@ -585,7 +597,11 @@ std::string	RequestHandler::getTime()
 	time_t timestamp;
 	std::time(&timestamp);
 
-	return std::ctime(&timestamp);
+	struct tm* gmt = std::gmtime(&timestamp);
+	char buffer [100];
+	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmt);
+
+	return std::string(buffer);
 }
 
 bool	RequestHandler::isDirectory(const std::string& path)
