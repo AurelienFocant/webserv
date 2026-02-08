@@ -382,20 +382,7 @@ bool	RequestHandler::isAllowedMethod()
 
 	if (allowed.find(method) == allowed.end())
 	{
-		_response.setStatusCode(METHOD_NOT_ALLOWED);
-
-		std::string allow_header;
-		for (std::set<std::string>::const_iterator it = allowed.begin();
-			it != allowed.end(); it++)
-		{
-			if (it != allowed.begin())
-				allow_header += ", ";
-			allow_header += *it;
-		}
-		_response.setHeader("Allow", allow_header);
-		std::cerr << "[ERROR] Method " << method << " not allowed for location " 
-		<<_matched_location->getName() << std::endl;
-
+		buildMethodAllowedResponse(METHOD_NOT_ALLOWED, allowed);
 		return false;
 	}
 	return true;
@@ -526,66 +513,70 @@ void	RequestHandler::generateAutoIndex()
 
 /* BUILD RESPONSE */
 
+void	RequestHandler::setBaseResponse(int status_code)
+{
+	_response.setStatusCode(status_code);
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setHeader("Date", httpUtils::getTime());
+}
+
 void	RequestHandler::buildFileResponse(int fd)
 {
 	int target_size = fileSystem::fileSize(_resolved_path);
 
-	_response.setStatusCode(OK);
-	_response.setHttpVersion(_request.getHttpVersion());
+	setBaseResponse(OK);
 	_response.setHeader("Content-Length", httpUtils::intToString(target_size));
 	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
-	_response.setHeader("Date", httpUtils::getTime());
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
 }
 
 void	RequestHandler::buildHtmlResponse(const std::string& content)
 {
-	_response.setStatusCode(OK);
-	_response.setHttpVersion(_request.getHttpVersion());
+	setBaseResponse(OK);
 	_response.setHeader("Content-Length", httpUtils::intToString(content.size()));
 	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
-	_response.setHeader("Date", httpUtils::getTime());
 	_response.setBodyContent(content);
 	_response.setBodySize(content.size());
 }
 
 void	RequestHandler::buildRedirectResponse(int status_code, const std::string& redirect_uri)
 {
-	_response.setStatusCode(status_code);
-	_response.setHttpVersion(_request.getHttpVersion());
+	setBaseResponse(status_code);
 	_response.setHeader("Location", redirect_uri);
 	_response.setHeader("Content-Length", "0");
-	_response.setHeader("Date", httpUtils::getTime());
-
+	_response.setBodySize(0);
 }
+
 
 void	RequestHandler::buildErrorResponse(int status_code)
 {
 	int 	fd = -1;
 	size_t	file_size;
 
-	if (loadErrorPage(404, fd, file_size))
+	setBaseResponse(status_code);
+	if (loadErrorPage(status_code, fd, file_size))
 	{
-		_response.setStatusCode(status_code);
-		_response.setHttpVersion(_request.getHttpVersion());
 		_response.setHeader("Content-Length", httpUtils::intToString(file_size));
 		_response.setHeader("Content-Type", "text/html");
-		_response.setHeader("Date", httpUtils::getTime());
 		_response.setBodyFd(fd);
 		_response.setBodySize(file_size);
 	}
-/* 	else
-	{
-		std::string	error_content = generateDefaultError(status_code);
 
-		_response.setStatusCode(status_code);
-		_response.setHttpVersion(_request.getHttpVersion());
-		_response.setHeader("Content-Type", "text/html");
-		_response.setHeader("Content-Length", intToString(error_content.size()));
-		_response.setBodyContent(error_content);
-		_response.setBodySize(error_content.size());
-	} */
+}
+
+void	RequestHandler::buildMethodAllowedResponse(int status_code, const std::set<std::string>& allowed)
+{
+	setBaseResponse(status_code);
+
+	std::string allow_header;
+	for (std::set<std::string>::const_iterator it = allowed.begin();
+		it != allowed.end(); it++)
+	{
+		if (it != allowed.begin())
+			allow_header += ", ";
+		allow_header += *it;
+	}
 
 }
 
@@ -610,23 +601,6 @@ bool	RequestHandler::loadErrorPage(int status_code, int& fd, size_t& size)
 	size = fileSystem::fileSize(error_path);
 	
 	return true;
-}
-
-std::string	RequestHandler::generateDefaultError(int status_code)
-{
-	std::stringstream	html;
-	std::string			status_message = httpStatusToString(static_cast<t_HttpCode> (status_code));
-
-	html << "<!DOCTYPE html>\n"
-		<< "<html>\n"
-		<< "<head><title>Error " << status_code << "</title></head>\n"
-		<< "<body style=\"font-family:Arial;text-align:center;padding-top:100px;\">\n"
-		<< "    <h1>" << status_code << "</h1>\n"
-		<< "    <p>" << status_message << "</p>\n"
-		<< "</body>\n"
-		<< "</html>";
-
-	return html.str();
 }
 
 /* TESTS/DEBUG */

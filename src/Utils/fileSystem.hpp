@@ -8,7 +8,7 @@
 
 namespace fileSystem {
 
-	bool	 	File(const std::string& path);
+	bool	 	isFile(const std::string& path);
 
 	bool		isDir(const std::string& path);
 
