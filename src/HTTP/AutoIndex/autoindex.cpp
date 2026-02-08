@@ -10,13 +10,12 @@
 #include <algorithm>
 
 #include "HtmlBuilder.hpp"
-
-bool isDir(const std::string& path);
+#include "../Utils/fileSystem.hpp"
 
 bool compareFilenames(const std::string& a, const std::string& b)
 {
-	bool aIsDir = isDir(a);
-	bool bIsDir = isDir(b);
+	bool aIsDir = fileSystem::isDir(a);
+	bool bIsDir = fileSystem::isDir(b);
 	if (aIsDir && !bIsDir) return true;
 	if (!aIsDir && bIsDir) return false;
 	return a < b;
@@ -38,7 +37,7 @@ std::vector<std::string>	resolveLocalDirFilenames(std::string const& path)
 	while (((dirent) = readdir(dirp))) {
 		std::string file(dirent->d_name);
 		if (file.at(0) != '.') {
-			if (isDir(path + "/" + file))
+			if (fileSystem::isDir(path + "/" + file))
 				file += '/';
 			filenames.push_back(file);
 		}

@@ -448,9 +448,12 @@ bool	RequestHandler::processGetMethod()
 		}
 	}
 
-	int	fd = openReadFile(_resolved_path);
+	int	fd = fileSystem::openReadFile(_resolved_path);
 	if (fd < 0)
+	{
+		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
+	}
 
 	buildFileResponse(fd);
 
@@ -525,13 +528,13 @@ void	RequestHandler::generateAutoIndex()
 
 void	RequestHandler::buildFileResponse(int fd)
 {
-	int target_size = fileSize(_resolved_path);
+	int target_size = fileSystem::fileSize(_resolved_path);
 
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Length", intToString(target_size));
-	_response.setHeader("Content-Type", getContentType(_resolved_path));
-	_response.setHeader("Date", getTime());
+	_response.setHeader("Content-Length", httpUtils::intToString(target_size));
+	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
+	_response.setHeader("Date", httpUtils::getTime());
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
 }
@@ -540,9 +543,9 @@ void	RequestHandler::buildHtmlResponse(const std::string& content)
 {
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Length", intToString(content.size()));
-	_response.setHeader("Content-Type", getContentType(_resolved_path));
-	_response.setHeader("Date", getTime());
+	_response.setHeader("Content-Length", httpUtils::intToString(content.size()));
+	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
+	_response.setHeader("Date", httpUtils::getTime());
 	_response.setBodyContent(content);
 	_response.setBodySize(content.size());
 }
@@ -553,7 +556,7 @@ void	RequestHandler::buildRedirectResponse(int status_code, const std::string& r
 	_response.setHttpVersion(_request.getHttpVersion());
 	_response.setHeader("Location", redirect_uri);
 	_response.setHeader("Content-Length", "0");
-	_response.setHeader("Date", getTime());
+	_response.setHeader("Date", httpUtils::getTime());
 
 }
 
@@ -566,9 +569,9 @@ void	RequestHandler::buildErrorResponse(int status_code)
 	{
 		_response.setStatusCode(status_code);
 		_response.setHttpVersion(_request.getHttpVersion());
-		_response.setHeader("Content-Length", intToString(file_size));
+		_response.setHeader("Content-Length", httpUtils::intToString(file_size));
 		_response.setHeader("Content-Type", "text/html");
-		_response.setHeader("Date", getTime());
+		_response.setHeader("Date", httpUtils::getTime());
 		_response.setBodyFd(fd);
 		_response.setBodySize(file_size);
 	}
@@ -597,11 +600,14 @@ bool	RequestHandler::loadErrorPage(int status_code, int& fd, size_t& size)
 	
 	std::string error_path = it->second;
 
-	fd = openReadFile(error_path);
+	fd = fileSystem::openReadFile(error_path);
 	if (fd < 0)
+	{
+		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
+	}
 
-	size = fileSize(error_path);
+	size = fileSystem::fileSize(error_path);
 	
 	return true;
 }
@@ -622,110 +628,6 @@ std::string	RequestHandler::generateDefaultError(int status_code)
 
 	return html.str();
 }
-
-/* UTILS */
-
-std::string	RequestHandler::getTime()
-{
-	time_t timestamp;
-	std::time(&timestamp);
-
-	struct tm* gmt = std::gmtime(&timestamp);
-	char buffer [100];
-	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmt);
-
-	return std::string(buffer);
-}
-
-bool	RequestHandler::isDirectory(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return false;
-	return S_ISDIR(statBuf.st_mode);
-}
-
-std::string RequestHandler::getContentType(const std::string& path)
-{
-    size_t dotPos = path.find_last_of('.');
-    if (dotPos == std::string::npos) {
-        return "application/octet-stream";
-    }
-    
-    std::string ext = path.substr(dotPos + 1);
-    
-    if (ext == "html" || ext == "htm")return "text/html";
-    else if (ext == "css") return "text/css";
-    else if (ext == "js") return "application/javascript";
-    else if (ext == "json") return "application/json";
-    else if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
-    else if (ext == "png") return "image/png";
-    else if (ext == "gif") return "image/gif";
-    else if (ext == "txt") return "text/plain";
-    else if (ext == "pdf") return "application/pdf";
-    
-    return "application/octet-stream";
-}
-
-/* FILE OPERATIONS */
-
-int	RequestHandler::openReadFile(const std::string& path)
-{
-	int	fd = open(path.c_str(), O_RDONLY);
-	if (fd < 0)
-	{
-		switch (errno) {
-		case EACCES:
-			_response.setStatusCode(FORBIDDEN);
-			break;
-		case ENOENT:
-			_response.setStatusCode(NOT_FOUND);
-			break;
-		default:
-			_response.setStatusCode(INTERNAL_SERVER_ERROR);
-			break;
-		}
-	}
-	return fd;
-}
-
-int	RequestHandler::openWriteFile(const std::string& path)
-{
-	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644); // CHECK FLAGS -> APPEND?
-	if (fd < 0)
-	{
-		switch (errno) {
-		case EACCES:
-			_response.setStatusCode(FORBIDDEN);
-			break;
-		case ENOENT:
-			_response.setStatusCode(NOT_FOUND);
-			break;
-		default:
-			_response.setStatusCode(INTERNAL_SERVER_ERROR);
-			break;
-		}
-	}
-	return fd;
-}
-
-size_t RequestHandler::fileSize(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return 0;
-	return statBuf.st_size;
-}
-
-/* Utils */
-
-std::string intToString(size_t value)
-{
-    std::stringstream ss;
-    ss << value;
-    return ss.str();
-}
-
 
 /* TESTS/DEBUG */
 

@@ -16,6 +16,8 @@
 #include "Response.hpp"
 #include "VirtualServer.hpp"
 #include "Location.hpp"
+#include "../Utils/fileSystem.hpp"
+#include "../Utils/httpUtils.hpp"
 
 class RequestHandler
 {
@@ -85,15 +87,6 @@ class RequestHandler
 	bool			loadErrorPage(int status_code, int& fd, size_t& size);
 	std::string		generateDefaultError(int status_code);
 
-	std::string		getTime();
-
-	/* File operations */
-	int				openReadFile(const std::string& path);
-	int				openWriteFile(const std::string& path);
-	bool 			isDirectory(const std::string& path);
-	size_t			fileSize(const std::string& path);
-	std::string 	getContentType(const std::string& path);
-	
 
 	/* For testing */
 	void			printRoutes();
@@ -110,8 +103,5 @@ class RequestHandler
 	/* Public Methods */
 	void			handleRequest();
 };
-
-std::string			intToString(size_t value);
-
 
 #endif
