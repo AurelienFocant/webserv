@@ -58,6 +58,7 @@ class RequestHandler
 	bool			hasRedirect();
 
 	/* Request processing */
+	bool			isAllowedMethod();
 	bool			processMethods();
 	bool			processGetMethod();
 	bool			processPostMethod();

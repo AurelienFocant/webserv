@@ -367,24 +367,58 @@ bool	RequestHandler::validatePath()
 
 /* METHODS PROCESSING */
 
+bool	RequestHandler::isAllowedMethod()
+{
+	if (!_matched_location)
+		return true;
+
+	std::set<std::string> allowed = _matched_location->getAllowedMethods();
+
+	// if no allowd_methods directive in this location in config true by default?
+	if (allowed.empty())
+		return true;
+
+	std::string method = methodToString(_request.getMethod());
+
+	if (allowed.find(method) == allowed.end())
+	{
+		_response.setStatusCode(METHOD_NOT_ALLOWED);
+
+		std::string allow_header;
+		for (std::set<std::string>::const_iterator it = allowed.begin();
+			it != allowed.end(); it++)
+		{
+			if (it != allowed.begin())
+				allow_header += ", ";
+			allow_header += *it;
+		}
+		_response.setHeader("Allow", allow_header);
+		std::cerr << "[ERROR] Method " << method << " not allowed for location " 
+		<<_matched_location->getName() << std::endl;
+
+		return false;
+	}
+	return true;
+}
+
 bool	RequestHandler::processMethods()
 {
 	// Verifier AUTHORIZED METHODS in locations
 
+	if (!isAllowedMethod())
+		return false;
+
 	switch(_request.getMethod())
 	{
 		case GET:
-			processGetMethod();
-			break ;
+			return processGetMethod();
 /*
  		case POST:
-			processPostMethod();
-			break ;
+			return processPostMethod();
 */
 /*
 			case DELETE:
-			processDeleteMethod();
-			break ;
+			return processDeleteMethod();
 */
 		default: 
 			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
