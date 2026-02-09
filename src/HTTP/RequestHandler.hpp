@@ -49,7 +49,7 @@ class RequestHandler
 	bool			validatePath();
 	void			findLocation();
 
-	std::string		decodePath(const std::string& encoded);
+	bool			decodePath(const std::string& encoded, std::string& decoded);
 	bool			normalizePath();
 	bool			detectCGI();
 

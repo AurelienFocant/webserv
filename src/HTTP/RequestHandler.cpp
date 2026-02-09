@@ -239,10 +239,8 @@ bool	RequestHandler::detectCGI()
 
 }
 
-std::string	RequestHandler::decodePath(const std::string& encoded)
+bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded)
 {
-	std::string decoded;
-
 	//avoid useless reallocations (borne superieure)
 	decoded.reserve(encoded.size());
 
@@ -258,6 +256,8 @@ std::string	RequestHandler::decodePath(const std::string& encoded)
 				int	value;
 				if (ss >> std::hex >> value)
 				{
+					if (value == 0)
+						return false;
 					decoded += static_cast<char>(value);
 					i += 2;
 				}
@@ -269,7 +269,7 @@ std::string	RequestHandler::decodePath(const std::string& encoded)
 			decoded += encoded[i];
 	}
 
-	return decoded;
+	return true;
 }
 
 bool	RequestHandler::normalizePath()
@@ -277,16 +277,23 @@ bool	RequestHandler::normalizePath()
 	std::cout << "Cage root :" << _cage_root << std::endl;
 	std::cout << "Request path :" << _request_path << std::endl;
 
-	std::string	decoded_path = decodePath(_request_path);
+	std::string	decoded_path;
+
+	if (!decodePath(_request_path, decoded_path))
+	{
+		std::cerr << "[ERROR] Path traversal attempt" << std::endl;
+		_response.setStatusCode(403);
+		return false;
+	}
 	std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
-	// fonction meme hors location car _cage_root est initialise a "";
+	// fonctionne meme hors location car _cage_root est initialise a "";
 	std::string temp_path = decoded_path.substr(_cage_root.size());
 
 	if (!temp_path.empty() && temp_path[0] != '/')
 		temp_path = "/" + temp_path;
 
-	bool trailing_slash = (!temp_path.empty() 
+	bool trailing_slash = (!temp_path.empty()
 		&& temp_path[temp_path.size() - 1] == '/');
 
 	if (!trailing_slash)
