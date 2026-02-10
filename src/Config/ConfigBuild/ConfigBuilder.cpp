@@ -51,7 +51,6 @@ void ConfigBuilder::visit(const BlockNode& node)
 	}
 	else if (name == "location") {
 		std::string location_name = node.args[0];
-		_getCurrentCtxt().isCGI(location_name);
 		Location loc(_getCurrentCtxt());
 		loc.setName(location_name);
 		_popContext();
@@ -112,6 +111,10 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["keepalive_timeout"]	= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["return"]				= DirectiveSpecs(SERVER|LOCATION, 2, 2);
 	_direcSpecs["allowed_methods"]		= DirectiveSpecs(SERVER|LOCATION, 1, 3);
+	_direcSpecs["cgi"]					= DirectiveSpecs(LOCATION, 1, 1);
+	_direcSpecs["virtual"]				= DirectiveSpecs(LOCATION, 1, 1);
+	_direcSpecs["alias"]				= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["error_page"]			= DirectiveSpecs(SERVER|LOCATION, 2, 999);
 }
 
 
@@ -127,6 +130,10 @@ void ConfigBuilder::_initHandlers()
 	_handlers["keepalive_timeout"]	= &ConfigBuilder::_handleKeepaliveTimeout;
 	_handlers["return"]				= &ConfigBuilder::_handleReturn;
 	_handlers["allowed_methods"]	= &ConfigBuilder::_handleAllowedMethods;
+	_handlers["cgi"]				= &ConfigBuilder::_handleCGI;
+	_handlers["virtual"]			= &ConfigBuilder::_handleVirtualLocation;
+	_handlers["alias"]				= &ConfigBuilder::_handleAlias;
+	_handlers["error_page"]			= &ConfigBuilder::_handleErrorPages;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -238,6 +245,53 @@ void ConfigBuilder::_handleAllowedMethods(const DirectiveNode& d)
 
 	_getCurrentCtxt().setAllowedMethods(allowed_methods);
 }
+
+void ConfigBuilder::_handleCGI(const DirectiveNode& d)
+{
+	std::string arg = d.args[0];
+
+	if (arg == "false") {
+		_getCurrentCtxt().setCGI(false); return;
+	}
+	if (arg == "true") {
+		_getCurrentCtxt().setCGI(true); return;
+	}
+	_error(d.line, "only true of false values after 'cgi' directive");
+}
+
+void ConfigBuilder::_handleVirtualLocation(const DirectiveNode& d)
+{
+	std::string arg = d.args[0];
+
+	if (arg == "false") {
+		_getCurrentCtxt().setVirtualLocation(false); return;
+	}
+	if (arg == "true") {
+		_getCurrentCtxt().setVirtualLocation(true); return;
+	}
+	_error(d.line, "only true of false values after 'virtual' directive");
+}
+
+void ConfigBuilder::_handleAlias(const DirectiveNode& d)
+{
+	_getCurrentCtxt().setAlias(d.args[0]);
+}
+
+void ConfigBuilder::_handleErrorPages(const DirectiveNode& d)
+{
+	std::vector<std::string>::const_iterator it;
+
+	for (it = d.args.begin(); it != d.args.end() - 1; ++it) {
+		std::stringstream	ss(*it);
+		int		n;
+		char	c;
+		if (ss >> n && ss >> c)
+			_error(d.line, "Only numerical codes allowed after error_page directive");
+
+		_getCurrentCtxt().setErrorPage(n, *(d.args.end()));
+	}
+}
+
 
 
 // Utils

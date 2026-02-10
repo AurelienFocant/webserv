@@ -329,8 +329,8 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 	return (argument);
 }
 
-const char*			Request::important_argument[] = {
-	"CONTENT_LENGTH", "TRANSFERT_ENCODING"
+const char*			Request::important_argument[3] = {
+	"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
 	};
 
 void	Request::detectImportantValue(std::string& argument, std::string value) {
