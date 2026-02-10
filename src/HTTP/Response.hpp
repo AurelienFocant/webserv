@@ -87,8 +87,8 @@ class	Response
 	size_t								_body_sent;
 
 	char								_buffer[BUFFER_SIZE];
-	size_t								_buffer_size;
-	size_t								_buffer_sent;
+	size_t								_bytes_in_buffer;
+	size_t								_buffer_offset;
 
 	/* Private Methods */
 
