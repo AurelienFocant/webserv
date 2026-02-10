@@ -1,90 +1,81 @@
-#include "handleUser.hpp"
+#include "createNewUser.hpp"
 
-static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& output) ;
-static std::string	urlDecode(const std::string& str) ;
-static int	hexVal(char c) ;
-static bool	dirExist(const std::string& name) ;
-static bool	isSafeName(const std::string& name) ;
-static bool	userExistInCsv(const std::string& csv, const std::string& name) ;
-static bool	addUserToCsv(const std::string& csv, const std::string& name, const std::string& password) ;
-static bool	delUserInCsv(const std::string& csv, const std::string& user) ;
-
-bool	handleUser::createNewUser(const RequestHandler& handler) {
+bool	RequestHandler::createNewUser() {
 	const std::string	db_root = "./data/dB";
 	const std::string	csv_path = db_root + "/users_login.csv";
 
 	std::map<std::string, std::string>	key_value;
-	key_value = parseFormUrlEncoded(handler._request.getBody());
+	key_value = parseFormUrlEncoded(_request.getBody());
 
 	const std::string	user_name = key_value.count("username") ? key_value["username"] : "";
 	const std::string	user_password = key_value.count("password") ? key_value["password"] : "";
 
 	if (isSafeName(user_name) || user_password.empty()) {
-		handler._response.setStatusCode(BAD_REQUEST);
+		_response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
 
 	if (!dirExist(db_root)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	if (userInCsv(csv_path, username)) {
-		handler._response.setStatusCode(BAD_REQUEST);
+		_response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
-	if (dirExist(db_root + "/" + user_name)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+	if (dirExist(db_root + "/" + user_name))
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	else {
 		if (mkdir(db_root + "/" + user_name, 0755)) {
-			handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 			return (false);
 		}
 	}
 	if (!addUserToCsv(csv_path, user_name, user_password)) {
 		rm(db_root + "/" + user_name);
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
-	handler._response.setStatusCode(OK);
+	_response.setStatusCode(OK);
 	return (true);
 }
 
-bool	handleUser::deleteUser() {
+bool	RequestHandler::deleteUser() {
 	const std::string	db_root = "./data/dB";
 	const std::string	csv_path = db_root + "/users_longin.csv";
 
 	std::map<std::string, std::string>	key_value;
-	key_value = parseFormUrlEncoded(handler._request.getBody());
+	key_value = parseFormUrlEncoded(_request.getBody());
 
 	const std::string	user_name = key_value.count("username") ? key_value["username"] : "";
 	const std::string	user_password = key_value.count("password") ? key_value["password"] : "";
 
 	if (isSafeName(user_name) || user_password.empty()) {
-		handler._response.setStatusCode(BAD_REQUEST);
+		_response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
 
 	if (!dirExist(db_root)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	const std::string	user_dir = db_root + "/" + user_name;
 	if (!removeTree(user_dir)) {
-		handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return (false);
 	}
 	if (!delUserInCsv(csv_path, username)) {
-		handler._response.setStatusCode(BAD_REQUEST);
+		_response.setStatusCode(BAD_REQUEST);
 		return (false);
 	}
-	handler._response.setStatusCode(OK);
+	_response.setStatusCode(OK);
 	return (true);
 }
 
 
-static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& output) {
+void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& output) {
 	size_t	pos = 0;
 	while (pos < body.size()) {
 		size_t sep = body.find('&', pos);
@@ -107,7 +98,7 @@ static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, s
 	}
 }
 
-static std::string	urlDecode(const std::string& str) {
+std::string	urlDecode(const std::string& str) {
 	std::string	output;
 	output.reserve(str.size());
 
@@ -131,7 +122,7 @@ static std::string	urlDecode(const std::string& str) {
 	return (output);
 }
 
-static int	hexVal(char c) {
+int	hexVal(char c) {
 	if (c >= '0' && c <= '9')
 		return (c - '0');
 	if (c >= 'a' && c <= 'f')
@@ -141,7 +132,7 @@ static int	hexVal(char c) {
 	return (-1);
 }
 
-static bool	isSafeName(const std::string& name) {
+bool	isSafeName(const std::string& name) {
 	if (name.empty())
 		return (false);
 	size_t	i = 0;
@@ -157,14 +148,14 @@ static bool	isSafeName(const std::string& name) {
 	return (true);
 }
 
-static bool	dirExist(const std::string& name) {
+bool	dirExist(const std::string& name) {
 	struct stat	st;
 	if (stat(name.c_str(), &st) != 0)
 		return (false);
 	return (S_ISDIR(st.st_mode));
 }
 
-static bool	removeTree(const std::string& path) {
+bool	removeTree(const std::string& path) {
 	struc stat	st;
 	if (lstat(path,c_str(), &st) != 0) {
 		if (errno == ENOENT)
@@ -206,7 +197,7 @@ static bool	removeTree(const std::string& path) {
 	return (true);
 }
 
-static bool	userExistInCsv(const std::string& csv, const std::string& name) {
+bool	userExistInCsv(const std::string& csv, const std::string& name) {
 	std::ifstream	stream(csv.c_str());
 	if (!stream.is_open())
 		return (false);
@@ -221,7 +212,7 @@ static bool	userExistInCsv(const std::string& csv, const std::string& name) {
 	return (false);
 }
 
-static bool	addUserToCsv(const std::string& csv, const std::string& name, const std::string& password) {
+bool	addUserToCsv(const std::string& csv, const std::string& name, const std::string& password) {
 	std::ofstream	stream(csv.c_str(), std::ios::out | std::ios::app);
 	if (!stream.is_open())
 		return (false);
@@ -229,7 +220,7 @@ static bool	addUserToCsv(const std::string& csv, const std::string& name, const 
 	return (stream.good());
 }
 
-static bool	delUserInCsv(const std::string& csv, const std::string& user) {
+bool	delUserInCsv(const std::string& csv, const std::string& user) {
 	std::ifstream	in(csv.c_str());
 	if (!in.is_open())
 		return (false);
@@ -259,5 +250,4 @@ static bool	delUserInCsv(const std::string& csv, const std::string& user) {
 		return (false);
 	}
 	return (true);
-}
 

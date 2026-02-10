@@ -38,6 +38,7 @@ class	HTTPTokenizer : private Tokenizer {
 	private:
 	/*Private Attributes*/
 		int										_tokenizing;
+		int										_nbr_eol;
 };
 
 #endif

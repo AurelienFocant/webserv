@@ -25,7 +25,7 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 	return (true);
 }
 
-const char**	cgi::buildCgiEnv(const Request& request) {
+char**	cgi::buildCgiEnv(const Request& request) {
 	std::multimap<std::string, std::string>	cpp_env = request.getHeaders();
 	std::string	previous_key = "";
 	std::string	header;
@@ -43,9 +43,10 @@ const char**	cgi::buildCgiEnv(const Request& request) {
 		}
 	}
 	size_t	i = 0;
-	const char **c_enc = new const char*[vect.size()];
+	char **c_enc = new char*[vect.size()];
 	for (std::vector<std::string>::iterator it = vect.begin(); it != vect.end(); ++it) {
-		c_enc[i] = vect.at(i).c_str();
+		c_enc[i] = new char[vect.at(i).size() + 1];
+		std::strcpy(c_enc[i], vect.at(i).c_str());
 	}
 	return (c_enc);
 }

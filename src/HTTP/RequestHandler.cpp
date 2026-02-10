@@ -3,6 +3,7 @@
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 #include "cgi.hpp"
+#include "handleUser.hpp"
 
 /* ////////////REQUEST HANDLER////////////////// */
 
@@ -217,6 +218,9 @@ bool	RequestHandler::detectCGI()
 		return false; */
 	
 	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
+		return false;
+
+	if (_matched_extension == NO_EXT)
 		return false;
 
 	std::string ext_str = extensionToString(_matched_extension);
@@ -460,14 +464,16 @@ bool RequestHandler::executeCGI()
 }
 
 bool	RequestHandler::processPostMethod() {
-//	if (_matched_location->getCGI()) {
-//		char **env = cgi::buildCgiEnv(_request);
-//		cgi::execute(*this, _response, env);
-//	}
-//	if (_matched_location == "createuser")
-//		utils::createUser();
-//	if (_matched_location == "comment")
+	if (_matched_location->getCGI()) {
+		char **env = cgi::buildCgiEnv(_request);
+		cgi::execute(*this, _response, env);
+	}
+	if (_matched_location->getName() == "createuser") {
+		_response.setStatusCode(handleUser::createNewUser(*this));
+	}
+	if (_matched_location->getName() == "comment") {
 	//	use script create comment;
+	}
 //	if (_matched_location == "createuser")
 	return (true);		
 }
@@ -626,4 +632,13 @@ void	RequestHandler::printRoutes()
 	}
 	std::cout << "---------------------------"<< std::endl;
 
+}
+
+/*Getters*/
+const Request&	RequestHandler::getRequest() const {
+	return (_request);
+}
+
+const Response&	RequestHandler::getResponse() const {
+	return (_response);
 }
