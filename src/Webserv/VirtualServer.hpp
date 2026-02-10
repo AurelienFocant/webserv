@@ -32,7 +32,6 @@ class VirtualServer
 
 	public:
 		void	initDefaultConfig(void);
-		std::map<int, std::string>	error_pages;
 
 		const std::map<std::string, Location>	&getLocations(void) const;
 		void									setLocations(const std::map<std::string, Location> &locs);

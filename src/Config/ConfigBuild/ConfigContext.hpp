@@ -51,7 +51,7 @@ class ConfigContext {
 									std::string	getRedirect()			const	{return _redirect;}
 									std::time_t	getKeepalive_time()		const	{return _keepalive_time;}
 									std::time_t	getKeepalive_timeout()	const	{return _keepalive_timeout;}
-						std::set<std::string>	getAllowedMethods()		const	{return _allowed_methods;}
+						  std::set<std::string> getAllowedMethods()		const	{return _allowed_methods;}
 									bool		getCGI()	   			const	{return _cgi;}
 									bool		getVirtualLocation()	const	{return _virtualLocation;}
 									std::string	getAlias()				const	{return _alias;}
