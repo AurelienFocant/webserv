@@ -8,9 +8,9 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 	 //size must depend of number of argument and if an interpreter is needed ?
 	char** argv = new char*[2];
 	//Create argv for child exec
+	argv[1] = NULL;
 	try {
-		argv[0] = findInterpreter(handler.getExtansion());
-		argv[1] = convertStringToChar(handler.getScriptName()); //->maybe do one function that initialize whole argv based on file_to_execute
+		argv[0] = convertStringToChar("./data/site/" + handler.getScriptName()); //->maybe do one function that initialize whole argv based on file_to_execute
 	}
 	catch (std::exception& e) {
 		//setup Response status code to Internal_server_error: here or up the stack
@@ -21,8 +21,6 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 	if (!launchCgi(argv, env)) {
 		//some errors happened, setup response code accordingly
 	}
-	delete[](argv);
-	delete[](env);
 	return (true);
 }
 
@@ -98,21 +96,29 @@ bool	cgi::launchCgi(char** argv, char** env) {
 		return (false);
 	else if (pid == 0) { // Child process
 	//Setup the pipe to write from the child
-		close(pipe_fd[1]);
-		dup2(pipe_fd[0], STDIN_FILENO);
+		dup2(pipe_fd[0], STDOUT_FILENO);
+		dup2(pipe_fd[1], STDIN_FILENO);
 		close(pipe_fd[0]);
+		close(pipe_fd[1]);
 
 		execve(argv[0], argv, env);
 		delete[](env);
+		delete[](argv);
 		exit(EXIT_FAILURE);
 	}
 	else { // Parent process
 	//Setup the pipe to listen in the parent
-		close(pipe_fd[0]);
-		dup2(pipe_fd[1], STDIN_FILENO);
-		close(pipe_fd[1]);
+		//close(pipe_fd[0]);
+	//	close(pipe_fd[1]);
+		delete[](argv);
 		delete[](env);
 	}
+	//Read production of the child
+//	while (write(pipe_fd[1], "Coucour", 7) > 0) {}
+	close(pipe_fd[1]);
+	char buffer[5];
+//	while (read(pipe_fd[0], buffer, 256) > 0) {}
+	close(pipe_fd[0]);
 
 //	Need to read child production ?on std::cout?
 	int	status = 0;
@@ -133,6 +139,7 @@ bool	cgi::launchCgi(char** argv, char** env) {
 						(void)pid;
 						//SOMETHING went really wrong
 				}
+				time = 0;
 				break ;
 			case (0):
 				time -= 50;
@@ -153,9 +160,6 @@ bool	cgi::launchCgi(char** argv, char** env) {
 		kill(pid, SIGINT);
 		//setcode for timeout ?
 	}
-	//Read production of the child
-	std::string	response;
-	std::cin >> response;
 	//Error happened
 	return (true);
 }
