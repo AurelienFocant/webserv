@@ -9,7 +9,8 @@ Location::Location(ConfigContext& ctxt)
 	, _autoindex(ctxt.getAutoindex())
 	, _keepalive_time(ctxt.getKeepalive_time())
 	, _keepalive_timeout(ctxt.getKeepalive_timeout())
-	, _cgi_on(ctxt.getCGI())
+//	, _cgi_on(ctxt.getCGI())
+	, _cgi_on(true) //-->change that when parsing from config work
 	//, _virtual(ctxt.getVirtual())
 {
 	this->setIndexes(ctxt.getIndexes());
@@ -24,7 +25,8 @@ Location::Location(const Location& src)
 	, _autoindex(src._autoindex)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout(src._keepalive_timeout)
-	, _cgi_on(src._cgi_on)
+//	, _cgi_on(src._cgi_on)
+	, _cgi_on(true)
 	, _allowed_methods(src._allowed_methods)
 {
 	this->setIndexes(src.getIndexes());

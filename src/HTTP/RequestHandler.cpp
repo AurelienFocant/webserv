@@ -465,7 +465,7 @@ bool RequestHandler::executeCGI()
 
 bool	RequestHandler::processPostMethod() {
 	if (_matched_location->getCGI()) {
-		char **env = cgi::buildCgiEnv(_request);
+		char **env = cgi::buildCgiEnv(*this);
 		cgi::execute(*this, _response, env);
 	}
 	if (_matched_location->getName() == "createuser") {

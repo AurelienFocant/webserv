@@ -1,15 +1,16 @@
 #include "cgi.hpp"
 
+static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) ;
+
 bool	cgi::execute(const RequestHandler& handler, Response& response, char** env) {
 	//For compilation errors
-		(void)handler;
 		(void)response;
 	 //size must depend of number of argument and if an interpreter is needed ?
 	char** argv = new char*[2];
 	//Create argv for child exec
 	try {
-//		argv[0] = findInterpreter(handler.extension);
-//		argv[1] = file_to_execute.c_str(); //->maybe do one function that initialize whole argv based on file_to_execute
+		argv[0] = findInterpreter(handler.getExtansion());
+		argv[1] = convertStringToChar(handler.getScriptName()); //->maybe do one function that initialize whole argv based on file_to_execute
 	}
 	catch (std::exception& e) {
 		//setup Response status code to Internal_server_error: here or up the stack
@@ -21,15 +22,16 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 		//some errors happened, setup response code accordingly
 	}
 	delete[](argv);
-	//delete[](cgi_env); -> probably needed, depend on CppEnv implementation
+	delete[](env);
 	return (true);
 }
 
-char**	cgi::buildCgiEnv(const Request& request) {
-	std::multimap<std::string, std::string>	cpp_env = request.getHeaders();
+char**	cgi::buildCgiEnv(const RequestHandler& handler) {
+	std::multimap<std::string, std::string>	cpp_env = handler.getRequest().getHeaders();
 	std::string	previous_key = "";
 	std::string	header;
 	std::vector<std::string>	vect;
+	addFirstLineInfo(handler, vect);
 	for (std::multimap<std::string, std::string>::const_iterator it = cpp_env.begin(); it != cpp_env.end(); ++it) {
 		if (previous_key == it->first) {
 			header += ", " + it->second;
@@ -39,7 +41,10 @@ char**	cgi::buildCgiEnv(const Request& request) {
 			previous_key = it->first;
 			vect.push_back(header);
 			header.clear();
-			header += "HTTP_" + it->first + "=" + it->second;
+			if (it->first == "CONTEN_LENGTH" || it->first == "CONTENT_TYPE")
+				header += it->first + "=" + it->second;
+			else
+				header += "HTTP_" + it->first + "=" + it->second;
 		}
 	}
 	size_t	i = 0;
@@ -51,21 +56,34 @@ char**	cgi::buildCgiEnv(const Request& request) {
 	return (c_enc);
 }
 
-
-char*	cgi::findInterpreter(const std::string& extension) {
-	/*
-	char	*response;
-	if (extension == ".py")
-		response = {path to python interpreter};
-	else if (extension == ".sh")
-		response("path to shell interpreter");
-	else
-		response = NULL;
-	return (response);
-	*/
-	(void)extension;
-	return (NULL);
+static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) {
+	vect.push_back("REQUEST_METHOD=" + methodToString(handler.getRequest().getMethod()));
+	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getRequestUri());
+	vect.push_back("QUERY_STRING=" + handler.getQuery());
+	vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
+	return (true);
 }
+
+char*	cgi::findInterpreter(const t_extension& extension) {
+	switch (extension) {
+		case (PY):
+			return (convertStringToChar("/usr/bin/python3")); //--> potential problems, need decisions on that 
+		case (SH):
+			return (convertStringToChar("/usr/bin/bash"));
+		default:
+			return (NULL);
+	}
+}
+
+char*	cgi::convertStringToChar(const std::string& string) {
+	char* str = new char[string.size()];
+	str[string.size()] = '\0';
+	for (size_t i = 0; i < string.size(); ++i) {
+		str[i] = string[i];
+	}
+	return (str);
+}
+
 
 bool	cgi::launchCgi(char** argv, char** env) {
 //Pipe creation for communication with the child
