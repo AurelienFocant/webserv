@@ -41,23 +41,18 @@ class Connection
 				std::time_t	_last_conn;
 
 	public:
-		bool   		(Webserv::*handler)(Connection & conn);
+		bool			conn_closed;
+		VirtualServer	virtual_server;
 
 		Request		request;
 		Response	response;
 
-		void	sendResponse();
-
-		bool	conn_closed;
 		bool	hasTimedOut(void);
+		void	sendResponse();
+		bool   		(Webserv::*handler)(Connection & conn);
 
 
 
-		VirtualServer		virtual_server;
-		// bool	receiveRequest();
-		// void	sendResponse(int epollFd);
-		//
-		// std::string	build_response();
 
 		void		setEvent(uint32_t event);
 		uint32_t	getEvent(void) const;
@@ -66,8 +61,6 @@ class Connection
 		std::time_t getFirstConnTime()	const;
 		void		setLastConnTime(std::time_t time);
 		std::time_t getLastConnTime()	const;
-
-	
 
 		Connection	(int fd, const int& epoll_fd, std::time_t start_time, bool (Webserv::*f)(Connection & conn));
 		Connection	( const Connection& src );
