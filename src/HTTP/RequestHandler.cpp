@@ -178,7 +178,7 @@ void	RequestHandler::findLocation()
 			if (ext_start != std::string::npos)
 			{
 				size_t ext_end = ext_start + ext.size();
-				if (ext_end == _request_path.size() || _request_path[ext_end] == '/')
+				if (ext_end == _request_path.size() || _request_path[ext_end - 1] == '/' || _request_path[ext_end] == '/')
 				{
 					//_matched_location = location;
 					if (_matched_extension == NO_EXT)
@@ -191,7 +191,7 @@ void	RequestHandler::findLocation()
 			size_t route_len = route_path.size();
 
 			// Test if it's a real match, not just a partial prefix
-			if (_request_path.size() == route_len || _request_path[route_len] == '/')
+			if (_request_path.size() == route_len || _request_path[route_len - 1] == '/' || _request_path[route_len] == '/')
 			{
 				//Keep the longest match
 				if (route_len > longest_match)
