@@ -41,6 +41,10 @@ class ConfigBuilder
 		void _handleKeepaliveTimeout(const DirectiveNode& d);
 		void _handleReturn(const DirectiveNode& d);
 		void _handleAllowedMethods(const DirectiveNode& d);
+		void _handleCGI(const DirectiveNode& d);
+		void _handleVirtualLocation(const DirectiveNode& d);
+		void _handleAlias(const DirectiveNode& d);
+		void _handleErrorPages(const DirectiveNode& d);
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&				_getCurrentCtxt(void);
