@@ -494,6 +494,8 @@ bool	RequestHandler::resolveIndex()
 		return false;
 
 	std::string	dir_path = _resolved_path;
+	if (!dir_path.empty() && dir_path[dir_path.size() -1] != '/')
+		dir_path += '/';
 
 	for (size_t i = 0; i < indexes.size(); i++)
 	{
