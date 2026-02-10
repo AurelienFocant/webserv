@@ -10,8 +10,8 @@ Response::Response()
 , _body_content("")
 , _body_size(0)
 , _body_sent(0)
-, _buffer_size(0)
-, _buffer_sent(0)
+, _bytes_in_buffer(0)
+, _buffer_offset(0)
 {
 	std::memset(_buffer, 0, BUFFER_SIZE);
 }
@@ -47,8 +47,8 @@ void	Response::formatResponse()
 
 	std::memcpy(_buffer, formatted.c_str(), formatted.size());
 
-	_buffer_size = formatted.size();
-	_buffer_sent = 0;
+	_bytes_in_buffer = formatted.size();
+	_buffer_offset = 0;
 }
 
 std::string	Response::buildHttpResponse()
@@ -92,8 +92,8 @@ bool	Response::readBodyChunk()
 				_state = DONE;
 				return false;
 			}
-			_buffer_size = bytes_read;
-			_buffer_sent = 0;
+			_bytes_in_buffer = bytes_read;
+			_buffer_offset = 0;
 			break ;
 		}
 		case DYNAMIC:
@@ -112,8 +112,8 @@ bool	Response::readBodyChunk()
 			size_t to_copy = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
 			std::memcpy(_buffer, _body_content.c_str() + _body_sent, to_copy);
 
-			_buffer_size = to_copy;
-			_buffer_sent = 0;
+			_bytes_in_buffer = to_copy;
+			_buffer_offset = 0;
 			_body_sent += to_copy;
 			break;
 		}
@@ -126,9 +126,9 @@ void	Response::updateBytesSend(size_t bytes_sent)
 {
 	if (_state == SEND_HEADER)
 	{
-		_buffer_sent += bytes_sent;
+		_buffer_offset += bytes_sent;
 		_header_sent += bytes_sent;
-		if (_buffer_sent >= _buffer_size)
+		if (_buffer_offset >= _bytes_in_buffer)
 		{
 			resetBuffer();
 			if (_body_size == 0) // if NO body
@@ -141,10 +141,10 @@ void	Response::updateBytesSend(size_t bytes_sent)
 	}
 	else if (_state == SEND_BODY)
 	{
-		_buffer_sent += bytes_sent;
+		_buffer_offset += bytes_sent;
 		_body_sent += bytes_sent;
 
-		if (_buffer_sent >= _buffer_size)
+		if (_buffer_offset >= _bytes_in_buffer)
 			resetBuffer();
 		
 		if (_body_sent >= _body_size)
@@ -163,18 +163,18 @@ const char*	Response::getDataToSend(size_t& size)
 {
 	if (_state == SEND_HEADER)
 	{
-		size = _buffer_size - _buffer_sent;
-		return _buffer + _buffer_sent;
+		size = _bytes_in_buffer - _buffer_offset;
+		return _buffer + _buffer_offset;
 	}
 	else if (_state == SEND_BODY)
 	{
-		if (_buffer_size == 0)
+		if (_bytes_in_buffer == 0)
 		{
 			if (!readBodyChunk())
 				return NULL;
 		}
-		size = _buffer_size - _buffer_sent;
-		return _buffer + _buffer_sent;
+		size = _bytes_in_buffer - _buffer_offset;
+		return _buffer + _buffer_offset;
 	}
 	return NULL;
 }
@@ -269,6 +269,11 @@ void	Response::setBodyContent(const std::string& content)
 	_body_sent = 0;
 }
 
+bodyType	Response::getBodyType() const
+{
+	return _body_type;
+}
+
 void	Response::setBodyType(bodyType type)
 {
 	_body_type = type;
@@ -276,8 +281,8 @@ void	Response::setBodyType(bodyType type)
 
 void	Response::resetBuffer()
 {
-	_buffer_size = 0;
-	_buffer_sent = 0;
+	_bytes_in_buffer = 0;
+	_buffer_offset = 0;
 }
 
 void	Response::cleanResponse()
@@ -296,8 +301,8 @@ void	Response::cleanResponse()
 	_body_size = 0;
 	_body_sent = 0;
 	_body_content.clear();
-	_buffer_size = 0;
-	_buffer_sent = 0;
+	_bytes_in_buffer = 0;
+	_buffer_offset = 0;
 	std::memset(_buffer, 0, BUFFER_SIZE);
 }
 
