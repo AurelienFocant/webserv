@@ -12,6 +12,7 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
 	, _root(currConn.virtual_server.getRoot())
+	, _cage_root("")
 	, _request_path("")
 	, _resolved_path("")
 	, _query("")
@@ -46,7 +47,7 @@ void	RequestHandler::handleRequest()
 
 bool	RequestHandler::extractPath()
 {
-	if (_request.getRequestUri().empty() /* || _request.getRequestUri().at(0) != '/' */)
+	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
 	{
 		_response.setStatusCode(BAD_REQUEST);
 		return false;
@@ -73,17 +74,21 @@ bool	RequestHandler::resolvePath()
 	if (_matched_location)
 	{
 		//Detect CGI
-		if (detectCgi())
+		if (detectCGI())
 			_response.setBodyType(DYNAMIC);
 
 		//Config Redirections
 		if (handleConfigRedirect())
 			return false;
-		else if (!_matched_location->getAlias().empty())
+
+		if (!normalizePath())
+			return false;
+		
+		if (!_matched_location->getAlias().empty())
 		{
 			//Alias : replace prefix of location
 			std::string	location_path = _matched_location->getName();
-			std::string	remaining_path = _request_path.substr(location_path.length());
+			std::string	remaining_path = _request_path.substr(location_path.size());
 			_resolved_path = _matched_location->getAlias() + remaining_path;
 		}
 		else if (!_matched_location->getRoot().empty())
@@ -100,6 +105,9 @@ bool	RequestHandler::resolvePath()
 	}
 	else
 	{
+		if (!normalizePath())
+			return false;
+
 		//Default root
 		_resolved_path = _root + _request_path;
 	}
@@ -108,11 +116,6 @@ bool	RequestHandler::resolvePath()
 
 	if (!validatePath())
 		return false;
-
-	if (_is_directory && handleTrailingSlash())
-		return false;
-
-	//exit(2);
 
 	return true;
 
@@ -133,12 +136,15 @@ bool	RequestHandler::handleConfigRedirect()
 
 bool	RequestHandler::handleTrailingSlash()
 {
-	if (_request_path[_request_path.length() - 1] == '/')
+	//if (_matched_location && _matched_location->virtual)
+	//	return true;
+
+	if (_request_path[_request_path.size() - 1] == '/')
 		return false;
 
 	std::string redirect_uri = _request_path + "/";
-	//if query??
-
+	if (!_query.empty())
+		redirect_uri += '?' + _query;
 	buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
 
 	return true;
@@ -175,41 +181,43 @@ void	RequestHandler::findLocation()
 				size_t ext_end = ext_start + ext.size();
 				if (ext_end == _request_path.size() || _request_path[ext_end] == '/')
 				{
-					_matched_location = location;
-					_matched_extension = extensionFromString(ext);
-					break ;
+					//_matched_location = location;
+					if (_matched_extension == NO_EXT)
+						_matched_extension = extensionFromString(ext);
 				}
 			}
 		}
 		else if (_request_path.find(route_path, 0) == 0)
 		{
-			size_t route_len = route_path.length();
+			size_t route_len = route_path.size();
 
 			// Test if it's a real match, not just a partial prefix
-			if (_request_path.length() == route_len || _request_path[route_len] == '/')
+			if (_request_path.size() == route_len || _request_path[route_len] == '/')
 			{
 				//Keep the longest match
 				if (route_len > longest_match)
 				{
-					longest_match = route_path.length();
+					longest_match = route_path.size();
 					_matched_location = location;
+					_cage_root = location->getName();
 				}
 			}
 		}
 	}
 
+	std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
 	if (_matched_location)
 		std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
 	else
 		std::cout << "[DEBUG] No location matched: " << std::endl;
 }
 
-bool	RequestHandler::detectCgi()
+bool	RequestHandler::detectCGI()
 {
 /* 	if (!_matched_location->getCGI())
 		return false; */
 	
-	if (_matched_extension == UNKNOWN_EXT)
+	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
 		return false;
 
 	if (_matched_extension == NO_EXT)
@@ -230,30 +238,113 @@ bool	RequestHandler::detectCgi()
 		_path_info = _request_path.substr(ext_end);
 		_request_path = _request_path.substr(0, ext_end);
 	}
-
-/* 	std::cout << "[DEBUG]: "
-			<< "\nSCRIPT_NAME: " << _script_name
-			<< "\nEXT: " << ext_str
-			<< "\nQUERY: " << _query
-			<< "\nPATH_INFO: " << _path_info << std::endl; */
 	
 	return true;
 
 }
 
+bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded)
+{
+	//avoid useless reallocations (borne superieure)
+	decoded.reserve(encoded.size());
+
+	for (size_t i = 0; i < encoded.size(); i++)
+	{
+		if (encoded[i] == '%' && i + 2 < encoded.size())
+		{
+			std::string	hex = encoded.substr(i + 1, 2);
+
+			if (std::isxdigit(hex[0]) && std::isxdigit(hex[1]))
+			{
+				std::stringstream ss(hex);
+				int	value;
+				if (ss >> std::hex >> value)
+				{
+					if (value == 0)
+						return false;
+					decoded += static_cast<char>(value);
+					i += 2;
+				}
+			}
+			else
+				decoded += encoded[i];
+		}
+		else
+			decoded += encoded[i];
+	}
+
+	return true;
+}
+
 bool	RequestHandler::normalizePath()
 {
-	// TO DO 
+	std::cout << "Cage root :" << _cage_root << std::endl;
+	std::cout << "Request path :" << _request_path << std::endl;
 
-	// percent encoding?
+	std::string	decoded_path;
 
-	// "./" delete
+	if (!decodePath(_request_path, decoded_path))
+	{
+		std::cerr << "[ERROR] Path traversal attempt" << std::endl;
+		_response.setStatusCode(403);
+		return false;
+	}
+	std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
+	// fonctionne meme hors location car _cage_root est initialise a "";
+	std::string temp_path = decoded_path.substr(_cage_root.size());
 
-	// "../" level up
+	if (!temp_path.empty() && temp_path[0] != '/')
+		temp_path = "/" + temp_path;
 
+	bool trailing_slash = (!temp_path.empty()
+		&& temp_path[temp_path.size() - 1] == '/');
 
-	// "//" become "/"
+	if (!trailing_slash)
+		temp_path += '/';
+
+	std::cout << "[DEBUG] Path to normalize " << temp_path << std::endl;
+
+	std::vector<std::string> segments;
+
+	size_t pos = 0;
+	size_t start = 0;
+
+	while ((pos = temp_path.find('/', start)) != std::string::npos && pos < temp_path.size())
+	{
+		std::string seg = temp_path.substr(start, pos -start);
+
+		if (seg.empty() || (seg.at(0) == '.' && seg.size() == 1))
+		{
+			start = pos + 1;
+			continue;
+		}
+		else if (seg == ".." )
+		{
+			if (segments.empty())
+			{
+				std::cerr << "[ERROR] Path traversal attempt" << std::endl;
+				_response.setStatusCode(403);
+				return false;
+			}
+			segments.pop_back();
+		}
+		else
+			segments.push_back(seg);
+		start = pos + 1;
+	}
+
+	temp_path = _cage_root;
+
+	for (size_t i = 0; i < segments.size(); i++)
+		temp_path += "/" + segments[i];
+
+	if (temp_path.empty() || (trailing_slash && temp_path.size() != 1))
+		temp_path += '/';
+	
+	_request_path = temp_path;
+
+	std::cout << "[DEBUG] Normalized path " << _request_path << std::endl;
 
 	return true;
 }
@@ -263,16 +354,8 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
-	if (_resolved_path.find("/../") != std::string::npos)
-	{
-		_response.setStatusCode(403);
-        std::cerr << "[DEBUG] Potential Traversal Path: "
-		<< _resolved_path << std::endl;
-		return false;
-	}
-
-	// normalizePath()
-
+	//if (_matched_location->virtual)
+	//	return true;
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
@@ -283,36 +366,57 @@ bool	RequestHandler::validatePath()
 		else
 			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return false;
-/* 		std::cerr << "[DEBUG] stat() failed: " << strerror(errno) << std::endl;
-        std::cerr << "[DEBUG] Current working dir: ";
-        system("pwd") */;
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);
+
+	if (_is_directory && handleTrailingSlash())
+		return false;
 
 	return true;
 }
 
 /* METHODS PROCESSING */
 
+bool	RequestHandler::isAllowedMethod()
+{
+	if (!_matched_location)
+		return true;
+
+	std::set<std::string> allowed = _matched_location->getAllowedMethods();
+
+	// if no allowd_methods directive in this location in config true by default?
+	if (allowed.empty())
+		return true;
+
+	std::string method = methodToString(_request.getMethod());
+
+	if (allowed.find(method) == allowed.end())
+	{
+		buildMethodAllowedResponse(METHOD_NOT_ALLOWED, allowed);
+		return false;
+	}
+	return true;
+}
+
 bool	RequestHandler::processMethods()
 {
 	// Verifier AUTHORIZED METHODS in locations
 
+	if (!isAllowedMethod())
+		return false;
+
 	switch(_request.getMethod())
 	{
 		case GET:
-			processGetMethod();
-			break ;
-
+			return processGetMethod();
+/*
  		case POST:
-			processPostMethod();
-			break ;
-
+			return processPostMethod();
+*/
 /*
 			case DELETE:
-			processDeleteMethod();
-			break ;
+			return processDeleteMethod();
 */
 		default: 
 			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
@@ -323,6 +427,10 @@ bool	RequestHandler::processMethods()
 
 bool	RequestHandler::processGetMethod()
 {
+	if (_response.getBodyType() == DYNAMIC)
+		return executeCGI();
+
+	//STATIC
 	if (_is_directory)
 	{
 		if (!resolveIndex())
@@ -338,12 +446,20 @@ bool	RequestHandler::processGetMethod()
 		}
 	}
 
-	int	fd = openReadFile(_resolved_path);
+	int	fd = fileSystem::openReadFile(_resolved_path);
 	if (fd < 0)
+	{
+		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
+	}
 
 	buildFileResponse(fd);
 
+	return true;
+}
+
+bool RequestHandler::executeCGI()
+{
 	return true;
 }
 
@@ -410,66 +526,70 @@ void	RequestHandler::generateAutoIndex()
 
 /* BUILD RESPONSE */
 
+void	RequestHandler::setBaseResponse(int status_code)
+{
+	_response.setStatusCode(status_code);
+	_response.setHttpVersion(_request.getHttpVersion());
+	_response.setHeader("Date", httpUtils::getTime());
+}
+
 void	RequestHandler::buildFileResponse(int fd)
 {
-	int target_size = fileSize(_resolved_path);
+	int target_size = fileSystem::fileSize(_resolved_path);
 
-	_response.setStatusCode(OK);
-	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Length", intToString(target_size));
-	_response.setHeader("Content-Type", getContentType(_resolved_path));
-	_response.setHeader("Date", getTime());
+	setBaseResponse(OK);
+	_response.setHeader("Content-Length", httpUtils::intToString(target_size));
+	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
 }
 
 void	RequestHandler::buildHtmlResponse(const std::string& content)
 {
-	_response.setStatusCode(OK);
-	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Length", intToString(content.size()));
-	_response.setHeader("Content-Length", intToString(content.size()));
-	_response.setHeader("Date", getTime());
+	setBaseResponse(OK);
+	_response.setHeader("Content-Length", httpUtils::intToString(content.size()));
+	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
 	_response.setBodyContent(content);
 	_response.setBodySize(content.size());
 }
 
 void	RequestHandler::buildRedirectResponse(int status_code, const std::string& redirect_uri)
 {
-	_response.setStatusCode(status_code);
-	_response.setHttpVersion(_request.getHttpVersion());
+	setBaseResponse(status_code);
 	_response.setHeader("Location", redirect_uri);
 	_response.setHeader("Content-Length", "0");
-	_response.setHeader("Date", getTime());
-
+	_response.setBodySize(0);
 }
+
 
 void	RequestHandler::buildErrorResponse(int status_code)
 {
 	int 	fd = -1;
 	size_t	file_size;
 
-	if (loadErrorPage(404, fd, file_size))
+	setBaseResponse(status_code);
+	if (loadErrorPage(status_code, fd, file_size))
 	{
-		_response.setStatusCode(status_code);
-		_response.setHttpVersion(_request.getHttpVersion());
-		_response.setHeader("Content-Length", intToString(file_size));
+		_response.setHeader("Content-Length", httpUtils::intToString(file_size));
 		_response.setHeader("Content-Type", "text/html");
-		_response.setHeader("Date", getTime());
 		_response.setBodyFd(fd);
 		_response.setBodySize(file_size);
 	}
-/* 	else
-	{
-		std::string	error_content = generateDefaultError(status_code);
 
-		_response.setStatusCode(status_code);
-		_response.setHttpVersion(_request.getHttpVersion());
-		_response.setHeader("Content-Type", "text/html");
-		_response.setHeader("Content-Length", intToString(error_content.size()));
-		_response.setBodyContent(error_content);
-		_response.setBodySize(error_content.size());
-	} */
+}
+
+void	RequestHandler::buildMethodAllowedResponse(int status_code, const std::set<std::string>& allowed)
+{
+	setBaseResponse(status_code);
+
+	std::string allow_header;
+	for (std::set<std::string>::const_iterator it = allowed.begin();
+		it != allowed.end(); it++)
+	{
+		if (it != allowed.begin())
+			allow_header += ", ";
+		allow_header += *it;
+	}
 
 }
 
@@ -484,131 +604,17 @@ bool	RequestHandler::loadErrorPage(int status_code, int& fd, size_t& size)
 	
 	std::string error_path = it->second;
 
-	fd = openReadFile(error_path);
+	fd = fileSystem::openReadFile(error_path);
 	if (fd < 0)
+	{
+		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
+	}
 
-	size = fileSize(error_path);
+	size = fileSystem::fileSize(error_path);
 	
 	return true;
 }
-
-std::string	RequestHandler::generateDefaultError(int status_code)
-{
-	std::stringstream	html;
-	std::string			status_message = httpStatusToString(static_cast<t_HttpCode> (status_code));
-
-	html << "<!DOCTYPE html>\n"
-		<< "<html>\n"
-		<< "<head><title>Error " << status_code << "</title></head>\n"
-		<< "<body style=\"font-family:Arial;text-align:center;padding-top:100px;\">\n"
-		<< "    <h1>" << status_code << "</h1>\n"
-		<< "    <p>" << status_message << "</p>\n"
-		<< "</body>\n"
-		<< "</html>";
-
-	return html.str();
-}
-
-/* UTILS */
-
-std::string	RequestHandler::getTime()
-{
-	time_t timestamp;
-	std::time(&timestamp);
-
-	return std::ctime(&timestamp);
-}
-
-bool	RequestHandler::isDirectory(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return false;
-	return S_ISDIR(statBuf.st_mode);
-}
-
-std::string RequestHandler::getContentType(const std::string& path)
-{
-    size_t dotPos = path.find_last_of('.');
-    if (dotPos == std::string::npos) {
-        return "application/octet-stream";
-    }
-    
-    std::string ext = path.substr(dotPos + 1);
-    
-    if (ext == "html" || ext == "htm")return "text/html";
-    else if (ext == "css") return "text/css";
-    else if (ext == "js") return "application/javascript";
-    else if (ext == "json") return "application/json";
-    else if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
-    else if (ext == "png") return "image/png";
-    else if (ext == "gif") return "image/gif";
-    else if (ext == "txt") return "text/plain";
-    else if (ext == "pdf") return "application/pdf";
-    
-    return "application/octet-stream";
-}
-
-/* FILE OPERATIONS */
-
-int	RequestHandler::openReadFile(const std::string& path)
-{
-	int	fd = open(path.c_str(), O_RDONLY);
-	if (fd < 0)
-	{
-		switch (errno) {
-		case EACCES:
-			_response.setStatusCode(FORBIDDEN);
-			break;
-		case ENOENT:
-			_response.setStatusCode(NOT_FOUND);
-			break;
-		default:
-			_response.setStatusCode(INTERNAL_SERVER_ERROR);
-			break;
-		}
-	}
-	return fd;
-}
-
-int	RequestHandler::openWriteFile(const std::string& path)
-{
-	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644); // CHECK FLAGS -> APPEND?
-	if (fd < 0)
-	{
-		switch (errno) {
-		case EACCES:
-			_response.setStatusCode(FORBIDDEN);
-			break;
-		case ENOENT:
-			_response.setStatusCode(NOT_FOUND);
-			break;
-		default:
-			_response.setStatusCode(INTERNAL_SERVER_ERROR);
-			break;
-		}
-	}
-	return fd;
-}
-
-size_t RequestHandler::fileSize(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return 0;
-	return statBuf.st_size;
-}
-
-/* Utils */
-
-std::string intToString(size_t value)
-{
-    std::stringstream ss;
-    ss << value;
-    return ss.str();
-}
-
 
 /* TESTS/DEBUG */
 

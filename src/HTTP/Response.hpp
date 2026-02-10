@@ -60,6 +60,7 @@ class	Response
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBodyContent(const std::string& content); // MEMORY
 	int					getState() const;
+	bodyType			getBodyType() const;
 	int					getStatusCode() const;
 	int					getBodyFd() const;
 	int					getBodySize() const;
@@ -86,8 +87,8 @@ class	Response
 	size_t								_body_sent;
 
 	char								_buffer[BUFFER_SIZE];
-	size_t								_buffer_size;
-	size_t								_buffer_sent;
+	size_t								_bytes_in_buffer;
+	size_t								_buffer_offset;
 
 	/* Private Methods */
 

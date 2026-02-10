@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <sstream>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -15,6 +16,8 @@
 #include "Response.hpp"
 #include "VirtualServer.hpp"
 #include "Location.hpp"
+#include "../Utils/fileSystem.hpp"
+#include "../Utils/httpUtils.hpp"
 
 class RequestHandler
 {
@@ -26,6 +29,7 @@ class RequestHandler
 	VirtualServer&			_server;
 
 	std::string				_root;
+	std::string				_cage_root;
 	std::string				_request_path;
 	std::string				_resolved_path;
 
@@ -42,11 +46,12 @@ class RequestHandler
 	/* Path processing */
 	bool			extractPath();
 	bool			resolvePath();
-	bool			normalizePath();
 	bool			validatePath();
 	void			findLocation();
 
-	bool			detectCgi();
+	bool			decodePath(const std::string& encoded, std::string& decoded);
+	bool			normalizePath();
+	bool			detectCGI();
 
 
 	/*  Redirections */
@@ -55,10 +60,15 @@ class RequestHandler
 	bool			hasRedirect();
 
 	/* Request processing */
+	bool			isAllowedMethod();
 	bool			processMethods();
 	bool			processGetMethod();
 	bool			processPostMethod();
-	/*POST Methods*/
+
+	/* GET Method */
+	bool			executeCGI(); // a implementer
+
+	/*POST Method*/
 	//void	processPostMethod() ;
 	bool			createNewUser() ;
 
@@ -68,24 +78,13 @@ class RequestHandler
 	void			generateAutoIndex();
 
 	/* Build Response */
+	void			setBaseResponse(int status_code);
+	bool			loadErrorPage(int status_code, int& fd, size_t& size);
 	void			buildFileResponse(int fd);
 	void			buildHtmlResponse(const std::string& content);
 	void			buildRedirectResponse(int status_code, const std::string& redirect_uri);
 	void			buildErrorResponse(int status_code);
-
-	/* Errors */
-	bool			loadErrorPage(int status_code, int& fd, size_t& size);
-	std::string		generateDefaultError(int status_code);
-
-	std::string		getTime();
-
-	/* File operations */
-	int				openReadFile(const std::string& path);
-	int				openWriteFile(const std::string& path);
-	bool 			isDirectory(const std::string& path);
-	size_t			fileSize(const std::string& path);
-	std::string 	getContentType(const std::string& path);
-	
+	void			buildMethodAllowedResponse(int status_code, const std::set<std::string>& allowed);
 
 	/* For testing */
 	void			printRoutes();
@@ -104,8 +103,5 @@ class RequestHandler
 	/* Public Methods */
 	void			handleRequest();
 };
-
-std::string			intToString(size_t value);
-
 
 #endif

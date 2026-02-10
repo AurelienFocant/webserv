@@ -32,7 +32,7 @@ void	Connection::sendResponse()
 		}
 		else
 		{
-			std::cout << "[Error] No data to send but response not done" << std::endl;
+			std::cerr << "[Error] No data to send but response not done" << std::endl;
 			conn_closed = true;
 		}
 		return ;
