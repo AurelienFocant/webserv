@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <signal.h>
 
+#define LISTEN_SOCK	0
 #define MAX_EVENTS	1024
 
 int g_signum;
@@ -79,6 +80,13 @@ std::string	_receiveLoop(int fd)
 	return (s);
 }
 
+static	bool	_isListenSocket(Connection const& conn)
+{
+		if (conn.getFirstConnTime() == LISTEN_SOCK)
+			return (true);
+		return (false);
+}
+
 void	Webserv::_closeConnection(Connection & conn)
 {
 	int	fd = conn.getFd();
@@ -90,13 +98,21 @@ void	Webserv::_closeConnection(Connection & conn)
 
 void	Webserv::_closeStaleConnections(void)
 {
+	return ;
+
+
 	std::map<int, Connection>::iterator	it;
 
 	for (it = _connections.begin(); it != _connections.end(); it++) {
-		if (it->second.conn_closed)
-			return (_closeConnection(it->second));
-		if (it->second.hasTimedOut())
-			return (_closeConnection(it->second));
+		Connection& conn = it->second;
+
+		if (_isListenSocket(conn))
+			continue ;
+		if (conn.conn_closed)
+			return (_closeConnection(conn));
+		// what about if its the very first connection and doesnt have any virtual server ?
+		if (conn.hasTimedOut())
+			return (_closeConnection(conn));
 	}
 }
 
@@ -166,7 +182,7 @@ void	Webserv::initWebServer()
 		// ?? listen options ?
 
 
-		Connection	new_connection(listenSocket, _epoll_fd, 0, &Webserv::listenHandler);
+		Connection	new_connection(listenSocket, _epoll_fd, LISTEN_SOCK, &Webserv::listenHandler);
 		_connections.insert(std::make_pair(listenSocket, new_connection));
 
 
@@ -210,7 +226,7 @@ void	Webserv::run()
 		}
 
 		// check keepalive_timeout and keepalive_time
-		//_closeStaleConnections();
+		_closeStaleConnections();
 	}
 }
 
