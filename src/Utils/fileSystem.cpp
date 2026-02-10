@@ -1,5 +1,10 @@
 #include "fileSystem.hpp"
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 namespace fileSystem {
 
 	bool isFile(const std::string& path)

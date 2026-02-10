@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <unistd.h>
+#include "HTTPenum.hpp"
 
 namespace httpUtils {
 

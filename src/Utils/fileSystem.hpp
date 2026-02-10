@@ -1,10 +1,7 @@
 #ifndef FILESYSTEM_HPP
 #define FILESYSTEM_HPP
 
-#include <iostream>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <string>
 
 namespace fileSystem {
 

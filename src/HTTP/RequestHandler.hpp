@@ -14,10 +14,13 @@
 #include "Connection.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+#include "ResponseBuilder.hpp"
 #include "VirtualServer.hpp"
 #include "Location.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
+
+//class ResponseBuilder;
 
 class RequestHandler
 {
@@ -27,6 +30,7 @@ class RequestHandler
 	const Request&			_request;
 	Response&				_response;
 	VirtualServer&			_server;
+	ResponseBuilder			_builder;
 
 	std::string				_root;
 	std::string				_cage_root;
@@ -77,15 +81,6 @@ class RequestHandler
 	bool			hasAutoIndex();
 	void			generateAutoIndex();
 
-	/* Build Response */
-	void			setBaseResponse(int status_code);
-	bool			loadErrorPage(int status_code, int& fd, size_t& size);
-	void			buildFileResponse(int fd);
-	void			buildHtmlResponse(const std::string& content);
-	void			buildRedirectResponse(int status_code, const std::string& redirect_uri);
-	void			buildErrorResponse(int status_code);
-	void			buildMethodAllowedResponse(int status_code, const std::set<std::string>& allowed);
-
 	/* For testing */
 	void			printRoutes();
 
@@ -94,6 +89,8 @@ class RequestHandler
 	/* Constructors / Destructors */
 	RequestHandler	(Connection& currConn);
 	~RequestHandler	();
+
+	RequestHandler&	operator=(const RequestHandler& rhs);
 
 	/* Getters */
 	std::string		getRoot() const {return _root;}
