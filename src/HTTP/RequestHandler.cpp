@@ -416,8 +416,9 @@ void	RequestHandler::buildFileResponse(int fd)
 
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Type", getContentType(_resolved_path));
 	_response.setHeader("Content-Length", intToString(target_size));
+	_response.setHeader("Content-Type", getContentType(_resolved_path));
+	_response.setHeader("Date", getTime());
 	_response.setBodyFd(fd);
 	_response.setBodySize(target_size);
 }
@@ -426,8 +427,9 @@ void	RequestHandler::buildHtmlResponse(const std::string& content)
 {
 	_response.setStatusCode(OK);
 	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Content-Type", "text/html");
 	_response.setHeader("Content-Length", intToString(content.size()));
+	_response.setHeader("Content-Length", intToString(content.size()));
+	_response.setHeader("Date", getTime());
 	_response.setBodyContent(content);
 	_response.setBodySize(content.size());
 }
@@ -438,6 +440,8 @@ void	RequestHandler::buildRedirectResponse(int status_code, const std::string& r
 	_response.setHttpVersion(_request.getHttpVersion());
 	_response.setHeader("Location", redirect_uri);
 	_response.setHeader("Content-Length", "0");
+	_response.setHeader("Date", getTime());
+
 }
 
 void	RequestHandler::buildErrorResponse(int status_code)
@@ -449,8 +453,9 @@ void	RequestHandler::buildErrorResponse(int status_code)
 	{
 		_response.setStatusCode(status_code);
 		_response.setHttpVersion(_request.getHttpVersion());
-		_response.setHeader("Content-Type", "text/html");
 		_response.setHeader("Content-Length", intToString(file_size));
+		_response.setHeader("Content-Type", "text/html");
+		_response.setHeader("Date", getTime());
 		_response.setBodyFd(fd);
 		_response.setBodySize(file_size);
 	}
@@ -506,6 +511,14 @@ std::string	RequestHandler::generateDefaultError(int status_code)
 }
 
 /* UTILS */
+
+std::string	RequestHandler::getTime()
+{
+	time_t timestamp;
+	std::time(&timestamp);
+
+	return std::ctime(&timestamp);
+}
 
 bool	RequestHandler::isDirectory(const std::string& path)
 {
