@@ -5,10 +5,6 @@
 #include <set>
 #include <map>
 
-
-// #include "RequestHandler.hpp"
-// #include "Request.hpp"
-// #include "Response.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
 #include "HTTPenum.hpp"
@@ -23,7 +19,7 @@ class ResponseBuilder
 	/* Private Attributes */
 	const Request&						_request;
 	Response&							_response;
-	const std::map<int, std::string>&	_error_pages;
+	const std::map<int, std::string>	_error_pages;
 
 	/* Private Methods */
 

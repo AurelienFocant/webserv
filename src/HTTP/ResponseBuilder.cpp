@@ -102,16 +102,17 @@ bool	ResponseBuilder::loadErrorPage(int status_code, int& fd, size_t& size)
 	if (it == _error_pages.end())
 		return false;
 	
-	std::string errorpath = it->second;
+	std::string error_path = it->second;
+	// check if absolute path or string to concatene
 
-	fd = fileSystem::openReadFile(errorpath);
+	fd = fileSystem::openReadFile(error_path);
 	if (fd < 0)
 	{
 		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
 	}
 
-	size = fileSystem::fileSize(errorpath);
+	size = fileSystem::fileSize(error_path);
 	
 	return true;
 }
