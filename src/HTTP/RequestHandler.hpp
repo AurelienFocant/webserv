@@ -102,6 +102,10 @@ class RequestHandler
 	std::string		getRoot() const {return _root;}
 	const Request&	getRequest() const ;
 	const Response&	getResponse() const ;
+	std::string		getQuery() const { return (_query);};
+	std::string		getScriptName() const { return (_script_name);};
+	t_extension		getExtension() const { return (_matched_extension);};
+	std::string		getResolvedPath() const { return (_resolved_path);};
 
 };
 

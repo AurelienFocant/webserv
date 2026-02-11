@@ -13,9 +13,10 @@
 
 namespace	cgi {
 		bool	execute(const RequestHandler& handler, Response& response, char** env) ;
-		bool	launchCgi(char** argv, char** env) ;
-		char	*findInterpreter(const std::string& extension) ;
-		char	**buildCgiEnv(const Request& request);
+		int		*launchCgi(char** argv, char** env) ;
+		char*	findInterpreter(const t_extension& extension) ;
+		char	**buildCgiEnv(const RequestHandler& handler);
+		char*	convertStringToChar(const std::string& string) ;
 };
 
 #endif

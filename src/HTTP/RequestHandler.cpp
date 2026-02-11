@@ -240,7 +240,7 @@ bool	RequestHandler::detectCGI()
 		return false;
 	size_t ext_end = ext_start + ext_str.size();
 
-	std::string _script_name = _request_path.substr(0, ext_end);
+	_script_name = _request_path.substr(0, ext_end);
 
 	_path_info = "";
 	if (ext_end < _request_path.size() && _request_path[ext_end] == '/')
@@ -418,10 +418,8 @@ bool	RequestHandler::processMethods()
 	{
 		case GET:
 			return processGetMethod();
-/*
  		case POST:
 			return processPostMethod();
-*/
 /*
 			case DELETE:
 			return processDeleteMethod();
@@ -479,7 +477,7 @@ bool RequestHandler::executeCGI()
 
 bool	RequestHandler::processPostMethod() {
 	if (_matched_location->getCGI()) {
-		char **env = cgi::buildCgiEnv(_request);
+		char **env = cgi::buildCgiEnv(*this);
 		cgi::execute(*this, _response, env);
 	}
 	if (_matched_location->getName() == "createuser") {
