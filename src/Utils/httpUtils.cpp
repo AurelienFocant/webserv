@@ -61,13 +61,3 @@ bool isExecutable(const std::string& path)
 	return (statBuf.st_mode & S_IXUSR) == S_IXUSR;
 } */
 
-/* void RequestHandler::resolvePath()
-{
-	if (_alias.empty())
-
-	for (std::map<std::string, Location>::iterator it = _config.route.begin(); it != _config.route.end(); i++)
-	{
-		if (path.find(it->first) == 0)
-	}
-
-} */

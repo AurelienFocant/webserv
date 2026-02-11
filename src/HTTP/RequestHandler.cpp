@@ -1,6 +1,11 @@
+
+#include "Connection.hpp"
 #include "RequestHandler.hpp"
 #include "ResponseBuilder.hpp"
+#include "VirtualServer.hpp"
+#include "Request.hpp"
 #include "Response.hpp"
+#include "Location.hpp"
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 #include "cgi.hpp"
@@ -17,10 +22,12 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _cage_root("")
 	, _request_path("")
 	, _resolved_path("")
-	, _query("")
 	, _matched_location(NULL)
 	, _matched_extension(NO_EXT)
 	, _is_directory(false)
+	, _script_name("")
+	, _path_info("")
+	, _query("")
 {}
 
 RequestHandler::~RequestHandler() {}

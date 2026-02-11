@@ -1,5 +1,4 @@
 #include "ResponseBuilder.hpp"
-#include "RequestHandler.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "autoindex.hpp"
@@ -12,16 +11,7 @@
 ResponseBuilder::ResponseBuilder(const Request& request, Response& response, const std::map<int, std::string>& error_pages)
 : _request(request), _response(response), _error_pages(error_pages){}
 
-//ResponseBuilder::ResponseBuilder(const ResponseBuilder& other) : _handler(other._handler) {}
-
 ResponseBuilder::~ResponseBuilder() {}
-
-/* ResponseBuilder&	ResponseBuilder::operator=(const ResponseBuilder& rhs)
-{
-	if (this != &rhs)
-		_handler = rhs._handler;
-	return *this;
-} */
 
 
 /* BUILD RESPONSE */
