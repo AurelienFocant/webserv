@@ -41,7 +41,7 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 
 	if (bytes == -1)
 	{
-		perror("read");
+		return (false);
 	}
 
 	close(cgi_fd[0]);
