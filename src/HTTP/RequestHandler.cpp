@@ -1,5 +1,11 @@
+
+#include "Connection.hpp"
 #include "RequestHandler.hpp"
+#include "ResponseBuilder.hpp"
+#include "VirtualServer.hpp"
+#include "Request.hpp"
 #include "Response.hpp"
+#include "Location.hpp"
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 #include "cgi.hpp"
@@ -11,18 +17,18 @@ RequestHandler::RequestHandler(Connection& currConn)
 	: _request(currConn.request)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
+	, _builder(currConn.request, currConn.response, _server.getErrorPages())
 	, _root(currConn.virtual_server.getRoot())
 	, _cage_root("")
 	, _request_path("")
 	, _resolved_path("")
-	, _query("")
 	, _matched_location(NULL)
 	, _matched_extension(NO_EXT)
 	, _is_directory(false)
-{
-	_response.setStatusCode(_request.getStatusCode());
-	//printRoutes();
-}
+	, _script_name("")
+	, _path_info("")
+	, _query("")
+{}
 
 RequestHandler::~RequestHandler() {}
 
@@ -31,14 +37,14 @@ void	RequestHandler::handleRequest()
 {
 	if (_request.getStatusCode() != OK)
 	{
-		buildErrorResponse(_request.getStatusCode());
+		_builder.buildErrorResponse(_request.getStatusCode());
 		return;
 	}
 
 	if (!extractPath() || !resolvePath() || !processMethods())
 	{
 		if (!hasRedirect())
-			buildErrorResponse(_response.getStatusCode());
+			_builder.buildErrorResponse(_response.getStatusCode());
 		return;
 	}
 }
@@ -76,6 +82,10 @@ bool	RequestHandler::resolvePath()
 		//Detect CGI
 		if (detectCGI())
 			_response.setBodyType(DYNAMIC);
+
+		//Detect virtual location
+		if (_matched_location->getVirtual())
+			return true;
 
 		//Config Redirections
 		if (handleConfigRedirect())
@@ -129,15 +139,15 @@ bool	RequestHandler::handleConfigRedirect()
 	if (redirect_uri.empty() || !redirect_code)
 		return false;
 	
-	buildRedirectResponse(redirect_code, redirect_uri);
+	_builder.buildRedirectResponse(redirect_code, redirect_uri);
 
 	return true;
 }
 
 bool	RequestHandler::handleTrailingSlash()
 {
-	//if (_matched_location && _matched_location->virtual)
-	//	return true;
+	if (_matched_location && _matched_location->getVirtual())
+		return true;
 
 	if (_request_path[_request_path.size() - 1] == '/')
 		return false;
@@ -145,7 +155,7 @@ bool	RequestHandler::handleTrailingSlash()
 	std::string redirect_uri = _request_path + "/";
 	if (!_query.empty())
 		redirect_uri += '?' + _query;
-	buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
+	_builder.buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
 
 	return true;
 }
@@ -179,7 +189,7 @@ void	RequestHandler::findLocation()
 			if (ext_start != std::string::npos)
 			{
 				size_t ext_end = ext_start + ext.size();
-				if (ext_end == _request_path.size() || _request_path[ext_end] == '/')
+				if (ext_end == _request_path.size() || _request_path[ext_end - 1] == '/' || _request_path[ext_end] == '/')
 				{
 					//_matched_location = location;
 					if (_matched_extension == NO_EXT)
@@ -192,7 +202,7 @@ void	RequestHandler::findLocation()
 			size_t route_len = route_path.size();
 
 			// Test if it's a real match, not just a partial prefix
-			if (_request_path.size() == route_len || _request_path[route_len] == '/')
+			if (_request_path.size() == route_len || _request_path[route_len - 1] == '/' || _request_path[route_len] == '/')
 			{
 				//Keep the longest match
 				if (route_len > longest_match)
@@ -354,8 +364,8 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
-	//if (_matched_location->virtual)
-	//	return true;
+	if (_matched_location->getVirtual())
+		return true;
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
@@ -393,7 +403,7 @@ bool	RequestHandler::isAllowedMethod()
 
 	if (allowed.find(method) == allowed.end())
 	{
-		buildMethodAllowedResponse(METHOD_NOT_ALLOWED, allowed);
+		_builder.buildMethodAllowedResponse(METHOD_NOT_ALLOWED, allowed);
 		return false;
 	}
 	return true;
@@ -401,8 +411,6 @@ bool	RequestHandler::isAllowedMethod()
 
 bool	RequestHandler::processMethods()
 {
-	// Verifier AUTHORIZED METHODS in locations
-
 	if (!isAllowedMethod())
 		return false;
 
@@ -427,6 +435,12 @@ bool	RequestHandler::processGetMethod()
 {
 	if (_response.getBodyType() == DYNAMIC)
 		return executeCGI();
+	
+	if (_matched_location && _matched_location->getVirtual())
+	{
+		//do some action
+		return true;
+	}
 
 	//STATIC
 	if (_is_directory)
@@ -451,7 +465,7 @@ bool	RequestHandler::processGetMethod()
 		return false;
 	}
 
-	buildFileResponse(fd);
+	_builder.buildFileResponse(fd, _resolved_path);
 
 	return true;
 }
@@ -493,6 +507,8 @@ bool	RequestHandler::resolveIndex()
 		return false;
 
 	std::string	dir_path = _resolved_path;
+	if (!dir_path.empty() && dir_path[dir_path.size() -1] != '/')
+		dir_path += '/';
 
 	for (size_t i = 0; i < indexes.size(); i++)
 	{
@@ -519,99 +535,7 @@ void	RequestHandler::generateAutoIndex()
 {
 	std::string	html = ::generateAutoIndex(_resolved_path);
 
-	buildHtmlResponse(html);
-}
-
-/* BUILD RESPONSE */
-
-void	RequestHandler::setBaseResponse(int status_code)
-{
-	_response.setStatusCode(status_code);
-	_response.setHttpVersion(_request.getHttpVersion());
-	_response.setHeader("Date", httpUtils::getTime());
-}
-
-void	RequestHandler::buildFileResponse(int fd)
-{
-	int target_size = fileSystem::fileSize(_resolved_path);
-
-	setBaseResponse(OK);
-	_response.setHeader("Content-Length", httpUtils::intToString(target_size));
-	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
-	_response.setBodyFd(fd);
-	_response.setBodySize(target_size);
-}
-
-void	RequestHandler::buildHtmlResponse(const std::string& content)
-{
-	setBaseResponse(OK);
-	_response.setHeader("Content-Length", httpUtils::intToString(content.size()));
-	_response.setHeader("Content-Type", fileSystem::getContentType(_resolved_path));
-	_response.setBodyContent(content);
-	_response.setBodySize(content.size());
-}
-
-void	RequestHandler::buildRedirectResponse(int status_code, const std::string& redirect_uri)
-{
-	setBaseResponse(status_code);
-	_response.setHeader("Location", redirect_uri);
-	_response.setHeader("Content-Length", "0");
-	_response.setBodySize(0);
-}
-
-
-void	RequestHandler::buildErrorResponse(int status_code)
-{
-	int 	fd = -1;
-	size_t	file_size;
-
-	setBaseResponse(status_code);
-	if (loadErrorPage(status_code, fd, file_size))
-	{
-		_response.setHeader("Content-Length", httpUtils::intToString(file_size));
-		_response.setHeader("Content-Type", "text/html");
-		_response.setBodyFd(fd);
-		_response.setBodySize(file_size);
-	}
-
-}
-
-void	RequestHandler::buildMethodAllowedResponse(int status_code, const std::set<std::string>& allowed)
-{
-	setBaseResponse(status_code);
-
-	std::string allow_header;
-	for (std::set<std::string>::const_iterator it = allowed.begin();
-		it != allowed.end(); it++)
-	{
-		if (it != allowed.begin())
-			allow_header += ", ";
-		allow_header += *it;
-	}
-
-}
-
-/* ERRORS */
-
-bool	RequestHandler::loadErrorPage(int status_code, int& fd, size_t& size)
-{
-
-	std::map<int, std::string>::const_iterator it = _server.error_pages.find(status_code);
-	if (it == _server.error_pages.end())
-		return false;
-	
-	std::string error_path = it->second;
-
-	fd = fileSystem::openReadFile(error_path);
-	if (fd < 0)
-	{
-		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
-		return false;
-	}
-
-	size = fileSystem::fileSize(error_path);
-	
-	return true;
+	_builder.buildHtmlResponse(html, _resolved_path);
 }
 
 /* TESTS/DEBUG */

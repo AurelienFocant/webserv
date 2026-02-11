@@ -95,8 +95,8 @@ Connection::Connection(int fd, const int& epoll_fd, std::time_t time, bool (Webs
 	, _epoll_fd(epoll_fd)
 	, _first_conn(time)
 	, _last_conn(0)
-	, handler(f)
 	, conn_closed(false)
+	, handler(f)
 {
 }
 
@@ -105,8 +105,8 @@ Connection::Connection( const Connection& src )
 	, _epoll_fd(src._epoll_fd)
 	, _first_conn(src._first_conn)
 	, _last_conn(src._last_conn)
-	, handler(src.handler)
 	, conn_closed(src.conn_closed)
+	, handler(src.handler)
 {
 	(void) src;
 }
