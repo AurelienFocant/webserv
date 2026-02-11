@@ -24,28 +24,30 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 		//some errors happened, setup response code accordingly
 	}
 
-	//Move that section to somewhere else, don´t forget to delete cleaning (delete, close) here AND don´t forget them at the new location
-	int	content_length = std::atoi(handler.getRequest().getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->danger, verify presence 
-	write(cgi_fd[1], (handler.getRequest().getBody()).c_str(), content_length);
-	close(cgi_fd[1]);
-
-	std::string	cgi_response;
-
-	char buffer[4096];
-	ssize_t bytes;
-
-	while ((bytes = read(cgi_fd[0], buffer, sizeof(buffer))) > 0)
-	{
-		cgi_response.append(buffer, bytes);
-	}
-
-	if (bytes == -1)
-	{
+	if (fcntl(cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
+		close(cgi_fd[0]);
+		close(cgi_fd[1]);
+		delete[] (cgi_fd);
 		return (false);
 	}
 
-	close(cgi_fd[0]);
-	delete[] (cgi_fd); //->delete that when moving cgi lecture point
+
+	struct epoll_event ev_hints;
+	ev_hints.events = EPOLLOUT | EPOLLRDHUP;
+	ev_hints.data.fd = cgi_fd[1];
+	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, cgi_fd[1], &ev_hints) < 0) {
+		close(cgi_fd[0]);
+		close(cgi_fd[1]);
+		delete[] (cgi_fd);
+		return (false);
+	}
+
+	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	Connection	new_connection(cgi_fd[1], _epoll_fd, std::time(NULL), &Webserv::cgiIn();
+	new_connection._cgi_fd = cgi_fd;
+	new_connection.setLastConnTime(std::time(NULL));
+	_connections.insert(std::make_pair(cgi_fd[1], new_connection));
+
 	return (true);
 }
 

@@ -306,6 +306,38 @@ bool	Webserv::clientHandler(Connection & conn)
 	return (true);
 }
 
+bool	Webserv::cgiIn(Connection& conn) {
+	(void)conn;
+
+	int	content_length = std::atoi(conn.request.getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->danger, verify presence 
+	int byte = write(cgi_fd[1], (conn.request.getBody()).c_str(), content_length);
+	if (byte <= 0 || byte == content_length)
+		close(cgi_fd[1]);
+	
+	return (true);
+}
+
+bool	Webserv::cgiOut(Connection& conn) {
+	(void)conn;
+
+	std::string	cgi_response;
+
+	char buffer[4096];
+	ssize_t bytes;
+
+	while ((bytes = read(cgi_fd[0], buffer, sizeof(buffer))) > 0)
+	{
+		cgi_response.append(buffer, bytes);
+	}
+
+	if (bytes == -1)
+	{
+		return (false);
+	}
+
+	close(cgi_fd[0]);
+	return (true);
+}
 
 
 // Getters

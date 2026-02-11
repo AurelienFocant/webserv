@@ -39,6 +39,7 @@ class Connection
 
 		const	std::time_t	_first_conn;
 				std::time_t	_last_conn;
+		//if cgi
 
 	public:
 		bool			conn_closed;
@@ -50,6 +51,7 @@ class Connection
 		bool	hasTimedOut(void);
 		void	sendResponse();
 		bool   		(Webserv::*handler)(Connection & conn);
+		int			cgi_fd[2];
 
 
 
