@@ -76,6 +76,10 @@ bool	RequestHandler::resolvePath()
 		if (detectCGI())
 			_response.setBodyType(DYNAMIC);
 
+		//Detect virtual location
+		if (_matched_location->getVirtual())
+			return true;
+
 		//Config Redirections
 		if (handleConfigRedirect())
 			return false;
@@ -135,8 +139,8 @@ bool	RequestHandler::handleConfigRedirect()
 
 bool	RequestHandler::handleTrailingSlash()
 {
-	//if (_matched_location && _matched_location->virtual)
-	//	return true;
+	if (_matched_location && _matched_location->getVirtual())
+		return true;
 
 	if (_request_path[_request_path.size() - 1] == '/')
 		return false;
@@ -353,8 +357,8 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
-	//if (_matched_location->virtual)
-	//	return true;
+	if (_matched_location->getVirtual())
+		return true;
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
@@ -400,8 +404,6 @@ bool	RequestHandler::isAllowedMethod()
 
 bool	RequestHandler::processMethods()
 {
-	// Verifier AUTHORIZED METHODS in locations
-
 	if (!isAllowedMethod())
 		return false;
 
@@ -428,6 +430,12 @@ bool	RequestHandler::processGetMethod()
 {
 	if (_response.getBodyType() == DYNAMIC)
 		return executeCGI();
+	
+	if (_matched_location && _matched_location->getVirtual())
+	{
+		//do some action
+		return true;
+	}
 
 	//STATIC
 	if (_is_directory)
