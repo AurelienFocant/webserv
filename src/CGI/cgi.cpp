@@ -6,11 +6,12 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 	//For compilation errors
 		(void)response;
 	 //size must depend of number of argument and if an interpreter is needed ?
-	char** argv = new char*[2];
+	char** argv = new char*[3];
 	//Create argv for child exec
-	argv[1] = NULL;
+	argv[2] = NULL;
 	try {
-		argv[0] = convertStringToChar("./data/site/" + handler.getScriptName()); //->maybe do one function that initialize whole argv based on file_to_execute
+		argv[0] = convertStringToChar(findInterpreter(handler.getExtension()));
+		argv[1] = convertStringToChar(handler.getResolvedPath()); //->maybe do one function that initialize whole argv based on file_to_execute
 	}
 	catch (std::exception& e) {
 		//setup Response status code to Internal_server_error: here or up the stack
@@ -18,9 +19,33 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 		return (false); //Continue or crash the program ?
 	}
 
-	if (!launchCgi(argv, env)) {
+	int	*cgi_fd = launchCgi(argv, env);
+	if (!cgi_fd) {
 		//some errors happened, setup response code accordingly
 	}
+
+	//Move that section to somewhere else, don´t forget to delete cleaning (delete, close) here AND don´t forget them at the new location
+	int	content_length = std::atoi(handler.getRequest().getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->danger, verify presence 
+	write(cgi_fd[1], (handler.getRequest().getBody()).c_str(), content_length);
+	close(cgi_fd[1]);
+
+	std::string	cgi_response;
+
+	char buffer[4096];
+	ssize_t bytes;
+
+	while ((bytes = read(cgi_fd[0], buffer, sizeof(buffer))) > 0)
+	{
+		cgi_response.append(buffer, bytes);
+	}
+
+	if (bytes == -1)
+	{
+		perror("read");
+	}
+
+	close(cgi_fd[0]);
+	delete[] (cgi_fd); //->delete that when moving cgi lecture point
 	return (true);
 }
 
@@ -37,17 +62,17 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler) {
 		else {
 			previous_key.clear();
 			previous_key = it->first;
-			vect.push_back(header);
+			if (!header.empty())
+				vect.push_back(header);
 			header.clear();
-			if (it->first == "CONTEN_LENGTH" || it->first == "CONTENT_TYPE")
+			if (it->first == "CONTENT_LENGTH" || it->first == "CONTENT_TYPE")
 				header += it->first + "=" + it->second;
 			else
 				header += "HTTP_" + it->first + "=" + it->second;
 		}
 	}
-	size_t	i = 0;
 	char **c_enc = new char*[vect.size()];
-	for (std::vector<std::string>::iterator it = vect.begin(); it != vect.end(); ++it) {
+	for (size_t i = 0; i < vect.size(); ++i) {
 		c_enc[i] = new char[vect.at(i).size() + 1];
 		std::strcpy(c_enc[i], vect.at(i).c_str());
 	}
@@ -59,6 +84,7 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getRequestUri());
 	vect.push_back("QUERY_STRING=" + handler.getQuery());
 	vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
+	vect.push_back("SCRIPT_FILENAME=" + handler.getResolvedPath()); 
 	return (true);
 }
 
@@ -83,25 +109,32 @@ char*	cgi::convertStringToChar(const std::string& string) {
 }
 
 
-bool	cgi::launchCgi(char** argv, char** env) {
+int	*cgi::launchCgi(char** argv, char** env) {
 //Pipe creation for communication with the child
-	int	pipe_fd[2];
-	if (pipe(pipe_fd) < 0) {
-		return (false);
+	int	pipe_in[2];
+	int	pipe_out[2];
+	if (pipe(pipe_in) < 0) {
+		return (NULL);
+	}
+	if (pipe(pipe_out) < 0) {
+		return (NULL);
 	}
 
 //Creation of the subprocess
 	pid_t	pid = fork();
 	if (pid < 0)
-		return (false);
+		return (NULL);
 	else if (pid == 0) { // Child process
 	//Setup the pipe to write from the child
-		dup2(pipe_fd[0], STDOUT_FILENO);
-		dup2(pipe_fd[1], STDIN_FILENO);
-		close(pipe_fd[0]);
-		close(pipe_fd[1]);
-
+		dup2(pipe_in[0], STDIN_FILENO);
+		close(pipe_in[1]);
+		dup2(pipe_out[1], STDOUT_FILENO);
+		close(pipe_out[0]);
+		 
 		execve(argv[0], argv, env);
+		 
+		close(pipe_in[0]);
+		close(pipe_out[1]);
 		delete[](env);
 		delete[](argv);
 		exit(EXIT_FAILURE);
@@ -114,13 +147,10 @@ bool	cgi::launchCgi(char** argv, char** env) {
 		delete[](env);
 	}
 	//Read production of the child
-//	while (write(pipe_fd[1], "Coucour", 7) > 0) {}
-	close(pipe_fd[1]);
-	char buffer[5];
-//	while (read(pipe_fd[0], buffer, 256) > 0) {}
-	close(pipe_fd[0]);
+	close(pipe_in[0]);
+	close(pipe_out[1]);
 
-//	Need to read child production ?on std::cout?
+/*//	Need to read child production ?on std::cout?
 	int	status = 0;
 	int time = 3000;
 	int	ret;
@@ -146,7 +176,7 @@ bool	cgi::launchCgi(char** argv, char** env) {
 				if (usleep(50) < 0) {
 					kill(pid, SIGINT);
 					//setStatus code internal error
-					return (false);
+					return (NULL);
 				}
 				break ;
 			default:
@@ -159,7 +189,10 @@ bool	cgi::launchCgi(char** argv, char** env) {
 	if (ret == 0) {
 		kill(pid, SIGINT);
 		//setcode for timeout ?
-	}
+	}*/
 	//Error happened
-	return (true);
+	int	*cgi_fd = new int[2];
+	cgi_fd[0] = pipe_out[0];
+	cgi_fd[1] = pipe_in[1];
+	return (cgi_fd);
 }

@@ -101,7 +101,8 @@ class RequestHandler
 	const Response&	getResponse() const ;
 	std::string		getQuery() const { return (_query);};
 	std::string		getScriptName() const { return (_script_name);};
-	t_extension		getExtansion() const { return (_matched_extension);};
+	t_extension		getExtension() const { return (_matched_extension);};
+	std::string		getResolvedPath() const { return (_resolved_path);};
 
 	/* Public Methods */
 	void			handleRequest();

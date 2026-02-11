@@ -22,7 +22,7 @@ else:
     safe_comment = html.escape(comment)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    with open("comment", "a", encoding="utf-8") as f:
+    with open("./data/dB/users/comments.txt", "a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] {safe_comment}\n")
 
     response_body = "<h1>OK</h1><p>Comment saved.</p>"
