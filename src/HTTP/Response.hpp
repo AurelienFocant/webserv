@@ -60,6 +60,7 @@ class	Response
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBodyContent(const std::string& content); // MEMORY
 	int					getState() const;
+	void				setHeaderSent(size_t n) {_header_sent = n;}
 	bodyType			getBodyType() const;
 	int					getStatusCode() const;
 	int					getBodyFd() const;

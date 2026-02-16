@@ -29,6 +29,10 @@ void	Connection::sendResponse()
 				perror("epoll_ctl MOD");
 				conn_closed = true;
 			}
+
+			// reset response state
+			response.setState(Response::DEFAULT);
+			response.setHeaderSent(0);
 		}
 		else
 		{
