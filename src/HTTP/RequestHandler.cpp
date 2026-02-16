@@ -14,7 +14,8 @@
 /* ////////////REQUEST HANDLER////////////////// */
 
 RequestHandler::RequestHandler(Connection& currConn) 
-	: _request(currConn.request)
+	: _connection(currConn)
+	, _request(currConn.request)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
 	, _builder(currConn.request, currConn.response, _server.getErrorPages())

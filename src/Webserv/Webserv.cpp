@@ -101,10 +101,10 @@ void	Webserv::_closeStaleConnections(void)
 	return ;
 
 
-	std::map<int, Connection>::iterator	it;
+	std::map<int, t_info>::iterator	it;
 
 	for (it = _connections.begin(); it != _connections.end(); it++) {
-		Connection& conn = it->second;
+		Connection& conn = *(it->second.connection);
 
 		if (_isListenSocket(conn))
 			continue ;
@@ -182,8 +182,11 @@ void	Webserv::initWebServer()
 		// ?? listen options ?
 
 
-		Connection	new_connection(listenSocket, _epoll_fd, LISTEN_SOCK, &Webserv::listenHandler);
-		_connections.insert(std::make_pair(listenSocket, new_connection));
+		Connection	new_connection(listenSocket, _epoll_fd, LISTEN_SOCK);
+		t_info	info;
+		info.connection = &new_connection;
+		info.handler = &Webserv::listenHandler;
+		_connections.insert(std::make_pair(listenSocket, info));
 
 
 		struct epoll_event	ev_hints;
@@ -216,13 +219,13 @@ void	Webserv::run()
 
 		for (int i = 0; i < event_count; i++) {
 
-			std::map<int, Connection>::iterator it = _connections.find(ready_events[i].data.fd);				// find the right key
+			std::map<int, t_info>::iterator it = _connections.find(ready_events[i].data.fd);				// find the right key
 			if (it == _connections.end())
 				continue ;
 
-			Connection & currConn = it->second;	// currConn is the value of <key, value>
+			Connection & currConn = *(it->second.connection);	// currConn is the value of <key, value>
 			currConn.setEvent(ready_events[i].events);
-			(this->*currConn.handler)(currConn);
+			(it->second.handler)(currConn);
 		}
 
 		// check keepalive_timeout and keepalive_time
@@ -251,9 +254,11 @@ bool	Webserv::listenHandler(Connection & conn)
 	}
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL), &Webserv::clientHandler);
-	new_connection.setLastConnTime(std::time(NULL));
-	_connections.insert(std::make_pair(clientSocket, new_connection));
+	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL));
+	t_info	info;
+	info.connection = &new_connection;
+	info.handler = &Webserv::clientHandler;
+	_connections.insert(std::make_pair(clientSocket, info));
 	return (true);
 }
 
@@ -310,9 +315,9 @@ bool	Webserv::cgiIn(Connection& conn) {
 	(void)conn;
 
 	int	content_length = std::atoi(conn.request.getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->danger, verify presence 
-	int byte = write(cgi_fd[1], (conn.request.getBody()).c_str(), content_length);
+	int byte = write(conn.cgi_fd[1], (conn.request.getBody()).c_str(), content_length);
 	if (byte <= 0 || byte == content_length)
-		close(cgi_fd[1]);
+		close(conn.cgi_fd[1]);
 	
 	return (true);
 }
@@ -325,7 +330,7 @@ bool	Webserv::cgiOut(Connection& conn) {
 	char buffer[4096];
 	ssize_t bytes;
 
-	while ((bytes = read(cgi_fd[0], buffer, sizeof(buffer))) > 0)
+	while ((bytes = read(conn.cgi_fd[0], buffer, sizeof(buffer))) > 0)
 	{
 		cgi_response.append(buffer, bytes);
 	}
@@ -335,7 +340,7 @@ bool	Webserv::cgiOut(Connection& conn) {
 		return (false);
 	}
 
-	close(cgi_fd[0]);
+	close(conn.cgi_fd[0]);
 	return (true);
 }
 

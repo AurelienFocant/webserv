@@ -90,13 +90,12 @@ std::time_t Connection::getLastConnTime()	const
 }
 
 // Constructors and stuff
-Connection::Connection(int fd, const int& epoll_fd, std::time_t time, bool (Webserv::*f)(Connection & conn))
+Connection::Connection(int fd, const int& epoll_fd, std::time_t time)
 	: _fd(fd)
 	, _epoll_fd(epoll_fd)
 	, _first_conn(time)
 	, _last_conn(0)
 	, conn_closed(false)
-	, handler(f)
 {
 }
 
@@ -106,7 +105,6 @@ Connection::Connection( const Connection& src )
 	, _first_conn(src._first_conn)
 	, _last_conn(src._last_conn)
 	, conn_closed(src.conn_closed)
-	, handler(src.handler)
 {
 	(void) src;
 }
@@ -117,7 +115,6 @@ Connection&	Connection::operator= ( const Connection& rhs )
 		_fd = rhs._fd;
 		_last_conn = rhs._last_conn;
 		_last_conn = rhs._last_conn;
-		handler = rhs.handler;
 		conn_closed = rhs.conn_closed;
 	}
 	return (*this);

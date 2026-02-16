@@ -2,9 +2,7 @@
 
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) ;
 
-bool	cgi::execute(const RequestHandler& handler, Response& response, char** env) {
-	//For compilation errors
-		(void)response;
+bool	cgi::execute(const RequestHandler& handler, char** env) {
 	 //size must depend of number of argument and if an interpreter is needed ?
 	char** argv = new char*[3];
 	//Create argv for child exec
@@ -19,34 +17,33 @@ bool	cgi::execute(const RequestHandler& handler, Response& response, char** env)
 		return (false); //Continue or crash the program ?
 	}
 
-	int	*cgi_fd = launchCgi(argv, env);
-	if (!cgi_fd) {
+	if (!launchCgi(handler.connection, argv, env))
 		//some errors happened, setup response code accordingly
+		return (false);
 	}
 
-	if (fcntl(cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
-		close(cgi_fd[0]);
-		close(cgi_fd[1]);
-		delete[] (cgi_fd);
+	if (fcntl(conn.cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
 		return (false);
 	}
 
 
 	struct epoll_event ev_hints;
 	ev_hints.events = EPOLLOUT | EPOLLRDHUP;
-	ev_hints.data.fd = cgi_fd[1];
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, cgi_fd[1], &ev_hints) < 0) {
-		close(cgi_fd[0]);
-		close(cgi_fd[1]);
-		delete[] (cgi_fd);
+	ev_hints.data.fd = conn.cgi_fd[1];
+	if (epoll_ctl(conn.getEpollFd(), EPOLL_CTL_ADD, conn.cgi_fd[1], &ev_hints) < 0) {
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
 		return (false);
 	}
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	Connection	new_connection(cgi_fd[1], _epoll_fd, std::time(NULL), &Webserv::cgiIn();
-	new_connection._cgi_fd = cgi_fd;
-	new_connection.setLastConnTime(std::time(NULL));
-	_connections.insert(std::make_pair(cgi_fd[1], new_connection));
+	t_info	info;
+	info.connection = new_connection;
+	info.handler = &Webserv::cgiIn();
+	info.connection.setLastConnTime(std::time(NULL));
+	_connections.insert(std::make_pair(cgi_fd[1], info));
 
 	return (true);
 }
@@ -111,21 +108,21 @@ char*	cgi::convertStringToChar(const std::string& string) {
 }
 
 
-int	*cgi::launchCgi(char** argv, char** env) {
+bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 //Pipe creation for communication with the child
 	int	pipe_in[2];
 	int	pipe_out[2];
 	if (pipe(pipe_in) < 0) {
-		return (NULL);
+		return (false);
 	}
 	if (pipe(pipe_out) < 0) {
-		return (NULL);
+		return (false);
 	}
 
 //Creation of the subprocess
 	pid_t	pid = fork();
 	if (pid < 0)
-		return (NULL);
+		return (false);
 	else if (pid == 0) { // Child process
 	//Setup the pipe to write from the child
 		dup2(pipe_in[0], STDIN_FILENO);
@@ -152,49 +149,7 @@ int	*cgi::launchCgi(char** argv, char** env) {
 	close(pipe_in[0]);
 	close(pipe_out[1]);
 
-/*//	Need to read child production ?on std::cout?
-	int	status = 0;
-	int time = 3000;
-	int	ret;
-	while (time > 0) {
-		ret = waitpid(pid, &status, WNOHANG);
-		switch (ret) {
-			case (-1):
-				switch (errno) {
-					case (ECHILD):
-						break ;
-					case (EINTR):
-						break ;
-					case (EINVAL):
-						break ;
-					default:
-						(void)pid;
-						//SOMETHING went really wrong
-				}
-				time = 0;
-				break ;
-			case (0):
-				time -= 50;
-				if (usleep(50) < 0) {
-					kill(pid, SIGINT);
-					//setStatus code internal error
-					return (NULL);
-				}
-				break ;
-			default:
-				if (ret == pid)
-					//Do SOMething
-				(void)pid;
-		}
-	}
-	//add check for if signaled
-	if (ret == 0) {
-		kill(pid, SIGINT);
-		//setcode for timeout ?
-	}*/
-	//Error happened
-	int	*cgi_fd = new int[2];
-	cgi_fd[0] = pipe_out[0];
-	cgi_fd[1] = pipe_in[1];
-	return (cgi_fd);
+	conn.cgi_fd[0] = pipe_out[0];
+	conn.cgi_fd[1] = pipe_in[1];
+	return (true);
 }

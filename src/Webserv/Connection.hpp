@@ -50,7 +50,6 @@ class Connection
 
 		bool	hasTimedOut(void);
 		void	sendResponse();
-		bool   		(Webserv::*handler)(Connection & conn);
 		int			cgi_fd[2];
 
 
@@ -59,12 +58,13 @@ class Connection
 		void		setEvent(uint32_t event);
 		uint32_t	getEvent(void) const;
 		int			getFd(void) const;
+		const int&	getEpollFd(void) const {return (_epoll_fd);};
 
 		std::time_t getFirstConnTime()	const;
 		void		setLastConnTime(std::time_t time);
 		std::time_t getLastConnTime()	const;
 
-		Connection	(int fd, const int& epoll_fd, std::time_t start_time, bool (Webserv::*f)(Connection & conn));
+		Connection	(int fd, const int& epoll_fd, std::time_t start_time);
 		Connection	( const Connection& src );
 		Connection&	operator= ( const Connection& rhs );
 		~Connection	( void );
