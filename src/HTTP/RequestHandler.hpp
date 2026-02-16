@@ -69,12 +69,14 @@ class RequestHandler
 	bool			processGetMethod();
 	bool			processPostMethod();
 	bool			processDeleteMethod();
+	bool			_hasContentTypeHeader();
+	bool			_isMultiformData();
+	std::string		_extractBoundary();
 
 	/* GET Method */
 	bool			executeCGI(); // a implementer
 
 	/*POST Method*/
-	//void	processPostMethod() ;
 	bool			createNewUser() ;
 
 	/* Directory listing / Index */

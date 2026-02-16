@@ -90,6 +90,7 @@ std::map<int, std::string>	ConfigContext::_initDefaultErrorPages(void)
 	pages[402] = "./data/error_pages/404.html";
 	pages[403] = "./data/error_pages/404.html";
 	pages[404] = "./data/error_pages/404.html";
+	pages[405] = "./data/error_pages/404.html";
 
 	return (pages);
 }

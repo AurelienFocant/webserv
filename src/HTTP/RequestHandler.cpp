@@ -412,8 +412,8 @@ bool	RequestHandler::processMethods()
 	{
 		case GET:
 			return processGetMethod();
- 		// case POST:
- 		// return processPostMethod();
+ 		case POST:
+			return processPostMethod();
 		case DELETE:
 			return processDeleteMethod();
 		default: 
@@ -476,14 +476,63 @@ bool RequestHandler::executeCGI()
 // 	//	if (_matched_location == "createuser")
 // 	return (true);		
 // }
+bool	RequestHandler::_hasContentTypeHeader(void)
+{
+	if (!_request.getHeaderValues("Content-Type")[0].empty())
+		return (true);
+	return (false);
+}
+
+bool	RequestHandler::_isMultiformData(void)
+{
+	size_t	semicolon = std::string::npos;
+
+	std::string	header = _request.getHeaderValues("Content-Type")[0];
+	if ((semicolon = header.find_first_of(';')) != std::string::npos) {
+		if (header.substr(0, semicolon) == "multipart/form-data")
+			return (true);
+	}
+	return (false);
+}
+
+std::string	RequestHandler::_extractBoundary(void)
+{
+	size_t	pos = std::string::npos;
+
+	std::string	header = _request.getHeaderValues("Content-Type")[0];
+	if ((pos = header.find(" boundary=")) != std::string::npos) {
+		return(header.substr(header.at(pos)));
+	}
+	return ("");
+}
 
 bool	RequestHandler::processPostMethod()
 {
+	// Step 1: Read the POST Request
+		// 	Extract Content-Length to know how much data to read.
+		// 	If Content-Type is multipart/form-data, extract the boundary from it.
+	// 	Step 2: Parse the Body
+		// 	If it’s a simple form (application/x-www-form-urlencoded), just parse key=value pairs.
+		// 	If it’s file upload (multipart/form-data):
+		// 	Each part is separated by the boundary.
+		// 	Extract the file’s name from the Content-Disposition header.
+		// 	Extract the raw file data.
+	// 	Step 3: Save the File
+		// 	Open a file in the server directory (e.g., uploads/filename) and write the bytes you extracted.
+		// 	Make sure to validate the filename to prevent path traversal attacks (../../etc/passwd!).
+	if (_hasContentTypeHeader()) {
+		if (_isMultiformData()) {
+			std::string boundary = _extractBoundary();
+			if (!boundary.empty()) {
+				_response.setStatusCode(CREATED);
+				return (true);
+			}
+		}
+	}
+	std::cout << "POLOUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUF\n";
 
-	// - check body size
-	// - check MIME ?
-
-	return (true);
+	_response.setStatusCode(BAD_REQUEST);
+	return (false);
 }
 
 bool	RequestHandler::processDeleteMethod()
