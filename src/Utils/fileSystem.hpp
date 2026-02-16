@@ -13,6 +13,8 @@ namespace fileSystem {
 
 	bool 		isWritable(const std::string& path);
 
+	bool		isExecutable(const std::string& path);
+
 	int			openReadFile(const std::string& path);
 
 	int			openWriteFile(const std::string& path);
@@ -20,6 +22,10 @@ namespace fileSystem {
 	size_t	 	fileSize(const std::string& path);
 
 	std::string	getContentType(const std::string& path);
+
+	std::string	getFilename(const std::string& path);
+
+	std::string	getDirname(const std::string& path);
 
 }
 

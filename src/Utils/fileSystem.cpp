@@ -44,6 +44,11 @@ namespace fileSystem {
 
 	}
 
+	bool isExecutable(const std::string& path)
+	{
+		return (access(path.c_str(), X_OK) == 0);
+	}
+
 	size_t fileSize(const std::string& path)
 	{
 		struct stat statBuf;
@@ -61,15 +66,15 @@ namespace fileSystem {
 		
 		std::string ext = path.substr(dotPos + 1);
 		
-		if (ext == "html" || ext == "htm")return "text/html";
-		else if (ext == "css") return "text/css";
-		else if (ext == "js") return "application/javascript";
-		else if (ext == "json") return "application/json";
-		else if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
-		else if (ext == "png") return "image/png";
-		else if (ext == "gif") return "image/gif";
-		else if (ext == "txt") return "text/plain";
-		else if (ext == "pdf") return "application/pdf";
+		if (ext == "html" || ext == "htm")		return "text/html";
+		else if (ext == "jpg" || ext == "jpeg")	return "image/jpeg";
+		else if (ext == "css")	return "text/css";
+		else if (ext == "js")	return "application/javascript";
+		else if (ext == "json")	return "application/json";
+		else if (ext == "png")	return "image/png";
+		else if (ext == "gif")	return "image/gif";
+		else if (ext == "txt")	return "text/plain";
+		else if (ext == "pdf")	return "application/pdf";
 		
 		return "application/octet-stream";
 	}
@@ -86,4 +91,19 @@ namespace fileSystem {
 		return fd;
 	}
 
+	std::string	getFilename(const std::string& path)
+	{
+		size_t pos = path.find_last_of("/");
+		if (pos == std::string::npos)
+			return (path);
+		return (path.substr(pos+1));
+	}
+
+	std::string	getDirname(const std::string& path)
+	{
+		size_t pos = path.find_last_of("/");
+		if (pos == std::string::npos)
+			return (".");
+		return (path.substr(0, pos));
+	}
 }

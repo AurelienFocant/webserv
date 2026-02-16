@@ -6,6 +6,9 @@
 #include "cgi.hpp"
 #include "handleUser.hpp"
 
+#include <fcntl.h>
+#include <unistd.h>
+
 /* ////////////REQUEST HANDLER////////////////// */
 
 RequestHandler::RequestHandler(Connection& currConn) 
@@ -86,8 +89,8 @@ bool	RequestHandler::resolvePath()
 		if (!_matched_location->getAlias().empty())
 		{
 			//Alias : replace prefix of location
-			std::string	location_path = _matched_location->getName();
-			std::string	remaining_path = _request_path.substr(location_path.size());
+			std::string	location_path	= _matched_location->getName();
+			std::string	remaining_path	= _request_path.substr(location_path.size());
 			_resolved_path = _matched_location->getAlias() + remaining_path;
 		}
 		else if (!_matched_location->getRoot().empty())
@@ -409,14 +412,10 @@ bool	RequestHandler::processMethods()
 	{
 		case GET:
 			return processGetMethod();
-/*
- 		case POST:
-			return processPostMethod();
-*/
-/*
-			case DELETE:
+ 		// case POST:
+ 		// return processPostMethod();
+		case DELETE:
 			return processDeleteMethod();
-*/
 		default: 
 			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
 			return false;
@@ -462,30 +461,56 @@ bool RequestHandler::executeCGI()
 	return true;
 }
 
-bool	RequestHandler::processPostMethod() {
-	if (_matched_location->getCGI()) {
-		char **env = cgi::buildCgiEnv(_request);
-		cgi::execute(*this, _response, env);
-	}
-	if (_matched_location->getName() == "createuser") {
-		_response.setStatusCode(handleUser::createNewUser(*this));
-	}
-	if (_matched_location->getName() == "comment") {
-	//	use script create comment;
-	}
-//	if (_matched_location == "createuser")
-	return (true);		
+// bool	RequestHandler::processPostMethod()
+// {
+// 	if (_matched_location->getCGI()) {
+// 		char **env = cgi::buildCgiEnv(_request);
+// 		cgi::execute(*this, _response, env);
+// 	}
+// 	if (_matched_location->getName() == "createuser") {
+// 		_response.setStatusCode(handleUser::createNewUser(*this));
+// 	}
+// 	if (_matched_location->getName() == "comment") {
+// 		//	use script create comment;
+// 	}
+// 	//	if (_matched_location == "createuser")
+// 	return (true);		
+// }
+
+bool	RequestHandler::processPostMethod()
+{
+
+	// - check body size
+	// - check MIME ?
+
+	return (true);
 }
 
-/*
-void	Request::processDelMethod() {
-	if (_matched_location == "comment")
-	//	use script delete comment;
+bool	RequestHandler::processDeleteMethod()
+{
+	if (_is_directory) {
+		_response.setStatusCode(FORBIDDEN); return (false);
+	}
+
+	if (!fileSystem::isFile(_resolved_path)) {
+		_response.setStatusCode(NOT_FOUND); return (false);
+	}
+
+	std::string dirname	= fileSystem::getDirname(_resolved_path);
+	if (!fileSystem::isWritable(dirname) || !fileSystem::isExecutable(dirname)) {
+		_response.setStatusCode(FORBIDDEN); return (false);
+	}
+
+
+	if (unlink(_resolved_path.c_str()) != 0) {
+		_response.setStatusCode(FORBIDDEN); return (false);
+	}
+
+	_response.setStatusCode(NO_CONTENT);
+	return (true);
 }
-*/
 
 /* INDEX/DIRECTORY HANDLING */
-
 bool	RequestHandler::resolveIndex()
 {
 	std::vector<std::string> indexes =_server.getIndexes();
@@ -524,7 +549,6 @@ void	RequestHandler::generateAutoIndex()
 }
 
 /* TESTS/DEBUG */
-
 void	RequestHandler::printRoutes()
 {
 	std::map<std::string, Location>::const_iterator it;
@@ -533,19 +557,24 @@ void	RequestHandler::printRoutes()
 	for (it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
 	{
 		std::cout << "Key: " << it->first
-		<< "\nName-> " << it->second.getName()
-		<< "\nRoot-> " << it->second.getRoot()
-		<< "\nAlias-> " << it->second.getAlias() << std::endl;
+			<< "\nName-> " << it->second.getName()
+			<< "\nRoot-> " << it->second.getRoot()
+			<< "\nAlias-> " << it->second.getAlias() << std::endl;
 	}
 	std::cout << "---------------------------"<< std::endl;
 
 }
 
 /*Getters*/
-const Request&	RequestHandler::getRequest() const {
+const Request&	RequestHandler::getRequest() const
+{
 	return (_request);
 }
 
 const Response&	RequestHandler::getResponse() const {
 	return (_response);
 }
+
+
+
+

@@ -68,6 +68,7 @@ class RequestHandler
 	bool			processMethods();
 	bool			processGetMethod();
 	bool			processPostMethod();
+	bool			processDeleteMethod();
 
 	/* GET Method */
 	bool			executeCGI(); // a implementer

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   handleUser.cpp                                     :+:      :+:    :+:   */
+/*                                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 16:18:00 by stempels          #+#    #+#             */
-/*   Updated: 2026/02/03 16:56:12 by stempels         ###   ########.fr       */
+/*   Updated: 2026/02/16 14:25:28 by afocant          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,8 @@ static bool	addUserToCsv(const std::string& csv, const std::string& name, const 
 static bool	delUserInCsv(const std::string& csv, const std::string& user) ;
 static bool	removeTree(const std::string& path) ;
 
-t_HttpCode	handleUser::createNewUser(const RequestHandler& handler) {
+t_HttpCode	handleUser::createNewUser(const RequestHandler& handler)
+{
 	const std::string	db_root = "./data/dB";
 	const std::string	csv_path = db_root + "/users_login.csv";
 
@@ -58,7 +59,8 @@ t_HttpCode	handleUser::createNewUser(const RequestHandler& handler) {
 	return (OK);
 }
 
-t_HttpCode	handleUser::deleteUser(const Request& request) {
+t_HttpCode	handleUser::deleteUser(const Request& request)
+{
 	const std::string	db_root = "./data/dB";
 	const std::string	csv_path = db_root + "/users_longin.csv";
 
@@ -86,7 +88,8 @@ t_HttpCode	handleUser::deleteUser(const Request& request) {
 }
 
 
-static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& out) {
+static void	parseFormUrlEncoded(const std::string& body, std::map<std::string, std::string>& out)
+{
 	size_t	pos = 0;
 	while (pos < body.size()) {
 		size_t sep = body.find('&', pos);

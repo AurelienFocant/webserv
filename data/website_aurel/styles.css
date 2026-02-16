@@ -1,0 +1,74 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fef6f9; /* pastel pink */
+    color: #5a5a5a;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Header */
+header {
+    padding: 80px 20px;
+    background-color: #d8f3dc; /* pastel mint */
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+header p {
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+}
+
+/* Button */
+.btn {
+    display: inline-block;
+    padding: 12px 25px;
+    background-color: #ffcad4; /* pastel coral */
+    color: #333;
+    text-decoration: none;
+    border-radius: 25px;
+    transition: 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #f4acb7;
+}
+
+/* Features Section */
+.features {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 60px 20px;
+    flex-wrap: wrap;
+}
+
+.card {
+    background-color: #cdb4db; /* pastel lavender */
+    padding: 25px;
+    border-radius: 15px;
+    width: 250px;
+    color: white;
+}
+
+.card h2 {
+    margin-bottom: 10px;
+}
+
+/* Footer */
+footer {
+    padding: 20px;
+    background-color: #bde0fe; /* pastel blue */
+    margin-top: 40px;
+}
