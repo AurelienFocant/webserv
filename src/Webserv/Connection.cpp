@@ -31,6 +31,7 @@ void	Connection::sendResponse()
 			}
 
 			// reset response state
+			// SHOULD CHECK IF NO BUFFER IS LEFT FULL SOMEWHERE ? SEE WITH AURORE
 			response.setState(Response::DEFAULT);
 			response.setHeaderSent(0);
 		}

@@ -52,7 +52,7 @@ class VirtualServer
 		void		setAlias(std::string a) {_alias = a;}
 		std::string	getAlias() const {return _alias;}
 		void		setErrorPages(std::map<int, std::string> ep) {_error_pages = ep;}
-		std::map<int, std::string>	getErrorPages() const {return _error_pages;}
+		std::map<int, std::string> const&	getErrorPages() const {return _error_pages;}
 		void		setErrorPage(int code, std::string page) {_error_pages.insert(std::make_pair(code, page));}
 		std::string	getErrorPage(int code) const {return _error_pages.at(code);}
 
