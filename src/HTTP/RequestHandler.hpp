@@ -30,7 +30,6 @@ class RequestHandler
 
 	/*PRIVATE ATTRIBUTES */
 	/* Objects */
-	Connection&				_connection;
 	const Request&			_request;
 	Response&				_response;
 	VirtualServer&			_server;
@@ -90,6 +89,7 @@ class RequestHandler
 	public:
 
 	/* PUBLIC METHODS */
+	Connection&		_connection;
 	/* Constructors / Destructors */
 	RequestHandler	(Connection& currConn);
 	~RequestHandler	();

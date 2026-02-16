@@ -225,7 +225,7 @@ void	Webserv::run()
 
 			Connection & currConn = *(it->second.connection);	// currConn is the value of <key, value>
 			currConn.setEvent(ready_events[i].events);
-			(it->second.handler)(currConn);
+			(this->*(it->second.handler))(currConn);
 		}
 
 		// check keepalive_timeout and keepalive_time

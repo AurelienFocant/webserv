@@ -3,6 +3,7 @@
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) ;
 
 bool	cgi::execute(const RequestHandler& handler, char** env) {
+	Connection&	conn = handler._connection;
 	 //size must depend of number of argument and if an interpreter is needed ?
 	char** argv = new char*[3];
 	//Create argv for child exec
@@ -17,7 +18,7 @@ bool	cgi::execute(const RequestHandler& handler, char** env) {
 		return (false); //Continue or crash the program ?
 	}
 
-	if (!launchCgi(handler.connection, argv, env))
+	if (!launchCgi(handler._connection, argv, env)) {
 		//some errors happened, setup response code accordingly
 		return (false);
 	}
@@ -40,10 +41,10 @@ bool	cgi::execute(const RequestHandler& handler, char** env) {
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
 	t_info	info;
-	info.connection = new_connection;
-	info.handler = &Webserv::cgiIn();
-	info.connection.setLastConnTime(std::time(NULL));
-	_connections.insert(std::make_pair(cgi_fd[1], info));
+	info.connection = &conn;
+	info.handler = &Webserv::cgiIn;
+	info.connection->setLastConnTime(std::time(NULL));
+	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
 
 	return (true);
 }

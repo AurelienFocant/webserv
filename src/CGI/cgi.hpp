@@ -14,7 +14,7 @@
 # include <sys/wait.h>
 
 namespace	cgi {
-		bool	execute(const RequestHandler& handler, Response& response, char** env) ;
+		bool	execute(const RequestHandler& handler, char** env) ;
 		bool	launchCgi(Connection& conn, char** argv, char** env) ;
 		char*	findInterpreter(const t_extension& extension) ;
 		char	**buildCgiEnv(const RequestHandler& handler) ;

@@ -14,8 +14,7 @@
 /* ////////////REQUEST HANDLER////////////////// */
 
 RequestHandler::RequestHandler(Connection& currConn) 
-	: _connection(currConn)
-	, _request(currConn.request)
+	: _request(currConn.request)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
 	, _builder(currConn.request, currConn.response, _server.getErrorPages())
@@ -29,6 +28,7 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _script_name("")
 	, _path_info("")
 	, _query("")
+	, _connection(currConn)
 {}
 
 RequestHandler::~RequestHandler() {}
@@ -479,7 +479,7 @@ bool RequestHandler::executeCGI()
 bool	RequestHandler::processPostMethod() {
 	if (_matched_location->getCGI()) {
 		char **env = cgi::buildCgiEnv(*this);
-		cgi::execute(*this, _response, env);
+		cgi::execute(*this, env);
 	}
 	if (_matched_location->getName() == "createuser") {
 		_response.setStatusCode(handleUser::createNewUser(*this));
