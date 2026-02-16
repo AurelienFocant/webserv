@@ -166,6 +166,11 @@ bool	Request::handleBody() {
 		_progress = BODY_HANDLING;
 		defineBodyExtractionHandler();
 	}
+	else if (_method == DELETE) { //Check for GET request
+		_progress = DONE;
+		_complete = true;
+		_status_code = OK;
+	}
 	else {
 		_complete = true;
 		_status_code = BAD_REQUEST;

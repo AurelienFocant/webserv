@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Server File Manager</title>
+<style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    ul { list-style-type: none; padding-left: 0; }
+    li { margin: 8px 0; }
+    button { margin-left: 10px; }
+</style>
+</head>
+<body>
+
+<h2>Files on Server</h2>
+<ul id="fileList">
+    <li>Loading...</li>
+</ul>
+
+<script>
+const AUTOINDEX_URL = "/files/"; // directory with autoindex
+
+function loadFiles() {
+    fetch(AUTOINDEX_URL)
+        .then(res => res.text())
+        .then(htmlText => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, "text/html");
+
+            const links = Array.from(doc.querySelectorAll("a"));
+            const ul = document.getElementById("fileList");
+            ul.innerHTML = "";
+
+            if (links.length === 0) {
+                ul.innerHTML = "<li>No files found</li>";
+                return;
+            }
+
+            links.forEach(link => {
+                const href = link.getAttribute("href");
+                // Skip parent directory links
+                if (href === "../") return;
+
+                const li = document.createElement("li");
+                li.textContent = href;
+
+                const btn = document.createElement("button");
+                btn.textContent = "Delete";
+                btn.onclick = () => deleteFile(href);
+
+                li.appendChild(btn);
+                ul.appendChild(li);
+            });
+        })
+        .catch(err => console.error("Error loading autoindex:", err));
+}
+
+function deleteFile(filename) {
+    if (!confirm(`Delete "${filename}"?`)) return;
+
+    fetch(AUTOINDEX_URL + filename, { method: "DELETE" })
+        .then(res => {
+            if (!res.ok) throw new Error("Delete failed");
+            alert(`Deleted ${filename}`);
+            loadFiles();
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error deleting file");
+        });
+}
+
+// Load on page open
+loadFiles();
+</script>
+
+</body>
+</html>
+
