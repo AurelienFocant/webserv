@@ -11,7 +11,8 @@ Request::Request() : HTTPTokenizer()
 }
 
 Request::Request(const Request& src)
-	: _progress(src._progress)
+	: HTTPTokenizer(src)
+	, _progress(src._progress)
 	, _complete(src._complete)
 	, _status_code(src._status_code)
 	, _body_handler(src._body_handler)	

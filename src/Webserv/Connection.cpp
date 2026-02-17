@@ -98,7 +98,7 @@ Connection::Connection(int fd, const int& epoll_fd, std::time_t time)
 	, _last_conn(0)
 	, conn_closed(false)
 	, child_pid(0)
-	, cgi_timeout(NULL)
+	, cgi_timeout(0)
 {
 	cgi_fd[0] = -1;
 	cgi_fd[1] = -1;
@@ -110,8 +110,11 @@ Connection::Connection( const Connection& src )
 	, _first_conn(src._first_conn)
 	, _last_conn(src._last_conn)
 	, conn_closed(src.conn_closed)
+	, request(src.request)
 	, child_pid(src.child_pid)
 	, cgi_timeout(src.cgi_timeout)
+
+
 {
 	cgi_fd[0] = src.cgi_fd[0];
 	cgi_fd[1] = src.cgi_fd[1];

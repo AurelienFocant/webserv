@@ -72,7 +72,6 @@ class RequestHandler
 	bool			processPostMethod();
 
 	/* GET Method */
-	bool			executeCGI(); // a implementer
 
 	/*POST Method*/
 	//void	processPostMethod() ;

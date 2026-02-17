@@ -12,6 +12,7 @@ class	HTTPTokenizer : private Tokenizer {
 	/*Constructor - Copy Constructor - Destructor*/
 		HTTPTokenizer();
 		HTTPTokenizer(std::string const& input);
+		HTTPTokenizer(const HTTPTokenizer& src);
 		virtual ~HTTPTokenizer();
 
 	/*Overloaded Operators*/

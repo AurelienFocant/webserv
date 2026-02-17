@@ -470,10 +470,6 @@ bool	RequestHandler::processGetMethod()
 	return true;
 }
 
-bool RequestHandler::executeCGI()
-{
-	return true;
-}
 
 bool	RequestHandler::processPostMethod() {
 	if (_matched_location->getName() == "createuser") {

@@ -118,7 +118,7 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 		close(pipe_out[0]);
 		 
 		execve(argv[0], argv, env);
-		 
+		
 		close(pipe_in[0]);
 		close(pipe_out[1]);
 		delete[](env);
