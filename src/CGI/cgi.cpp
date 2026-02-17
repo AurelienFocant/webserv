@@ -2,8 +2,7 @@
 
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) ;
 
-bool	cgi::execute(const RequestHandler& handler, char** env) {
-	Connection&	conn = handler._connection;
+bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env) {
 	 //size must depend of number of argument and if an interpreter is needed ?
 	char** argv = new char*[3];
 	//Create argv for child exec
@@ -18,7 +17,7 @@ bool	cgi::execute(const RequestHandler& handler, char** env) {
 		return (false); //Continue or crash the program ?
 	}
 
-	if (!launchCgi(handler._connection, argv, env)) {
+	if (!launchCgi(conn, argv, env)) {
 		//some errors happened, setup response code accordingly
 		return (false);
 	}
@@ -28,24 +27,11 @@ bool	cgi::execute(const RequestHandler& handler, char** env) {
 		close(conn.cgi_fd[1]);
 		return (false);
 	}
-
-
-	struct epoll_event ev_hints;
-	ev_hints.events = EPOLLOUT | EPOLLRDHUP;
-	ev_hints.data.fd = conn.cgi_fd[1];
-	if (epoll_ctl(conn.getEpollFd(), EPOLL_CTL_ADD, conn.cgi_fd[1], &ev_hints) < 0) {
+	if (fcntl(conn.cgi_fd[0], F_SETFL, O_NONBLOCK) < 0) {
 		close(conn.cgi_fd[0]);
 		close(conn.cgi_fd[1]);
 		return (false);
 	}
-
-	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	t_info	info;
-	info.connection = &conn;
-	info.handler = &Webserv::cgiIn;
-	info.connection->setLastConnTime(std::time(NULL));
-	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
-
 	return (true);
 }
 
@@ -152,5 +138,6 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 
 	conn.cgi_fd[0] = pipe_out[0];
 	conn.cgi_fd[1] = pipe_in[1];
+	conn.child_pid = pid;
 	return (true);
 }

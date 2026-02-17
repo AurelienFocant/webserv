@@ -42,7 +42,7 @@ void	RequestHandler::handleRequest()
 		return;
 	}
 
-	if (!extractPath() || !resolvePath())
+	if (!extractPath() || !resolvePath() || !processMethods())
 	{
 		if (!hasRedirect())
 			_builder.buildErrorResponse(_response.getStatusCode());
@@ -364,8 +364,8 @@ bool	RequestHandler::normalizePath()
 bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
-
-	if (_matched_location->getVirtual())
+	
+	if (_matched_location && _matched_location->getVirtual())
 		return true;
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
@@ -414,6 +414,8 @@ bool	RequestHandler::processMethods()
 {
 	if (!isAllowedMethod())
 		return false;
+	if (_response.getBodyType() == DYNAMIC)
+		return (true);
 
 	switch(_request.getMethod())
 	{
@@ -434,9 +436,6 @@ bool	RequestHandler::processMethods()
 
 bool	RequestHandler::processGetMethod()
 {
-	if (_response.getBodyType() == DYNAMIC)
-		return executeCGI();
-	
 	if (_matched_location && _matched_location->getVirtual())
 	{
 		//do some action
@@ -477,10 +476,6 @@ bool RequestHandler::executeCGI()
 }
 
 bool	RequestHandler::processPostMethod() {
-	if (_matched_location->getCGI()) {
-		char **env = cgi::buildCgiEnv(*this);
-		cgi::execute(*this, env);
-	}
 	if (_matched_location->getName() == "createuser") {
 		_response.setStatusCode(handleUser::createNewUser(*this));
 	}

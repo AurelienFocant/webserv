@@ -21,6 +21,8 @@
 
 #include <cerrno>
 #include <ctime>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "Request.hpp"
 #include "Response.hpp"
@@ -50,7 +52,9 @@ class Connection
 
 		bool	hasTimedOut(void);
 		void	sendResponse();
+		pid_t		child_pid;
 		int			cgi_fd[2];
+		std::time_t	cgi_timeout;
 
 
 

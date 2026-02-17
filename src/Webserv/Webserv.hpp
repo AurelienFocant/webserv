@@ -6,11 +6,13 @@
 
 #include "VirtualServer.hpp"
 #include "Connection.hpp"
+#include "cgi.hpp"
 
 const std::string defaultConfigPath("./data/webserv.nginx.conf");
 
 typedef struct	s_info {
-	Connection*	connection;
+	s_info(Connection& conn, bool (Webserv::*handler)(Connection& conn)):connection(conn), handler(handler) {}
+	Connection	connection;
 	bool   		(Webserv::*handler)(Connection & conn);
 }				t_info;
 

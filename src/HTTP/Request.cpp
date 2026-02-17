@@ -10,6 +10,22 @@ Request::Request() : HTTPTokenizer()
 	cleanRequest();
 }
 
+Request::Request(const Request& src)
+	: _progress(src._progress)
+	, _complete(src._complete)
+	, _status_code(src._status_code)
+	, _body_handler(src._body_handler)	
+	, _method(src._method)
+	, _request_uri(src._request_uri)
+	, _http_version(src._http_version)
+	, _body(src._body)
+	, _headers(src._headers)
+	, _nbr_headers(src._nbr_headers)
+	, _content_encoding(src._content_encoding)
+	, _content_type(src._content_type)
+	, _content_length(src._content_length) {
+}
+
 Request::Request(std::string const& request) : HTTPTokenizer(request)
 {
 	cleanRequest();
