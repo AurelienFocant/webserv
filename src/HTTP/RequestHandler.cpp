@@ -42,7 +42,7 @@ void	RequestHandler::handleRequest()
 		return;
 	}
 
-	if (!extractPath() || !resolvePath() || !processMethods())
+	if (!extractPath() || !resolvePath())
 	{
 		if (!hasRedirect())
 			_builder.buildErrorResponse(_response.getStatusCode());

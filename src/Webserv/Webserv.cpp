@@ -299,6 +299,18 @@ bool	Webserv::clientHandler(Connection & conn)
 			conn.virtual_server = _findCorrectServer(conn);
 			RequestHandler	reqHandl(conn);
 			reqHandl.handleRequest();
+			if (reqHandl.getRequest().getStatusCode() == OK) {
+				if (reqHandl.getCgi() {
+					cgi::executeCgi(reqHandl, conn);
+					//add CGI fd to epoll via conn
+				}
+				else {
+					if (!reqHandl.processMethods) {
+						if (!hasRedirect())
+							_builder.buildErrorResponse(reqHandl._response.getStatusCode()));
+					}
+				}
+			}
 			conn.request.cleanRequest();
 		}
 		conn.response.formatResponse();
