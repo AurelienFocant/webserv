@@ -1,0 +1,36 @@
+<!-- index.html (replace your current COMMENT section + add the display box + JS)
+     Assumes CGI endpoints:
+       - POST /cgi-bin/add_comment.py      (username, comment)
+       - POST /cgi-bin/remove_comment.py   (username, id)
+       - GET  /cgi-bin/get_all_comments.sh (returns TSV: username \t id \t comment)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Webserv Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .row { margin: 8px 0; }
+    .comments { border: 1px solid #ccc; padding: 12px; max-width: 800px; }
+    .comment { border-top: 1px solid #eee; padding: 10px 0; display: flex; gap: 12px; align-items: flex-start; }
+    .comment:first-child { border-top: none; }
+    .meta { min-width: 220px; font-size: 12px; color: #444; }
+    .text { flex: 1; white-space: pre-wrap; word-break: break-word; }
+    button { cursor: pointer; }
+    .danger { color: #b00020; }
+    .status { font-size: 12px; color: #333; margin-top: 8px; }
+    input, textarea { width: 420px; max-width: 100%; }
+  </style>
+</head>
+<body>
+
+<h1>42 Webserv Test Page</h1>
+
+<form action="cgi-bin/comment.py" method="post" class="comment-box">
+        <label for="comment">Your comment:</label><br>
+        <textarea id="comment" name="comment" placeholder="Type your comment here..." required></textarea><br>
+        <button type="submit">Send</button>
+    </form>
+
+</body>

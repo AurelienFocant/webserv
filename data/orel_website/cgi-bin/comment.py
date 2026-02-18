@@ -5,10 +5,13 @@ import sys
 import urllib.parse
 import html
 
+
 def main():
     # Read POST body
     content_length = int(os.environ.get("CONTENT_LENGTH", 0))
     body = sys.stdin.read(content_length)
+
+    print(body, file=sys.stderr)
 
     data = urllib.parse.parse_qs(body)
 
@@ -28,6 +31,7 @@ def main():
         print("<p>No comment provided</p>")
     print('<a href="/">Back</a>')
     print("</body></html>")
+
 
 if __name__ == "__main__":
     main()

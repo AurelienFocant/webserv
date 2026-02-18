@@ -203,7 +203,7 @@ bool	Webserv::_checkForRdHup(Connection & conn)
 			}
 
 			// error
-			if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
+			if (conn.getEvent() & EPOLLERR || conn.getEvent() & EPOLLHUP) {
 				std::cout << "[Error] HUP or ERR" <<std::endl; 
 				conn.conn_closed = true;
 				return (false);
@@ -244,7 +244,7 @@ void	Webserv::run()
 			currConn.setLastConnTime(std::time(NULL));
 		}
 
-		_closeStaleConnections();
+		// _closeStaleConnections();
 		//->add check enfant timeout
 	}
 }
@@ -331,7 +331,6 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandl, Connection & conn)
 	t_info	info(conn, &Webserv::cgiInHandler);
 	//			info.connection = conn;
 	//			info.handler = &Webserv::cgiIn;
-	info.connection.setLastConnTime(std::time(NULL));
 	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
 	conn.response.setState(Response::PROCESSING_CGI);
 	return (true);

@@ -250,26 +250,26 @@ void ConfigBuilder::_handleCGI(const DirectiveNode& d)
 {
 	std::string arg = d.args[0];
 
-	if (arg == "false") {
+	if (arg == "off") {
 		_getCurrentCtxt().setCGI(false); return;
 	}
-	if (arg == "true") {
+	if (arg == "on") {
 		_getCurrentCtxt().setCGI(true); return;
 	}
-	_error(d.line, "only true of false values after 'cgi' directive");
+	_error(d.line, "only on of off values after 'cgi' directive");
 }
 
 void ConfigBuilder::_handleVirtualLocation(const DirectiveNode& d)
 {
 	std::string arg = d.args[0];
 
-	if (arg == "false") {
+	if (arg == "off") {
 		_getCurrentCtxt().setVirtualLocation(false); return;
 	}
-	if (arg == "true") {
+	if (arg == "on") {
 		_getCurrentCtxt().setVirtualLocation(true); return;
 	}
-	_error(d.line, "only true of false values after 'virtual' directive");
+	_error(d.line, "only on of off values after 'virtual' directive");
 }
 
 void ConfigBuilder::_handleAlias(const DirectiveNode& d)
