@@ -11,42 +11,45 @@
 #include <sys/stat.h>
 #include <ctime>
 
-#include "Connection.hpp"
-#include "Request.hpp"
-#include "Response.hpp"
+
 #include "ResponseBuilder.hpp"
-#include "VirtualServer.hpp"
-#include "Location.hpp"
+#include "HTTPenum.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
 
-//class ResponseBuilder;
+class Connection;
+class Response;
+class Request;
+class Location;
+class VirtualServer;
+class ResponseBuilder;
 
 class RequestHandler
 {
 	private:
 
-	/* Private Attributes */
+	/*PRIVATE ATTRIBUTES */
+	/* Objects */
 	const Request&			_request;
 	Response&				_response;
 	VirtualServer&			_server;
 	ResponseBuilder			_builder;
 
+	/* Path Resolution */
 	std::string				_root;
 	std::string				_cage_root;
 	std::string				_request_path;
 	std::string				_resolved_path;
-
-	std::string				_script_name;
-	std::string				_path_info;
-	std::string				_query;
-
 	const Location*			_matched_location;
 	t_extension				_matched_extension;
 	bool					_is_directory;
 
-	/* Private Methods */
+	/* CGI ENV */
+	std::string				_script_name;
+	std::string				_path_info;
+	std::string				_query;
 
+	/* PRIVATE METHODS */
 	/* Path processing */
 	bool			extractPath();
 	bool			resolvePath();
@@ -56,7 +59,6 @@ class RequestHandler
 	bool			decodePath(const std::string& encoded, std::string& decoded);
 	bool			normalizePath();
 	bool			detectCGI();
-
 
 	/*  Redirections */
 	bool			handleConfigRedirect();
@@ -74,7 +76,6 @@ class RequestHandler
 	std::string		_extractBoundary();
 
 	/* GET Method */
-	bool			executeCGI(); // a implementer
 
 	/*POST Method*/
 	bool			createNewUser() ;
@@ -89,19 +90,25 @@ class RequestHandler
 
 	public:
 
+	/* PUBLIC METHODS */
 	/* Constructors / Destructors */
 	RequestHandler	(Connection& currConn);
 	~RequestHandler	();
 
 	RequestHandler&	operator=(const RequestHandler& rhs);
 
+	/* Main method*/
+	void			handleRequest();
+
 	/* Getters */
 	std::string		getRoot() const {return _root;}
 	const Request&	getRequest() const ;
 	const Response&	getResponse() const ;
+	std::string		getQuery() const { return (_query);};
+	std::string		getScriptName() const { return (_script_name);};
+	t_extension		getExtension() const { return (_matched_extension);};
+	std::string		getResolvedPath() const { return (_resolved_path);};
 
-	/* Public Methods */
-	void			handleRequest();
 };
 
 #endif

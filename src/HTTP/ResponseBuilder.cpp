@@ -1,5 +1,4 @@
 #include "ResponseBuilder.hpp"
-#include "RequestHandler.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "autoindex.hpp"
@@ -12,16 +11,7 @@
 ResponseBuilder::ResponseBuilder(const Request& request, Response& response, const std::map<int, std::string>& error_pages)
 : _request(request), _response(response), _error_pages(error_pages){}
 
-//ResponseBuilder::ResponseBuilder(const ResponseBuilder& other) : _handler(other._handler) {}
-
 ResponseBuilder::~ResponseBuilder() {}
-
-/* ResponseBuilder&	ResponseBuilder::operator=(const ResponseBuilder& rhs)
-{
-	if (this != &rhs)
-		_handler = rhs._handler;
-	return *this;
-} */
 
 
 /* BUILD RESPONSE */
@@ -102,16 +92,17 @@ bool	ResponseBuilder::loadErrorPage(int status_code, int& fd, size_t& size)
 	if (it == _error_pages.end())
 		return false;
 	
-	std::string errorpath = it->second;
+	std::string error_path = it->second;
+	// check if absolute path or string to concatene
 
-	fd = fileSystem::openReadFile(errorpath);
+	fd = fileSystem::openReadFile(error_path);
 	if (fd < 0)
 	{
 		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
 	}
 
-	size = fileSystem::fileSize(errorpath);
+	size = fileSystem::fileSize(error_path);
 	
 	return true;
 }

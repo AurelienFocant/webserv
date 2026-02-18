@@ -8,6 +8,15 @@ HTTPTokenizer::HTTPTokenizer(std::string const& input) : Tokenizer(input) {
 	cleanTokenList();
 }
 
+HTTPTokenizer::HTTPTokenizer(const HTTPTokenizer& src)
+	: Tokenizer(src)
+	, _token_list(src._token_list)
+	, _tokenizing(src._tokenizing)
+	, _nbr_eol(src._nbr_eol)
+{
+    _list_it = _token_list.begin();
+}
+
 HTTPTokenizer::~HTTPTokenizer() {
 }
 

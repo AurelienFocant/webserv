@@ -31,6 +31,7 @@ class	Response
 	
 	enum	state {
 		DEFAULT,
+		PROCESSING_CGI,
 		SEND_HEADER,
 		SEND_BODY,
 		DONE,
@@ -50,7 +51,7 @@ class	Response
 	void				cleanResponse();
 
 
-	/*Setters - Getters*/
+	/*Setters*/
 	void				setState(int state);
 	void				setBodyType(bodyType type);
 	void				setStatusCode(int status_code);
@@ -59,6 +60,9 @@ class	Response
 	void				setHttpVersion(const std::string& version);
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBodyContent(const std::string& content); // MEMORY
+	void				setCgiBody(std::string str) {_body_content += str; return ;};
+
+	/*Getters*/
 	int					getState() const;
 	void				setHeaderSent(size_t n) {_header_sent = n;}
 	bodyType			getBodyType() const;

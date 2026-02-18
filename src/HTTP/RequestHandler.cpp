@@ -1,6 +1,11 @@
+
+#include "Connection.hpp"
 #include "RequestHandler.hpp"
 #include "ResponseBuilder.hpp"
+#include "VirtualServer.hpp"
+#include "Request.hpp"
 #include "Response.hpp"
+#include "Location.hpp"
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 #include "cgi.hpp"
@@ -20,10 +25,12 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _cage_root("")
 	, _request_path("")
 	, _resolved_path("")
-	, _query("")
 	, _matched_location(NULL)
 	, _matched_extension(NO_EXT)
 	, _is_directory(false)
+	, _script_name("")
+	, _path_info("")
+	, _query("")
 {}
 
 RequestHandler::~RequestHandler() {}
@@ -78,6 +85,10 @@ bool	RequestHandler::resolvePath()
 		//Detect CGI
 		if (detectCGI())
 			_response.setBodyType(DYNAMIC);
+
+		//Detect virtual location
+		if (_matched_location->getVirtual())
+			return true;
 
 		//Config Redirections
 		if (handleConfigRedirect())
@@ -138,8 +149,8 @@ bool	RequestHandler::handleConfigRedirect()
 
 bool	RequestHandler::handleTrailingSlash()
 {
-	//if (_matched_location && _matched_location->virtual)
-	//	return true;
+	if (_matched_location && _matched_location->getVirtual())
+		return true;
 
 	if (_request_path[_request_path.size() - 1] == '/')
 		return false;
@@ -232,7 +243,7 @@ bool	RequestHandler::detectCGI()
 		return false;
 	size_t ext_end = ext_start + ext_str.size();
 
-	std::string _script_name = _request_path.substr(0, ext_end);
+	_script_name = _request_path.substr(0, ext_end);
 
 	_path_info = "";
 	if (ext_end < _request_path.size() && _request_path[ext_end] == '/')
@@ -355,9 +366,9 @@ bool	RequestHandler::normalizePath()
 bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
-
-	//if (_matched_location->virtual)
-	//	return true;
+	
+	if (_matched_location && _matched_location->getVirtual())
+		return true;
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
@@ -403,10 +414,10 @@ bool	RequestHandler::isAllowedMethod()
 
 bool	RequestHandler::processMethods()
 {
-	// Verifier AUTHORIZED METHODS in locations
-
 	if (!isAllowedMethod())
 		return false;
+	if (_response.getBodyType() == DYNAMIC)
+		return (true);
 
 	switch(_request.getMethod())
 	{
@@ -425,8 +436,11 @@ bool	RequestHandler::processMethods()
 
 bool	RequestHandler::processGetMethod()
 {
-	if (_response.getBodyType() == DYNAMIC)
-		return executeCGI();
+	if (_matched_location && _matched_location->getVirtual())
+	{
+		//do some action
+		return true;
+	}
 
 	//STATIC
 	if (_is_directory)
@@ -456,32 +470,13 @@ bool	RequestHandler::processGetMethod()
 	return true;
 }
 
-bool RequestHandler::executeCGI()
-{
-	return true;
-}
-
-// bool	RequestHandler::processPostMethod()
-// {
-// 	if (_matched_location->getCGI()) {
-// 		char **env = cgi::buildCgiEnv(_request);
-// 		cgi::execute(*this, _response, env);
-// 	}
-// 	if (_matched_location->getName() == "createuser") {
-// 		_response.setStatusCode(handleUser::createNewUser(*this));
-// 	}
-// 	if (_matched_location->getName() == "comment") {
-// 		//	use script create comment;
-// 	}
-// 	//	if (_matched_location == "createuser")
-// 	return (true);		
-// }
 bool	RequestHandler::_hasContentTypeHeader(void)
 {
 	if (!_request.getHeaderValues("Content-Type")[0].empty())
 		return (true);
 	return (false);
 }
+
 
 bool	RequestHandler::_isMultiformData(void)
 {
@@ -568,6 +563,8 @@ bool	RequestHandler::resolveIndex()
 		return false;
 
 	std::string	dir_path = _resolved_path;
+	if (!dir_path.empty() && dir_path[dir_path.size() -1] != '/')
+		dir_path += '/';
 
 	for (size_t i = 0; i < indexes.size(); i++)
 	{
@@ -623,7 +620,3 @@ const Request&	RequestHandler::getRequest() const
 const Response&	RequestHandler::getResponse() const {
 	return (_response);
 }
-
-
-
-

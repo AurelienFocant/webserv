@@ -22,7 +22,7 @@ class	Request	: private HTTPTokenizer {
 	/*Constructor - Copy Constructor - Destructor*/
 		Request();
 		Request(std::string const& request);
-//		Request(const Request& copy_from);
+		Request(const Request& copy_from);
 		~Request() {};
 
 	/*Overloaded operators*/

@@ -17,11 +17,11 @@
 
 int g_signum;
 
-static	void sigintHandler(int num)
+/*static	void sigintHandler(int num)
 {
 	g_signum = num;
 }
-
+*/
 // Config parsing and reading
 void	Webserv::_openConfig(void)
 {
@@ -98,13 +98,10 @@ void	Webserv::_closeConnection(Connection & conn)
 
 void	Webserv::_closeStaleConnections(void)
 {
-	return ;
-
-
-	std::map<int, Connection>::iterator	it;
+	std::map<int, t_info>::iterator	it;
 
 	for (it = _connections.begin(); it != _connections.end(); it++) {
-		Connection& conn = it->second;
+		Connection& conn = it->second.connection;
 
 		if (_isListenSocket(conn))
 			continue ;
@@ -182,8 +179,9 @@ void	Webserv::initWebServer()
 		// ?? listen options ?
 
 
-		Connection	new_connection(listenSocket, _epoll_fd, LISTEN_SOCK, &Webserv::listenHandler);
-		_connections.insert(std::make_pair(listenSocket, new_connection));
+		Connection	new_connection(listenSocket, _epoll_fd, LISTEN_SOCK);
+		t_info	info(new_connection, &Webserv::listenHandler);
+		_connections.insert(std::make_pair(listenSocket, info));
 
 
 		struct epoll_event	ev_hints;
@@ -192,7 +190,7 @@ void	Webserv::initWebServer()
 		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
 
-		signal(SIGINT, sigintHandler);
+		// signal(SIGINT, sigintHandler);
 	}
 }
 
@@ -216,17 +214,18 @@ void	Webserv::run()
 
 		for (int i = 0; i < event_count; i++) {
 
-			std::map<int, Connection>::iterator it = _connections.find(ready_events[i].data.fd);				// find the right key
+			std::map<int, t_info>::iterator it = _connections.find(ready_events[i].data.fd);				// find the right key
 			if (it == _connections.end())
 				continue ;
 
-			Connection & currConn = it->second;	// currConn is the value of <key, value>
+			Connection & currConn = it->second.connection;	// currConn is the value of <key, value>
 			currConn.setEvent(ready_events[i].events);
-			(this->*currConn.handler)(currConn);
+			(this->*(it->second.handler))(currConn);
 		}
 
 		// check keepalive_timeout and keepalive_time
 		_closeStaleConnections();
+		//->add check enfant timeout
 	}
 }
 
@@ -251,53 +250,109 @@ bool	Webserv::listenHandler(Connection & conn)
 	}
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL), &Webserv::clientHandler);
-	new_connection.setLastConnTime(std::time(NULL));
-	_connections.insert(std::make_pair(clientSocket, new_connection));
+	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL));
+	t_info	info(new_connection, &Webserv::clientHandler);
+	_connections.insert(std::make_pair(clientSocket, info));
+	return (true);
+}
+
+bool	Webserv::_addFdToEpoll(int client_fd, int events, int flags)
+{
+	struct epoll_event	ev_hints;
+	ev_hints.events = events;
+	ev_hints.data.fd = client_fd;
+	if (epoll_ctl(_epoll_fd, flags, client_fd, &ev_hints) < 0) {
+		return (false);
+	};
 	return (true);
 }
 
 bool	Webserv::clientHandler(Connection & conn)
 {
 	// client close gracefully
-/* 	if (conn.getEvent() & EPOLLRDHUP) {
+	if (conn.getEvent() & EPOLLRDHUP) {
 		std::cout << "[Error] RDHUP" <<std::endl; 
+		conn.conn_closed = true;
 	}
-
 	// error
 	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
 		std::cout << "[Error] HUP or ERR" <<std::endl; 
-		_closeConnection(conn);
+		conn.conn_closed = true;
 	}
-*/
+
+
+
 	if (conn.getEvent() & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
 
-		if (request_str.size() != 0) {
-			conn.request.addInput(request_str);
-			conn.request.parseRequest();
+		if (!request_str.size()) {
+			return (false);
 		}
 
+		conn.request.addInput(request_str);
+		conn.request.parseRequest();
+
 		if (conn.request.isCompleted()) {
-			struct epoll_event	ev_hints;
-			ev_hints.events = EPOLLOUT | EPOLLRDHUP;
-			ev_hints.data.fd = conn.getFd();
-			epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, conn.getFd(), &ev_hints);
+			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
+				conn.conn_closed = true;
 		}
 	}
 
+
+
 	else if (conn.getEvent() & EPOLLOUT) {
 
-		if (conn.response.isDefault())
-		{
+		if (conn.response.isDefault()) {
 			conn.virtual_server = _findCorrectServer(conn);
 			RequestHandler	reqHandl(conn);
 			reqHandl.handleRequest();
-			conn.request.cleanRequest();
+
+
+			//check status to do ?
+			if (reqHandl.getResponse().getBodyType() == DYNAMIC) {
+				char **env = cgi::buildCgiEnv(reqHandl);
+				if (!env)
+					return (false);
+				if (!cgi::execute(reqHandl, conn, env))
+					return (false); // check what happend
+									//add CGI fd to epoll via conn
+
+				if (!_addFdToEpoll(conn.cgi_fd[1], EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_ADD)) {
+					close(conn.cgi_fd[0]);
+					close(conn.cgi_fd[1]);
+					return (false);
+					// send 500 server error ??
+				}
+
+
+				//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+				t_info	info(conn, &Webserv::cgiIn);
+				//			info.connection = conn;
+				//			info.handler = &Webserv::cgiIn;
+				info.connection.setLastConnTime(std::time(NULL));
+				_connections.insert(std::make_pair(conn.cgi_fd[1], info));
+				conn.response.setState(Response::PROCESSING_CGI);
+				return (true);
+			}
 		}
-		conn.response.formatResponse();
-		conn.sendResponse();
+		if (conn.response.getState() != Response::PROCESSING_CGI) {
+			conn.response.formatResponse();
+			conn.sendResponse();
+		}
+		if (conn.response.isDone()) {
+			if (conn.response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
+			{
+				conn.conn_closed = true;
+				return (false);
+			}
+			conn.response.cleanResponse();
+			conn.request.cleanRequest();
+
+			if (!_addFdToEpoll(conn.getFd(), EPOLLIN | EPOLLRDHUP, EPOLL_CTL_MOD))
+				conn.conn_closed = true;;
+		}
+
 	}
 
 	// update last_conn_timestamp;
@@ -306,6 +361,60 @@ bool	Webserv::clientHandler(Connection & conn)
 	return (true);
 }
 
+bool	Webserv::cgiIn(Connection& conn) {
+
+	int	content_length = std::atoi(conn.request.getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->check to do on partial send 
+	int byte = write(conn.cgi_fd[1], (conn.request.getBody()).c_str(), content_length);
+	if (byte == content_length) {
+		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
+		_connections.erase(conn.cgi_fd[1]);
+		close(conn.cgi_fd[1]);
+
+		struct epoll_event ev_hints;
+		ev_hints.events = EPOLLIN | EPOLLRDHUP;
+		ev_hints.data.fd = conn.cgi_fd[1];
+		if (epoll_ctl(conn.getEpollFd(), EPOLL_CTL_ADD, conn.cgi_fd[1], &ev_hints) < 0) {
+			close(conn.cgi_fd[0]);
+			close(conn.cgi_fd[1]);
+			return (false);
+		}
+
+		//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+		t_info	info(conn, &Webserv::cgiOut);
+		info.connection.setLastConnTime(std::time(NULL));
+		_connections.insert(std::make_pair(conn.cgi_fd[1], info));
+	}
+	return (true);
+}
+
+bool	Webserv::cgiOut(Connection& conn) {
+
+	char buffer[4096];
+	ssize_t bytes;
+
+	std::string	cgi_response;
+	while ((bytes = read(conn.cgi_fd[0], buffer, sizeof(buffer))) > 0) //-->check for partial read
+	{
+		cgi_response.append(buffer, bytes);
+	}
+	conn.response.setCgiBody(cgi_response);
+	if (bytes < 0)
+	{
+		return (false);
+	}
+	if (bytes == 0) {
+		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
+		_connections.erase(conn.cgi_fd[0]);
+		close(conn.cgi_fd[0]);
+		// Build Response from CGI
+		int status;
+		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
+			//do stuff
+		}
+		conn.response.setState(Response::SEND_HEADER);
+	}
+	return (true);
+}
 
 
 // Getters

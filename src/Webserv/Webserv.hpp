@@ -6,15 +6,23 @@
 
 #include "VirtualServer.hpp"
 #include "Connection.hpp"
+#include "cgi.hpp"
 
 const std::string defaultConfigPath("./data/webserv.nginx.conf");
+
+typedef struct	s_info {
+	s_info(Connection& conn, bool (Webserv::*handler)(Connection& conn)):connection(conn), handler(handler) {}
+	Connection	connection;
+	bool   		(Webserv::*handler)(Connection & conn);
+}				t_info;
+
 
 class Webserv
 {
 	private:
 		int	_epoll_fd;
 		std::vector<VirtualServer>	_servers;
-		std::map<int, Connection>	_connections;
+		std::map<int, t_info>	_connections;
 		std::string		_configPath;
 		std::ifstream	_configFile;
 
@@ -25,6 +33,7 @@ class Webserv
 
 		void	_closeConnection(Connection & conn);
 		void	_closeStaleConnections(void);
+		bool	_addFdToEpoll(int client_fd, int events, int flags);
 
 		Webserv(void);
 
@@ -43,6 +52,8 @@ class Webserv
 
 		bool	listenHandler(Connection & conn);
 		bool	clientHandler(Connection & conn);
+		bool	cgiIn(Connection& conn) ;
+		bool	cgiOut(Connection& conn) ;
 
 		//quick fix added for getting server root location -> deducted from the executable path
 };

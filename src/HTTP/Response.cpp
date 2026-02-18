@@ -283,11 +283,12 @@ void	Response::resetBuffer()
 {
 	_bytes_in_buffer = 0;
 	_buffer_offset = 0;
+	std::memset(_buffer, 0, BUFFER_SIZE);
 }
 
 void	Response::cleanResponse()
 {
-	_state = SEND_HEADER;
+	_state = DEFAULT;
 	_body_type = STATIC;
 	_status_code = OK;
 	_http_version = "";
