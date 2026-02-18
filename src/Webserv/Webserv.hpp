@@ -16,24 +16,28 @@ typedef struct	s_info {
 	bool   		(Webserv::*handler)(Connection & conn);
 }				t_info;
 
+class RequestHandler;
 
 class Webserv
 {
 	private:
 		int	_epoll_fd;
 		std::vector<VirtualServer>	_servers;
-		std::map<int, t_info>	_connections;
-		std::string		_configPath;
-		std::ifstream	_configFile;
+		std::map<int, t_info>		_connections;
+		std::string					_configPath;
+		std::ifstream				_configFile;
 
 		void	_openConfig(); 
 		void	_parseConfig();
 
 		VirtualServer&	_findCorrectServer(Connection const& conn);
 
+		bool	_checkForRdHup(Connection & conn);
 		void	_closeConnection(Connection & conn);
 		void	_closeStaleConnections(void);
 		bool	_addFdToEpoll(int client_fd, int events, int flags);
+
+		bool	_startCGIresponse(RequestHandler & reqHandl, Connection & conn);
 
 		Webserv(void);
 
@@ -51,9 +55,10 @@ class Webserv
 		void	run();
 
 		bool	listenHandler(Connection & conn);
-		bool	clientHandler(Connection & conn);
-		bool	cgiIn(Connection& conn) ;
-		bool	cgiOut(Connection& conn) ;
+		bool	clientInHandler(Connection & conn);
+		bool	clientOutHandler(Connection & conn);
+		bool	cgiInHandler(Connection& conn);
+		bool	cgiOutHandler(Connection& conn);
 
 		//quick fix added for getting server root location -> deducted from the executable path
 };

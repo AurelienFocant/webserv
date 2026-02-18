@@ -194,6 +194,24 @@ void	Webserv::initWebServer()
 	}
 }
 
+bool	Webserv::_checkForRdHup(Connection & conn)
+{
+			if (conn.getEvent() & EPOLLRDHUP) {
+				std::cout << "[Error] RDHUP" <<std::endl; 
+				conn.conn_closed = true;
+				return (false);
+			}
+
+			// error
+			if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
+				std::cout << "[Error] HUP or ERR" <<std::endl; 
+				conn.conn_closed = true;
+				return (false);
+			}
+
+			return (true);
+}
+
 // Main loop
 void	Webserv::run()
 {
@@ -220,10 +238,12 @@ void	Webserv::run()
 
 			Connection & currConn = it->second.connection;	// currConn is the value of <key, value>
 			currConn.setEvent(ready_events[i].events);
+
+			_checkForRdHup(currConn);
 			(this->*(it->second.handler))(currConn);
+			currConn.setLastConnTime(std::time(NULL));
 		}
 
-		// check keepalive_timeout and keepalive_time
 		_closeStaleConnections();
 		//->add check enfant timeout
 	}
@@ -251,7 +271,7 @@ bool	Webserv::listenHandler(Connection & conn)
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
 	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL));
-	t_info	info(new_connection, &Webserv::clientHandler);
+	t_info	info(new_connection, &Webserv::clientInHandler);
 	_connections.insert(std::make_pair(clientSocket, info));
 	return (true);
 }
@@ -267,21 +287,8 @@ bool	Webserv::_addFdToEpoll(int client_fd, int events, int flags)
 	return (true);
 }
 
-bool	Webserv::clientHandler(Connection & conn)
+bool	Webserv::clientInHandler(Connection & conn)
 {
-	// client close gracefully
-	if (conn.getEvent() & EPOLLRDHUP) {
-		std::cout << "[Error] RDHUP" <<std::endl; 
-		conn.conn_closed = true;
-	}
-	// error
-	if (conn.getEvent() & EPOLLHUP || conn.getEvent() & EPOLLERR) {
-		std::cout << "[Error] HUP or ERR" <<std::endl; 
-		conn.conn_closed = true;
-	}
-
-
-
 	if (conn.getEvent() & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
@@ -296,99 +303,108 @@ bool	Webserv::clientHandler(Connection & conn)
 		if (conn.request.isCompleted()) {
 			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
+			
+			_connections.find(conn.getFd())->second.handler = &Webserv::clientOutHandler;
 		}
+	}
+	return (true);
+}
+
+bool	Webserv::_startCGIresponse(RequestHandler & reqHandl, Connection & conn)
+{
+	char **env = cgi::buildCgiEnv(reqHandl);
+	if (!env)
+		return (false);
+	if (!cgi::execute(reqHandl, conn, env))
+		return (false); // check what happend
+						//add CGI fd to epoll via conn
+
+	if (!_addFdToEpoll(conn.cgi_fd[1], EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_ADD)) {
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
+		return (false);
+		// send 500 server error ??
 	}
 
 
+	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	t_info	info(conn, &Webserv::cgiInHandler);
+	//			info.connection = conn;
+	//			info.handler = &Webserv::cgiIn;
+	info.connection.setLastConnTime(std::time(NULL));
+	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
+	conn.response.setState(Response::PROCESSING_CGI);
+	return (true);
+}
 
-	else if (conn.getEvent() & EPOLLOUT) {
 
+bool	Webserv::clientOutHandler(Connection & conn)
+{
+	if (conn.getEvent() & EPOLLOUT) {
 		if (conn.response.isDefault()) {
 			conn.virtual_server = _findCorrectServer(conn);
 			RequestHandler	reqHandl(conn);
 			reqHandl.handleRequest();
 
-
 			//check status to do ?
 			if (reqHandl.getResponse().getBodyType() == DYNAMIC) {
-				char **env = cgi::buildCgiEnv(reqHandl);
-				if (!env)
-					return (false);
-				if (!cgi::execute(reqHandl, conn, env))
-					return (false); // check what happend
-									//add CGI fd to epoll via conn
-
-				if (!_addFdToEpoll(conn.cgi_fd[1], EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_ADD)) {
-					close(conn.cgi_fd[0]);
-					close(conn.cgi_fd[1]);
-					return (false);
-					// send 500 server error ??
-				}
-
-
-				//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-				t_info	info(conn, &Webserv::cgiIn);
-				//			info.connection = conn;
-				//			info.handler = &Webserv::cgiIn;
-				info.connection.setLastConnTime(std::time(NULL));
-				_connections.insert(std::make_pair(conn.cgi_fd[1], info));
-				conn.response.setState(Response::PROCESSING_CGI);
-				return (true);
+				_startCGIresponse(reqHandl, conn);
 			}
 		}
+
+
 		if (conn.response.getState() != Response::PROCESSING_CGI) {
 			conn.response.formatResponse();
 			conn.sendResponse();
 		}
+
+
 		if (conn.response.isDone()) {
 			if (conn.response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
 			{
 				conn.conn_closed = true;
 				return (false);
 			}
+
 			conn.response.cleanResponse();
 			conn.request.cleanRequest();
 
 			if (!_addFdToEpoll(conn.getFd(), EPOLLIN | EPOLLRDHUP, EPOLL_CTL_MOD))
-				conn.conn_closed = true;;
+				conn.conn_closed = true;
+
+			_connections.find(conn.getFd())->second.handler = &Webserv::clientInHandler;
 		}
-
 	}
-
-	// update last_conn_timestamp;
-	conn.setLastConnTime(std::time(NULL));
-
 	return (true);
 }
 
-bool	Webserv::cgiIn(Connection& conn) {
 
+
+bool	Webserv::cgiInHandler(Connection& conn)
+{
 	int	content_length = std::atoi(conn.request.getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->check to do on partial send 
 	int byte = write(conn.cgi_fd[1], (conn.request.getBody()).c_str(), content_length);
+
 	if (byte == content_length) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
 
-		struct epoll_event ev_hints;
-		ev_hints.events = EPOLLIN | EPOLLRDHUP;
-		ev_hints.data.fd = conn.cgi_fd[1];
-		if (epoll_ctl(conn.getEpollFd(), EPOLL_CTL_ADD, conn.cgi_fd[1], &ev_hints) < 0) {
+		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 			close(conn.cgi_fd[0]);
 			close(conn.cgi_fd[1]);
 			return (false);
-		}
+		};
 
-		//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-		t_info	info(conn, &Webserv::cgiOut);
+		t_info	info(conn, &Webserv::cgiOutHandler);
 		info.connection.setLastConnTime(std::time(NULL));
-		_connections.insert(std::make_pair(conn.cgi_fd[1], info));
+		_connections.insert(std::make_pair(conn.cgi_fd[0], info));
 	}
 	return (true);
 }
 
-bool	Webserv::cgiOut(Connection& conn) {
-
+bool	Webserv::cgiOutHandler(Connection& conn)
+{
 	char buffer[4096];
 	ssize_t bytes;
 
@@ -399,13 +415,13 @@ bool	Webserv::cgiOut(Connection& conn) {
 	}
 	conn.response.setCgiBody(cgi_response);
 	if (bytes < 0)
-	{
 		return (false);
-	}
+
 	if (bytes == 0) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
 		_connections.erase(conn.cgi_fd[0]);
 		close(conn.cgi_fd[0]);
+
 		// Build Response from CGI
 		int status;
 		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
