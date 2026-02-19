@@ -57,7 +57,8 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler) {
 				header += "HTTP_" + it->first + "=" + it->second;
 		}
 	}
-	char **c_enc = new char*[vect.size()];
+	char **c_enc = new char*[vect.size() + 1];
+	c_enc[vect.size()] = NULL;
 	for (size_t i = 0; i < vect.size(); ++i) {
 		c_enc[i] = new char[vect.at(i).size() + 1];
 		std::strcpy(c_enc[i], vect.at(i).c_str());
@@ -123,6 +124,9 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 		close(pipe_out[1]);
 		delete[](env);
 		delete[](argv);
+
+		std::cerr << "Child fatal error\n" << std::endl; //debug info
+
 		exit(EXIT_FAILURE);
 	}
 	else { // Parent process
