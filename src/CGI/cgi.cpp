@@ -124,6 +124,9 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 		close(pipe_out[1]);
 		delete[](env);
 		delete[](argv);
+
+		std::cerr << "Child fatal error\n" << std::endl; //debug info
+
 		exit(EXIT_FAILURE);
 	}
 	else { // Parent process
