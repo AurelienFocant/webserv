@@ -30,7 +30,7 @@ class Webserv
 		void	_openConfig(); 
 		void	_parseConfig();
 
-		VirtualServer&	_findCorrectServer(Connection const& conn);
+		VirtualServer&	_resolveVirtualServer(Connection const& conn);
 
 		bool	_checkForRdHup(Connection & conn);
 		void	_closeConnection(Connection & conn);
