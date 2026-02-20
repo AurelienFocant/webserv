@@ -293,6 +293,7 @@ void	Response::cleanResponse()
 	_status_code = OK;
 	_http_version = "";
 
+	_headers.clear();
 	_header_sent = 0;
 	if (_body_fd != -1)
 	{

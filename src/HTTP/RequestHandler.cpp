@@ -552,7 +552,7 @@ std::string	RequestHandler::_verifyFile(std::string filename)
 	if (!fileSystem::isReadable(filename) || !fileSystem::isWritable(filename))
 		return ("");
 
-	if (filename.find("..") || filename.find("."))
+	if (filename.find("../"))
 			return ("");
 
 	return (filename);
@@ -589,33 +589,34 @@ bool	RequestHandler::_saveDataToFile(std::string filename)
 bool	RequestHandler::processPostMethod()
 {
 	if (!_hasContentTypeHeader()) {
-		_response.setStatusCode(BAD_REQUEST); return (false);
+		_response.setStatusCode(BAD_REQUEST);	return (false);
 	}
 
 	if (!_isMultiformData()) {
-		_response.setStatusCode(BAD_REQUEST); return (false);
+		_response.setStatusCode(BAD_REQUEST);	return (false);
 	}
 
 	std::string boundary = _extractBoundary();
 	if (boundary.empty()) {
-		_response.setStatusCode(BAD_REQUEST); return (false);
+		_response.setStatusCode(BAD_REQUEST);	return (false);
 	}
 
 	std::string filename = _extractFilename(boundary);
 	if (filename.empty()) {
-		_response.setStatusCode(BAD_REQUEST); return (false);
+		_response.setStatusCode(BAD_REQUEST);	return (false);
 	}
 
 	filename = _verifyFile(filename);
 	if (filename.empty()) {
-		_response.setStatusCode(FORBIDDEN); return (false);
+		_response.setStatusCode(FORBIDDEN);		return (false);
 	}
 
 	if (!_saveDataToFile(filename)) {
-		_response.setStatusCode(INTERNAL_SERVER_ERROR); return (false);
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);	return (false);
 	};
 
 	_response.setStatusCode(CREATED);
+	_response.setHeader("Content-Length", "0");
 	return (true);
 }
 

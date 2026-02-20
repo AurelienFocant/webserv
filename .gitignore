@@ -8,4 +8,5 @@ a.out
 Session.vim
 data/webserv.nginx.conf
 breakpoints
-*/upload/*
+data/*/upload/*
+!data/*/upload/*/.gitkeep
