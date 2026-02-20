@@ -4,7 +4,7 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 
 bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env) {
 	 //size must depend of number of argument and if an interpreter is needed ?
-	char** argv = new char*[3];
+	char* argv[3];
 	//Create argv for child exec
 	argv[2] = NULL;
 	try {
@@ -12,15 +12,19 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env) {
 		argv[1] = convertStringToChar(handler.getResolvedPath()); //->maybe do one function that initialize whole argv based on file_to_execute
 	}
 	catch (std::exception& e) {
+		delete[](env);
 		//setup Response status code to Internal_server_error: here or up the stack
 		std::cerr << "Fatal error; " << e.what() << std::endl;
 		return (false); //Continue or crash the program ?
 	}
 
 	if (!launchCgi(conn, argv, env)) {
+		delete[](env);
 		//some errors happened, setup response code accordingly
 		return (false);
 	}
+
+	delete[](env);
 
 	if (fcntl(conn.cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
 		close(conn.cgi_fd[0]);
@@ -104,6 +108,8 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 		return (false);
 	}
 	if (pipe(pipe_out) < 0) {
+		close(pipe_in[0]);
+		close(pipe_in[1]);
 		return (false);
 	}
 
@@ -111,7 +117,8 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 	pid_t	pid = fork();
 	if (pid < 0)
 		return (false);
-	else if (pid == 0) { // Child process
+	else if (pid == 0) {
+	// Child process
 	//Setup the pipe to write from the child
 		dup2(pipe_in[0], STDIN_FILENO);
 		close(pipe_in[1]);
@@ -119,27 +126,24 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 		close(pipe_out[0]);
 		 
 		execve(argv[0], argv, env);
-		
+
+	//In case of error in the child, clean everything and exit
 		close(pipe_in[0]);
 		close(pipe_out[1]);
 		delete[](env);
-		delete[](argv);
 
 		std::cerr << "Child fatal error\n" << std::endl; //debug info
 
 		exit(EXIT_FAILURE);
 	}
-	else { // Parent process
-	//Setup the pipe to listen in the parent
-		//close(pipe_fd[0]);
-	//	close(pipe_fd[1]);
-		delete[](argv);
-		delete[](env);
-	}
-	//Read production of the child
+
+// Parent process
+//Setup the pipe to listen in the parent
 	close(pipe_in[0]);
 	close(pipe_out[1]);
 
+//Pass in pipe writing head, pipe_in[1], and out_pipe reading head, pipe_out[0], to connection.
+//Also pass child pid for further child management
 	conn.cgi_fd[0] = pipe_out[0];
 	conn.cgi_fd[1] = pipe_in[1];
 	conn.child_pid = pid;

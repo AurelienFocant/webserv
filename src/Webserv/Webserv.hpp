@@ -11,8 +11,9 @@
 const std::string defaultConfigPath("./data/webserv.nginx.conf");
 
 typedef struct	s_info {
+
 	s_info(Connection& conn, bool (Webserv::*handler)(Connection& conn)):connection(conn), handler(handler) {}
-	Connection	connection;
+	Connection&	connection;
 	bool   		(Webserv::*handler)(Connection & conn);
 }				t_info;
 

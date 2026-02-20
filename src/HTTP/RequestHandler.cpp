@@ -9,7 +9,6 @@
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 #include "cgi.hpp"
-#include "handleUser.hpp"
 
 #include <fcntl.h>
 #include <unistd.h>

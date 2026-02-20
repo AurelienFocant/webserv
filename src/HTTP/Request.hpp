@@ -22,7 +22,6 @@ class	Request	: private HTTPTokenizer {
 	/*Constructor - Copy Constructor - Destructor*/
 		Request();
 		Request(std::string const& request);
-		Request(const Request& copy_from);
 		~Request() {};
 
 	/*Overloaded operators*/
@@ -45,6 +44,7 @@ class	Request	: private HTTPTokenizer {
 		const std::multimap<std::string, std::string>&	getHeaders() const ;
 
 	private:
+		Request(const Request& copy_from);
 	/*Private Attributes*/
 		//Request State
 		int										_progress;

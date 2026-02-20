@@ -270,7 +270,7 @@ bool	Webserv::listenHandler(Connection & conn)
 	}
 
 	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	Connection	new_connection(clientSocket, _epoll_fd, std::time(NULL));
+	Connection& new_connection = *(new Connection(clientSocket, _epoll_fd, std::time(NULL)));
 	t_info	info(new_connection, &Webserv::clientInHandler);
 	_connections.insert(std::make_pair(clientSocket, info));
 	return (true);
@@ -472,5 +472,8 @@ Webserv&	Webserv::operator=( const Webserv& rhs )
 
 Webserv::~Webserv( void )
 {
+	for (std::map<int, t_info>::iterator it = _connections.begin(); it != _connections.end(); ++it) {
+		delete (&(it->second.connection));
+	}
 	std::cout << "Webserv Object Destroyed" << std::endl;
 }

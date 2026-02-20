@@ -35,6 +35,9 @@ class Webserv;
 class Connection
 {
 	private:
+	//Copy constructor private for testing
+		Connection	( const Connection& src );
+
 		int			_fd;
 		uint32_t	_event;
 		const int	_epoll_fd;
@@ -69,7 +72,6 @@ class Connection
 		std::time_t getLastConnTime()	const;
 
 		Connection	(int fd, const int& epoll_fd, std::time_t start_time);
-		Connection	( const Connection& src );
 		Connection&	operator= ( const Connection& rhs );
 		~Connection	( void );
 

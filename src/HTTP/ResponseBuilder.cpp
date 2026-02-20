@@ -4,7 +4,6 @@
 #include "autoindex.hpp"
 #include "HtmlBuilder.hpp"
 #include "cgi.hpp"
-#include "handleUser.hpp"
 
 /* ////////////REQUEST _handler////////////////// */
 
