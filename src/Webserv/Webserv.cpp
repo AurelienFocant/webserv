@@ -197,7 +197,7 @@ void	Webserv::initWebServer()
 		// ?? listen options ?
 
 
-		Connection	new_connection(listenSocket, _epoll_fd, LISTEN_SOCK);
+		Connection&	new_connection = *(new Connection(listenSocket, _epoll_fd, LISTEN_SOCK));
 		t_info	info(new_connection, &Webserv::listenHandler);
 		_connections.insert(std::make_pair(listenSocket, info));
 
