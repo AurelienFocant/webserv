@@ -113,18 +113,19 @@ void	Webserv::_closeStaleConnections(void)
 	}
 }
 
-VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
+VirtualServer&	Webserv::_resolveVirtualServer(Connection const& conn)
 {
-	//Check for the existence of Host in Request for HTTP/1.1?
 	sockaddr_in addr;
 	socklen_t len = sizeof(addr);
 
 	//get local port
 	if (getsockname(conn.getFd(), (sockaddr*) &addr, &len) < 0)
-		throw std::runtime_error("getsockname failed");
+		throw std::runtime_error("getsockname failed"); // add a catch block in clientOutHandler to avoid crashing the server?
+														// only close the compromised connection
+
 	unsigned int port = ntohs(addr.sin_port);
 
-	std::string	host = conn.request.getHeaderValues("host").at(0);
+	std::string	host = conn.request.getHeaderValues("host")[0];
 
 	size_t	colon = host.find(':');
 	if (colon != std::string::npos)
@@ -142,8 +143,8 @@ VirtualServer&	Webserv::_findCorrectServer(Connection const& conn)
 			return _servers[i];
 	}
 
-	return (getServer(0)); // return first server as default server (HTTP/1.0) if non occurence or error? Need testing
-	// return error si pas de port qui correspond
+	std::cerr << "[ERROR] No server found for port" << port << "falling back to default server" << std::endl;
+	return (getServer(0)); // return first server as default server
 }
 
 
@@ -239,7 +240,7 @@ void	Webserv::run()
 			Connection & currConn = it->second.connection;	// currConn is the value of <key, value>
 			currConn.setEvent(ready_events[i].events);
 
-			_checkForRdHup(currConn);
+			//_checkForRdHup(currConn);
 			(this->*(it->second.handler))(currConn);
 			currConn.setLastConnTime(std::time(NULL));
 		}
@@ -341,7 +342,7 @@ bool	Webserv::clientOutHandler(Connection & conn)
 {
 	if (conn.getEvent() & EPOLLOUT) {
 		if (conn.response.isDefault()) {
-			conn.virtual_server = _findCorrectServer(conn);
+			conn.virtual_server = _resolveVirtualServer(conn);
 			RequestHandler	reqHandl(conn);
 			reqHandl.handleRequest();
 
