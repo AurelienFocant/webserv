@@ -40,16 +40,40 @@ void	RequestHandler::handleRequest()
 {
 	if (_request.getStatusCode() != OK)
 	{
-		_builder.buildErrorResponse(_request.getStatusCode());
+		_response.setStatusCode(_request.getStatusCode());
+		//_builder.buildErrorResponse(_request.getStatusCode());
 		return;
 	}
 
 	if (!extractPath() || !resolvePath() || !processMethods())
 	{
 		if (!hasRedirect())
-			_builder.buildErrorResponse(_response.getStatusCode());
+		{
+			saveErrorPage();
+			//_builder.buildErrorResponse(_response.getStatusCode());
+		}
 		return;
 	}
+}
+
+
+bool	RequestHandler::saveErrorPage()
+{
+	std::string error_page = _server.getErrorPage(_response.getStatusCode());
+	if (error_page.empty())
+		return false;
+
+	// ADD check if absolute path or string to concatene
+
+	int fd = fileSystem::openReadFile(error_page);
+	if (fd < 0)
+	{
+		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
+		return false;
+	}
+	if (!fileToString(fd))
+		return false;
+	return true;
 }
 
 /* PATH PROCESSING */
@@ -63,9 +87,6 @@ bool	RequestHandler::extractPath()
 	}
 
 	_request_path = _request.getRequestUri();
-	//std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
-	//std::cout << "[DEBUG] Path " << _request_path << std::endl;
-
 
 	size_t query_pos = _request_path.find("?");
 	if (query_pos != std::string::npos)
@@ -148,7 +169,9 @@ bool	RequestHandler::handleConfigRedirect()
 	if (redirect_uri.empty() || !redirect_code)
 		return false;
 	
-	_builder.buildRedirectResponse(redirect_code, redirect_uri);
+	_response.setHeader("Location", redirect_uri);
+	_response.setStatusCode(redirect_code);
+	//_builder.buildRedirectResponse(redirect_code, redirect_uri);
 
 	return true;
 }
@@ -164,7 +187,11 @@ bool	RequestHandler::handleTrailingSlash()
 	std::string redirect_uri = _request_path + "/";
 	if (!_query.empty())
 		redirect_uri += '?' + _query;
-	_builder.buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
+
+	_response.setHeader("Location", redirect_uri);
+	_response.setStatusCode(MOVED_PERMANENTLY);
+
+	//_builder.buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
 
 	return true;
 }
@@ -506,8 +533,32 @@ bool	RequestHandler::processGetMethod()
 		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
 	}
+	if (!fileToString(fd))
+		return false;
 
 	_builder.buildFileResponse(fd, _resolved_path);
+
+	return true;
+}
+
+bool RequestHandler::fileToString(int fd)
+{
+	char buffer[BUFFER_SIZE];
+	std::string body = "";
+	ssize_t bytes_read;
+
+	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
+		body.append(buffer);;
+	if (bytes_read < 0)
+		{
+			_response.setStatusCode(INTERNAL_SERVER_ERROR);
+			std::cerr << "[Error] Failed to read file: " << strerror(errno) << std::endl;
+			close(fd);
+			return false;
+		}
+	close(fd);
+	_response.setBodyContent(body);
+	_response.setBodySize(body.size());
 
 	return true;
 }

@@ -20,6 +20,8 @@ void	ResponseBuilder::setBaseResponse(int status_code)
 	_response.setStatusCode(status_code);
 	_response.setHttpVersion(_request.getHttpVersion());
 	_response.setHeader("Date", httpUtils::getTime());
+	_response.setHeader("Content-Length", httpUtils::intToString(_response.getBodySize()));
+	_response.setHeader("Content-Encodung", "br"); // verify
 }
 
 void	ResponseBuilder::buildFileResponse(int fd, const std::string& path)

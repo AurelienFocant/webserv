@@ -72,6 +72,8 @@ class RequestHandler
 	bool			processGetMethod();
 	bool			processPostMethod();
 	bool			processDeleteMethod();
+	bool 			fileToString(int fd);
+	bool			saveErrorPage();
 	bool			_hasContentTypeHeader();
 	bool			_isMultiformData();
 	std::string		_extractBoundary();

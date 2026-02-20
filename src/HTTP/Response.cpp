@@ -99,7 +99,7 @@ bool	Response::readBodyChunk()
 		case DYNAMIC:
 		{
 			// DYNAMIC a implementer
-			break;
+			// fallthrough
 		}
 		case MEMORY:
 		{
