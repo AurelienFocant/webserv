@@ -64,7 +64,6 @@ void	ResponseBuilder::buildErrorResponse(int status_code)
 		_response.setBodyFd(fd);
 		_response.setBodySize(file_size);
 	}
-
 }
 
 void	ResponseBuilder::buildMethodAllowedResponse(int status_code, const std::set<std::string>& allowed)
