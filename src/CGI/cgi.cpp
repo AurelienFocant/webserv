@@ -2,7 +2,8 @@
 
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) ;
 
-bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env) {
+bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
+{
 	 //size must depend of number of argument and if an interpreter is needed ?
 	char* argv[3];
 	//Create argv for child exec
@@ -39,7 +40,8 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env) {
 	return (true);
 }
 
-char**	cgi::buildCgiEnv(const RequestHandler& handler) {
+char**	cgi::buildCgiEnv(const RequestHandler& handler)
+{
 	std::multimap<std::string, std::string>	cpp_env = handler.getRequest().getHeaders();
 	std::string	previous_key = "";
 	std::string	header;
@@ -70,7 +72,8 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler) {
 	return (c_enc);
 }
 
-static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) {
+static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect)
+{
 	vect.push_back("REQUEST_METHOD=" + methodToString(handler.getRequest().getMethod()));
 	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getRequestUri());
 	vect.push_back("QUERY_STRING=" + handler.getQuery());
@@ -79,7 +82,8 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 	return (true);
 }
 
-char*	cgi::findInterpreter(const t_extension& extension) {
+char*	cgi::findInterpreter(const t_extension& extension)
+{
 	switch (extension) {
 		case (PY):
 			return (convertStringToChar("/usr/bin/python3")); //--> potential problems, need decisions on that 
@@ -90,7 +94,8 @@ char*	cgi::findInterpreter(const t_extension& extension) {
 	}
 }
 
-char*	cgi::convertStringToChar(const std::string& string) {
+char*	cgi::convertStringToChar(const std::string& string)
+{
 	char* str = new char[string.size()];
 	str[string.size()] = '\0';
 	for (size_t i = 0; i < string.size(); ++i) {
@@ -100,7 +105,8 @@ char*	cgi::convertStringToChar(const std::string& string) {
 }
 
 
-bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
+bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
+{
 //Pipe creation for communication with the child
 	int	pipe_in[2];
 	int	pipe_out[2];
@@ -124,6 +130,9 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env) {
 		close(pipe_in[1]);
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_out[0]);
+
+		close(pipe_in[0]);
+		close(pipe_out[1]);
 		 
 		execve(argv[0], argv, env);
 

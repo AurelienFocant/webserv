@@ -75,6 +75,9 @@ class RequestHandler
 	bool			_hasContentTypeHeader();
 	bool			_isMultiformData();
 	std::string		_extractBoundary();
+	std::string		_extractFilename(std::string boundary);
+	std::string		_verifyFile(std::string filename);
+	bool			_saveDataToFile(std::string filename);
 
 	/* GET Method */
 

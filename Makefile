@@ -99,7 +99,8 @@ fclean:		clean
 	@rm -rf	$(DEBUG_EXEC)
 	@printf	"$(NAME) fully cleaned\n"
 
-re:		fclean all
+re:		fclean
+	make all
 
 libclean:
 	@$(MAKE) -C $(LIBFT_DIR) fclean

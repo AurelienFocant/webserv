@@ -65,6 +65,7 @@ bool	RequestHandler::extractPath()
 	//std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
 	//std::cout << "[DEBUG] Path " << _request_path << std::endl;
 
+
 	size_t query_pos = _request_path.find("?");
 	if (query_pos != std::string::npos)
 	{
@@ -129,7 +130,7 @@ bool	RequestHandler::resolvePath()
 		_resolved_path = _root + _request_path;
 	}
 
-	std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
+	// std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 
 	if (!validatePath())
 		return false;
@@ -222,11 +223,11 @@ void	RequestHandler::findLocation()
 		}
 	}
 
-	std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
-	if (_matched_location)
-		std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
-	else
-		std::cout << "[DEBUG] No location matched: " << std::endl;
+	// std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
+	// if (_matched_location)
+	// 	std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
+	// else
+	// 	std::cout << "[DEBUG] No location matched: " << std::endl;
 }
 
 bool	RequestHandler::detectCGI()
@@ -334,7 +335,7 @@ bool	RequestHandler::normalizePath()
 		_response.setStatusCode(403);
 		return false;
 	}
-	std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
+	// std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
 	// fonctionne meme hors location car _cage_root est initialise a "";
 	std::string temp_path = decoded_path.substr(_cage_root.size());
@@ -351,7 +352,7 @@ bool	RequestHandler::normalizePath()
 	if (!slash[1])
 		temp_path += '/';
 
-	std::cout << "[DEBUG] Path to normalize " << temp_path << std::endl;
+	// std::cout << "[DEBUG] Path to normalize " << temp_path << std::endl;
 
 	std::vector<std::string> segments;
 
@@ -397,7 +398,7 @@ bool	RequestHandler::normalizePath()
 	
 	_request_path = temp_path;
 
-	std::cout << "[DEBUG] Normalized path " << _request_path << std::endl;
+	// std::cout << "[DEBUG] Normalized path " << _request_path << std::endl;
 
 	return true;
 }
@@ -510,6 +511,7 @@ bool	RequestHandler::processGetMethod()
 	return true;
 }
 
+
 bool	RequestHandler::_hasContentTypeHeader(void)
 {
 	if (!_request.getHeaderValues("Content-Type")[0].empty())
@@ -517,14 +519,12 @@ bool	RequestHandler::_hasContentTypeHeader(void)
 	return (false);
 }
 
-
 bool	RequestHandler::_isMultiformData(void)
 {
-	size_t	semicolon = std::string::npos;
+	size_t	pos = std::string::npos;
 
 	std::string	header = _request.getHeaderValues("Content-Type")[0];
-	if ((semicolon = header.find_first_of(';')) != std::string::npos) {
-		if (header.substr(0, semicolon) == "multipart/form-data")
+	if ((pos = header.find("multipart/form-data")) != std::string::npos) {
 			return (true);
 	}
 	return (false);
@@ -533,41 +533,131 @@ bool	RequestHandler::_isMultiformData(void)
 std::string	RequestHandler::_extractBoundary(void)
 {
 	size_t	pos = std::string::npos;
+	std::string boundary_str(" boundary=");
 
 	std::string	header = _request.getHeaderValues("Content-Type")[0];
-	if ((pos = header.find(" boundary=")) != std::string::npos) {
-		return(header.substr(header.at(pos)));
+	if ((pos = header.find(boundary_str)) != std::string::npos) {
+		std::string res = header.substr(pos + boundary_str.size());
+		return (res);
 	}
 	return ("");
 }
 
+std::string	RequestHandler::_extractFilename(std::string boundary)
+{
+	size_t start_of_filename;
+	size_t end_of_filename;
+	std::string body = _request.getBody();
+
+	if (!body.find(boundary))
+		return "";
+
+	std::string file("filename=");
+    start_of_filename = body.find(file);
+    if (start_of_filename == std::string::npos)
+        return "";
+
+    start_of_filename += file.size();
+	end_of_filename = body.find("\r\n", start_of_filename);
+	if (end_of_filename == std::string::npos)
+		return "";
+
+    if (body[start_of_filename] == '"') {
+		if (body[end_of_filename - 1] != '"')
+				return "";
+        start_of_filename++;
+		end_of_filename--;
+	}
+
+	std::string filename = body.substr(start_of_filename, end_of_filename - start_of_filename);
+	return (filename);
+}
+
+std::string	RequestHandler::_verifyFile(std::string filename)
+{
+	std::string dir = getResolvedPath();
+	if (!fileSystem::isDir(dir))
+		return ("");
+
+	if (dir[dir.size() - 1] != '/')
+		dir = dir + "/";
+
+	if (!fileSystem::isExecutable(dir) || !fileSystem::isWritable(dir))
+		return ("");
+
+	filename = dir + filename;
+	if (!fileSystem::isFile(filename))
+		return (filename);
+
+	if (!fileSystem::isReadable(filename) || !fileSystem::isWritable(filename))
+		return ("");
+
+	if (filename.find("../"))
+			return ("");
+
+	return (filename);
+}
+
+bool	RequestHandler::_saveDataToFile(std::string filename)
+{
+	std::string body = _request.getBody();
+
+	size_t end_of_header = body.find("\r\n\r\n");
+	if (end_of_header == std::string::npos)
+		return (false);
+	end_of_header += 4;
+
+	int fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0664);
+	if (fd < 0)
+		return (false);
+
+	std::string s_buffer = body.substr(end_of_header);
+	int bytes_to_send = s_buffer.size();
+
+	int bytes_sent = 0;
+	int start = 0;
+	while ((bytes_sent = write(fd, &(s_buffer.c_str()[start]), bytes_to_send)) > 0) {
+		bytes_to_send -= bytes_sent;
+		start += bytes_sent;
+	}
+	close(fd);
+	return (true);
+}
+
+
+
 bool	RequestHandler::processPostMethod()
 {
-	// Step 1: Read the POST Request
-		// 	Extract Content-Length to know how much data to read.
-		// 	If Content-Type is multipart/form-data, extract the boundary from it.
-	// 	Step 2: Parse the Body
-		// 	If it’s a simple form (application/x-www-form-urlencoded), just parse key=value pairs.
-		// 	If it’s file upload (multipart/form-data):
-		// 	Each part is separated by the boundary.
-		// 	Extract the file’s name from the Content-Disposition header.
-		// 	Extract the raw file data.
-	// 	Step 3: Save the File
-		// 	Open a file in the server directory (e.g., uploads/filename) and write the bytes you extracted.
-		// 	Make sure to validate the filename to prevent path traversal attacks (../../etc/passwd!).
-	if (_hasContentTypeHeader()) {
-		if (_isMultiformData()) {
-			std::string boundary = _extractBoundary();
-			if (!boundary.empty()) {
-				_response.setStatusCode(CREATED);
-				return (true);
-			}
-		}
+	if (!_hasContentTypeHeader()) {
+		_response.setStatusCode(BAD_REQUEST);	return (false);
 	}
-	std::cout << "POLOUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUF\n";
 
-	_response.setStatusCode(BAD_REQUEST);
-	return (false);
+	if (!_isMultiformData()) {
+		_response.setStatusCode(BAD_REQUEST);	return (false);
+	}
+
+	std::string boundary = _extractBoundary();
+	if (boundary.empty()) {
+		_response.setStatusCode(BAD_REQUEST);	return (false);
+	}
+
+	std::string filename = _extractFilename(boundary);
+	if (filename.empty()) {
+		_response.setStatusCode(BAD_REQUEST);	return (false);
+	}
+
+	filename = _verifyFile(filename);
+	if (filename.empty()) {
+		_response.setStatusCode(FORBIDDEN);		return (false);
+	}
+
+	if (!_saveDataToFile(filename)) {
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);	return (false);
+	};
+
+	_response.setStatusCode(CREATED);
+	_response.setHeader("Content-Length", "0");
+	return (true);
 }
 
 bool	RequestHandler::processDeleteMethod()
@@ -613,7 +703,7 @@ bool	RequestHandler::resolveIndex()
 		{
 			_resolved_path = test_path;
 			_is_directory = false;
-			std::cout << "[DEBUG] index found: " << _resolved_path << std::endl;
+			// std::cout << "[DEBUG] index found: " << _resolved_path << std::endl;
 			return true;
 		}
 	}

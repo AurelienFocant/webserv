@@ -11,6 +11,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <signal.h>
+#include <algorithm>
 
 #define LISTEN_SOCK	0
 #define MAX_EVENTS	1024
@@ -147,6 +148,16 @@ VirtualServer&	Webserv::_resolveVirtualServer(Connection const& conn)
 	return (getServer(0)); // return first server as default server
 }
 
+bool	Webserv::_addFdToEpoll(int client_fd, int events, int flags)
+{
+	struct epoll_event	ev_hints;
+	ev_hints.events = events;
+	ev_hints.data.fd = client_fd;
+	if (epoll_ctl(_epoll_fd, flags, client_fd, &ev_hints) < 0) {
+		return (false);
+	};
+	return (true);
+}
 
 
 // Setting up listening sockets
@@ -157,7 +168,13 @@ void	Webserv::initWebServer()
 		throw (std::runtime_error("epoll_create failed"));
 	// ?? put epoll fd non blocking ?
 
+	std::vector<int>	ports;
 	for (std::vector<VirtualServer>::iterator it = _servers.begin(); it != _servers.end(); it++) {
+		int	port = it->getPort();
+
+		if (std::find(ports.begin(), ports.end(), port) != ports.end())
+			return ;
+		ports.push_back(port);
 
 		int	listenSocket;
 		if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0)
@@ -277,17 +294,6 @@ bool	Webserv::listenHandler(Connection & conn)
 	return (true);
 }
 
-bool	Webserv::_addFdToEpoll(int client_fd, int events, int flags)
-{
-	struct epoll_event	ev_hints;
-	ev_hints.events = events;
-	ev_hints.data.fd = client_fd;
-	if (epoll_ctl(_epoll_fd, flags, client_fd, &ev_hints) < 0) {
-		return (false);
-	};
-	return (true);
-}
-
 bool	Webserv::clientInHandler(Connection & conn)
 {
 	if (conn.getEvent() & EPOLLIN) {
@@ -310,33 +316,6 @@ bool	Webserv::clientInHandler(Connection & conn)
 	}
 	return (true);
 }
-
-bool	Webserv::_startCGIresponse(RequestHandler & reqHandl, Connection & conn)
-{
-	char **env = cgi::buildCgiEnv(reqHandl);
-	if (!env)
-		return (false);
-	if (!cgi::execute(reqHandl, conn, env))
-		return (false); // check what happend
-						//add CGI fd to epoll via conn
-
-	if (!_addFdToEpoll(conn.cgi_fd[1], EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_ADD)) {
-		close(conn.cgi_fd[0]);
-		close(conn.cgi_fd[1]);
-		return (false);
-		// send 500 server error ??
-	}
-
-
-	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
-	t_info	info(conn, &Webserv::cgiInHandler);
-	//			info.connection = conn;
-	//			info.handler = &Webserv::cgiIn;
-	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
-	conn.response.setState(Response::PROCESSING_CGI);
-	return (true);
-}
-
 
 bool	Webserv::clientOutHandler(Connection & conn)
 {
@@ -379,6 +358,32 @@ bool	Webserv::clientOutHandler(Connection & conn)
 }
 
 
+// CGI HANDLERS
+bool	Webserv::_startCGIresponse(RequestHandler & reqHandl, Connection & conn)
+{
+	char **env = cgi::buildCgiEnv(reqHandl);
+	if (!env)
+		return (false);
+	if (!cgi::execute(reqHandl, conn, env))
+		return (false); // check what happend
+						//add CGI fd to epoll via conn
+
+	if (!_addFdToEpoll(conn.cgi_fd[1], EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_ADD)) {
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
+		return (false);
+		// send 500 server error ??
+	}
+
+
+	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
+	t_info	info(conn, &Webserv::cgiInHandler);
+	//			info.connection = conn;
+	//			info.handler = &Webserv::cgiIn;
+	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
+	conn.response.setState(Response::PROCESSING_CGI);
+	return (true);
+}
 
 bool	Webserv::cgiInHandler(Connection& conn)
 {

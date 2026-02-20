@@ -39,24 +39,24 @@ class ConfigContext {
 		void	inheritFrom(const ConfigContext &parent);
 
 
-									ContextType getType()				const	{return _type;}
-									int         getPort()				const	{return _port;}
-									std::string getRoot()				const	{return _root;}
-									std::string getServerName()			const	{return _serverName;}
-									std::string getLocationName()		const	{return _locationName;}
-		 std::map<std::string, Location> const& getLocations()			const	{return _locations;}
-									bool		getAutoindex() 			const	{return _autoindex;}
-				std::vector<std::string> const&	getIndexes()   			const	{return _indexes;}
-									int			getRedirectCode()		const	{return _redirect_code;}
-									std::string	getRedirect()			const	{return _redirect;}
-									std::time_t	getKeepalive_time()		const	{return _keepalive_time;}
-									std::time_t	getKeepalive_timeout()	const	{return _keepalive_timeout;}
-						  std::set<std::string> getAllowedMethods()		const	{return _allowed_methods;}
-									bool		getCGI()	   			const	{return _cgi;}
-									bool		getVirtualLocation()	const	{return _virtualLocation;}
-									std::string	getAlias()				const	{return _alias;}
-					std::map<int, std::string>	getErrorPages()	   		const	{return _error_pages;}
-									std::string	getErrorPage(int code)  const	{return _error_pages.at(code);}
+		ContextType								getType()				const	{return _type;}
+		int         							getPort()				const	{return _port;}
+		std::string 							getRoot()				const	{return _root;}
+		std::string 							getServerName()			const	{return _serverName;}
+		std::string 							getLocationName()		const	{return _locationName;}
+		std::map<std::string, Location> const&	getLocations()			const	{return _locations;}
+		bool									getAutoindex() 			const	{return _autoindex;}
+		std::vector<std::string> const&			getIndexes()   			const	{return _indexes;}
+		int										getRedirectCode()		const	{return _redirect_code;}
+		std::string								getRedirect()			const	{return _redirect;}
+		std::time_t								getKeepalive_time()		const	{return _keepalive_time;}
+		std::time_t								getKeepalive_timeout()	const	{return _keepalive_timeout;}
+		std::set<std::string>					getAllowedMethods()		const	{return _allowed_methods;}
+		bool									getCGI()	   			const	{return _cgi;}
+		bool									getVirtualLocation()	const	{return _virtualLocation;}
+		std::string								getAlias()				const	{return _alias;}
+		std::map<int, std::string>				getErrorPages()	   		const	{return _error_pages;}
+		std::string								getErrorPage(int code)  const	{return _error_pages.at(code);}
 
 		void        setPort(int port)											{_port = port;}
 		void        setRoot(const std::string &root)							{_root = root;}

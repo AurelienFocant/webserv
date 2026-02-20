@@ -7,3 +7,6 @@ a.out
 .github
 Session.vim
 data/webserv.nginx.conf
+breakpoints
+data/*/upload/*
+!data/*/upload/*/.gitkeep
