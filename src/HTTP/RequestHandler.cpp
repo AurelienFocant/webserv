@@ -84,7 +84,12 @@ bool	RequestHandler::resolvePath()
 	{
 		//Detect CGI
 		if (detectCGI())
+		{
+			if (!validateCGIScript())
+				return false;
 			_response.setBodyType(DYNAMIC);
+			return true;
+		}
 
 		//Detect virtual location
 		if (_matched_location->getVirtual())
@@ -188,10 +193,10 @@ void	RequestHandler::findLocation()
 		if (route_path[route_path.size() -1] == '$')
 		{
 			ext = route_path.substr(0, route_path.size() -1);
-			size_t ext_start = _request_path.find(ext);
-			if (ext_start != std::string::npos)
+			size_t start = _request_path.find(ext);
+			if (start != std::string::npos)
 			{
-				size_t ext_end = ext_start + ext.size();
+				size_t ext_end = start + ext.size();
 				if (ext_end == _request_path.size() || _request_path[ext_end - 1] == '/' || _request_path[ext_end] == '/')
 				{
 					//_matched_location = location;
@@ -227,21 +232,18 @@ void	RequestHandler::findLocation()
 
 bool	RequestHandler::detectCGI()
 {
-/* 	if (!_matched_location->getCGI())
-		return false; */
+	if (!_matched_location->getCGI())
+		return false;
 	
 	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
 		return false;
 
-	if (_matched_extension == NO_EXT)
-		return false;
-
 	std::string ext_str = extensionToString(_matched_extension);
 
-	size_t ext_start = _request_path.find(ext_str);
-	if (ext_start == std::string::npos)
+	size_t start = _request_path.find(ext_str);
+	if (start == std::string::npos)
 		return false;
-	size_t ext_end = ext_start + ext_str.size();
+	size_t ext_end = start + ext_str.size();
 
 	_script_name = _request_path.substr(0, ext_end);
 
@@ -251,9 +253,40 @@ bool	RequestHandler::detectCGI()
 		_path_info = _request_path.substr(ext_end);
 		_request_path = _request_path.substr(0, ext_end);
 	}
-	
 	return true;
+}
 
+bool	RequestHandler::validateCGIScript()
+{
+	std::string cgi_bin_path = 	_root + "/cgi-bin/";
+	DIR* dir_ptr = opendir(cgi_bin_path.c_str());
+	if (!dir_ptr)
+	{
+		// throw exception that set status to INTERNAL_ERROR?
+		_response.setStatusCode(INTERNAL_SERVER_ERROR);
+		return false;
+	}
+	size_t start = _script_name.rfind('/');
+	if (start == std::string::npos)
+	{
+		closedir(dir_ptr);
+		return false;
+	}
+
+	std::string script_basename = _script_name.substr(start + 1);
+	struct dirent* dir_entry;
+	while ((dir_entry = readdir(dir_ptr)) != NULL)
+	{
+		if ((std::strcmp(dir_entry->d_name, script_basename.c_str()) == 0))
+		{
+			_resolved_path = _root + "/cgi-bin/" + script_basename;
+			closedir(dir_ptr);
+			return true;
+		}
+	}
+	closedir(dir_ptr);
+	_response.setStatusCode(FORBIDDEN);
+	return false;
 }
 
 bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded)
@@ -307,13 +340,16 @@ bool	RequestHandler::normalizePath()
 	// fonctionne meme hors location car _cage_root est initialise a "";
 	std::string temp_path = decoded_path.substr(_cage_root.size());
 
+	bool slash[2] = {true, true};
+
 	if (!temp_path.empty() && temp_path[0] != '/')
+	{
+		slash[0] = false;
 		temp_path = "/" + temp_path;
-
-	bool trailing_slash = (!temp_path.empty()
+	}
+	slash[1] = (!temp_path.empty()
 		&& temp_path[temp_path.size() - 1] == '/');
-
-	if (!trailing_slash)
+	if (!slash[1])
 		temp_path += '/';
 
 	std::cout << "[DEBUG] Path to normalize " << temp_path << std::endl;
@@ -350,9 +386,14 @@ bool	RequestHandler::normalizePath()
 	temp_path = _cage_root;
 
 	for (size_t i = 0; i < segments.size(); i++)
-		temp_path += "/" + segments[i];
+	{
+		if (!slash[0] && i == 0)
+			temp_path += segments[i];
+		else
+			temp_path += "/" + segments[i];
+	}
 
-	if (temp_path.empty() || (trailing_slash && temp_path.size() != 1))
+	if (temp_path.empty() || (slash[1] && temp_path.size() != 1))
 		temp_path += '/';
 	
 	_request_path = temp_path;

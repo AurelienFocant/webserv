@@ -240,7 +240,7 @@ void	Webserv::run()
 			Connection & currConn = it->second.connection;	// currConn is the value of <key, value>
 			currConn.setEvent(ready_events[i].events);
 
-			_checkForRdHup(currConn);
+			//_checkForRdHup(currConn);
 			(this->*(it->second.handler))(currConn);
 			currConn.setLastConnTime(std::time(NULL));
 		}
