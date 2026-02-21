@@ -28,11 +28,7 @@ class VirtualServer
 		std::set<std::string>			_allowed_methods;
 		std::map<std::string, Location>	_locations;
 
-		void	_initDefaultErrorPages(void);
-
 	public:
-		void	initDefaultConfig(void);
-
 		const std::map<std::string, Location>	&getLocations(void) const;
 		void									setLocations(const std::map<std::string, Location> &locs);
 		void								 	setLocationsAt(std::string key, Location &loc);
