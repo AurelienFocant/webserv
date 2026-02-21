@@ -6,7 +6,8 @@
 }
 
 /* Body */
-body {
+body
+{
 	font-family: Arial, sans-serif;
 	background-color: #fef6f9; /* pastel pink */
 	color: #5a5a5a;
@@ -15,23 +16,27 @@ body {
 }
 
 /* Header */
-header {
-	padding: 80px 20px;
+header
+{
+	padding: 40px 20px;
 	background-color: #d8f3dc; /* pastel mint */
 }
 
-header h1 {
+header h1
+{
 	font-size: 2.5rem;
-	margin-bottom: 15px;
+	margin-bottom: 5px;
 }
 
-header p {
-	margin-bottom: 25px;
+header p
+{
+	margin-bottom: 5px;
 	font-size: 1.1rem;
 }
 
 /* Button */
-.btn {
+.btn
+{
 	display: inline-block;
 	padding: 12px 25px;
 	background-color: #ffcad4; /* pastel coral */
@@ -41,12 +46,14 @@ header p {
 	transition: 0.3s ease;
 }
 
-.btn:hover {
+.btn:hover
+{
 	background-color: #f4acb7;
 }
 
 /* Features Section */
-.features {
+.features
+{
 	display: flex;
 	justify-content: center;
 	gap: 20px;
@@ -54,7 +61,8 @@ header p {
 	flex-wrap: wrap;
 }
 
-.card {
+.card
+{
 	background-color: #cdb4db; /* pastel lavender */
 	padding: 25px;
 	border-radius: 15px;
@@ -62,22 +70,26 @@ header p {
 	color: white;
 }
 
-.card h2 {
+.card h2
+{
 	margin-bottom: 10px;
 }
 
 /* Footer */
-footer {
+footer
+{
 	padding: 20px;
 	background-color: #bde0fe; /* pastel blue */
 	margin-top: 40px;
 }
 
-h2 {
-	margin: 40px 0 20px;
+h2
+{
+	margin: 30px 0 10px;
 }
 
-.ctn {
+.ctn
+{
 	list-style: none;
 	padding: 0;
 	display: flex;
@@ -88,7 +100,8 @@ h2 {
 	margin: 0 auto 60px;
 }
 
-#fileList {
+#fileList
+{
 	list-style: none;
 	padding: 0;
 	display: flex;
@@ -99,7 +112,8 @@ h2 {
 	margin: 0 auto 60px;
 }
 
-#fileList li {
+#fileList li
+{
 	background-color: #ffd6e0; /* soft pink card for each file */
 	padding: 15px 20px;
 	border-radius: 15px;
@@ -111,7 +125,8 @@ h2 {
 	transition: 0.2s ease;
 }
 
-form {
+form
+{
 	background-color: #ffd6e0; /* soft pink card for each file */
 	padding: 15px 20px;
 	border-radius: 15px;
@@ -124,11 +139,13 @@ form {
 	transition: 0.2s ease;
 }
 
-#fileList li:hover {
+#fileList li:hover
+{
 	background-color: #ffc0cb;
 }
 
-#fileList .button {
+#fileList .button
+{
 	background-color: #ffcad4;
 	border: none;
 	padding: 8px 16px;
@@ -142,7 +159,9 @@ form {
 	font-family: inherit;
 }
 
-.bt {
+.bt,
+.bt::file-selector-button
+{
 	background-color: #ffcad4;
 	border: none;
 	padding: 8px 16px;
@@ -156,25 +175,30 @@ form {
 	font-family: inherit;
 }
 
-.action {
+.action
+{
 	display: flex;
 	gap: 10px;
 }
 
-#fileList .button:hover {
+#fileList .button:hover
+{
 	background-color: #f4acb7;
 }
 
-.loading {
+.loading
+{
 	font-style: italic;
 	color: #777;
 }
 
-.container {
-	padding: 20px;
+.container
+{
+	padding: 00px;
 }
 
-.home-link {
+.home-link
+{
 	position: absolute;
 	top: 20px;
 	left: 20px;
@@ -187,6 +211,7 @@ form {
 	transition: 0.3s ease;
 }
 
-.home-link:hover {
+.home-link:hover
+{
 	background-color: #f4acb7;
 }
