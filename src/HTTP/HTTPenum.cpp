@@ -1,6 +1,7 @@
 #include "HTTPenum.hpp"
 
-std::string methodToString(t_method code)  {
+std::string methodToString(t_method code) 
+{
 	switch (code) {
 		case NOT_SET:						return "Not set";
 		case GET:							return "GET";
@@ -10,7 +11,8 @@ std::string methodToString(t_method code)  {
 	}
 }
 
-t_method	methodFromString(const std::string& s)  {
+t_method	methodFromString(const std::string& s) 
+{
 	if (s == "NOT_SET")						return NOT_SET;
 	else if (s == "GET")					return GET;
 	else if (s == "POST")					return POST;
@@ -18,7 +20,8 @@ t_method	methodFromString(const std::string& s)  {
 	else									return UNKNOWN;
 }
 
-std::string progressToString(t_progress code)  {
+std::string progressToString(t_progress code) 
+{
 	switch (code) {
 		case PARSER_ERROR:					return "Parser error";
 		case START:							return "Start of processing";
@@ -33,7 +36,8 @@ std::string progressToString(t_progress code)  {
 	}
 }
 
-t_progress	progressFromString(const std::string& s)  {
+t_progress	progressFromString(const std::string& s) 
+{
 	if (s == "PARSER_ERROR")				return PARSER_ERROR;
 	else if	(s == "START")					return START;
 	else if	(s == "METHOD")					return METHOD;
@@ -46,7 +50,8 @@ t_progress	progressFromString(const std::string& s)  {
 	else									return UNKNOWN_STATE;
 }
 
-std::string extensionToString(t_extension code)  {
+std::string extensionToString(t_extension code) 
+{
     switch (code) {
         case NO_EXT:                        return "";
         case PY:                            return ".py";
@@ -55,15 +60,15 @@ std::string extensionToString(t_extension code)  {
     }
 }
 
-t_extension extensionFromString(const std::string& s)  {
+t_extension extensionFromString(const std::string& s) 
+{
     if (s == ".py")           return PY;
     else if (s == ".sh")      return SH;
     else                        return UNKNOWN_EXT;
 }
 
-
-
-std::string httpStatusToString(t_HttpCode code)  {
+std::string httpStatusToString(t_HttpCode code) 
+{
     switch (code)  {
 		case INIT_STATE:					  return "Initialized";
         // --- 1xx ---
@@ -120,7 +125,8 @@ std::string httpStatusToString(t_HttpCode code)  {
     return "Unknown Status";
 }
 
-t_HttpCode httpStatusFromString(const std::string& s)  {
+t_HttpCode httpStatusFromString(const std::string& s)
+{
     // --- 1xx ---
     if (s == "Continue")                        return CONTINUE;
     if (s == "Switching Protocols")             return SWITCHING_PROTOCOLS;

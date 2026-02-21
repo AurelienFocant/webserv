@@ -86,7 +86,9 @@ std::map<int, std::string>	ConfigContext::_initDefaultErrorPages(void)
 {
 	std::map<int, std::string> pages;
 
-	for (int i = 400; i <= 417; ++i) {
+	pages[400] = "./data/webserv_default_error_pages/400.html";
+
+	for (int i = 401; i <= 417; ++i) {
 		pages[i] = "./data/webserv_default_error_pages/404.html";
 	}
 
