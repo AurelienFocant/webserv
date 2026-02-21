@@ -81,16 +81,18 @@ ConfigContext::~ConfigContext(void)
 }
 
 
+// The Codes implemented here refer to HTTPenum.hpp
 std::map<int, std::string>	ConfigContext::_initDefaultErrorPages(void)
 {
 	std::map<int, std::string> pages;
 
-	pages[400] = "./data/error_pages/404.html";
-	pages[401] = "./data/error_pages/404.html";
-	pages[402] = "./data/error_pages/404.html";
-	pages[403] = "./data/error_pages/404.html";
-	pages[404] = "./data/error_pages/404.html";
-	pages[405] = "./data/error_pages/404.html";
+	for (int i = 400; i <= 417; ++i) {
+		pages[i] = "./data/webserv_default_error_pages/404.html";
+	}
+
+	for (int i = 500; i < 505; ++i) {
+		pages[i] = "./data/webserv_default_error_pages/500.html";
+	}
 
 	return (pages);
 }
