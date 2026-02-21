@@ -27,8 +27,6 @@ ConfigContext::ConfigContext(ContextType t)
 	_indexes.push_back("index.html");
 
 	_allowed_methods.insert("GET");
-	_allowed_methods.insert("POST");
-	_allowed_methods.insert("DELETE");
 }
 
 ConfigContext::ConfigContext(const ConfigContext &src)
