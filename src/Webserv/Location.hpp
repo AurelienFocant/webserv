@@ -30,8 +30,6 @@ class Location
 
 
 	public:
-
-	/* Getters */
 	std::string					getName()			const   {return _name;}
 	std::string					getRoot()			const   {return _root;}
 	std::string					getAlias()			const   {return _alias;}
@@ -44,7 +42,6 @@ class Location
 	std::map<int, std::string>	getErrorPages()		const	{return _error_pages;}
 	std::string					getErrorPage(int n)	const	{return _error_pages.at(n);}
 
-	/* Setters */
 	void	setName(const std::string& name)					{_name = name;}
 	void	setRoot(const std::string& root)					{_root = root;}
 	void	setAlias(const std::string& alias)					{_alias = alias;}
@@ -56,8 +53,8 @@ class Location
 	void   	setErrorPages(std::map<int, std::string> ep)		{_error_pages = ep;}
 	void   	setErrorPage(int code, std::string page)			{_error_pages.insert(std::make_pair(code, page));}
 
-	std::set<std::string>	getAllowedMethods(void) const	{return _allowed_methods;}
-	void					setAllowedMethods(std::set<std::string> m) {_allowed_methods = m;}
+	void					setAllowedMethods(std::set<std::string> m)	{_allowed_methods = m;}
+	std::set<std::string>	getAllowedMethods(void) const				{return _allowed_methods;}
 
 
 	Location	(ConfigContext& ctxt);

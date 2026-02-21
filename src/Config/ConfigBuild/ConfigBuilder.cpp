@@ -40,6 +40,7 @@ void ConfigBuilder::visit(const BlockNode& node)
 
 
 	_has_root = 0;
+	_has_alias = 0;
 	for (size_t i = 0; i < node.children.size(); ++i)
 		_visitChild((node.children[i]));
 
@@ -156,8 +157,22 @@ void ConfigBuilder::_handleRoot(const DirectiveNode& d)
 	if (_has_root)
 		_error(d.line, "root directive is a duplicate");
 
+	if (_has_alias)
+		_error(d.line, "cannot have both root and alias in the same block");
+
 	_getCurrentCtxt().setRoot(d.args[0]);
 	_has_root = 1;
+}
+
+void ConfigBuilder::_handleAlias(const DirectiveNode& d)
+{
+	if (_has_alias)
+		_error(d.line, "alias directive is a duplicate");
+
+	if (_has_root)
+		_error(d.line, "cannot have both root and alias in the same block");
+	_getCurrentCtxt().setAlias(d.args[0]);
+	_has_alias = 1;
 }
 
 void ConfigBuilder::_handleIndex(const DirectiveNode& d)
@@ -272,11 +287,6 @@ void ConfigBuilder::_handleVirtualLocation(const DirectiveNode& d)
 	_error(d.line, "only on of off values after 'virtual' directive");
 }
 
-void ConfigBuilder::_handleAlias(const DirectiveNode& d)
-{
-	_getCurrentCtxt().setAlias(d.args[0]);
-}
-
 void ConfigBuilder::_handleErrorPages(const DirectiveNode& d)
 {
 	std::vector<std::string>::const_iterator it;
@@ -332,7 +342,8 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 
 // Constructors
 ConfigBuilder::ConfigBuilder()
-	: _has_root(0)
+	: _has_root(false)
+	, _has_alias(false)
 {
 }
 
