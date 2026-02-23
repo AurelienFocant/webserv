@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/23 15:18:42 by stempels          #+#    #+#             */
-/*   Updated: 2026/02/23 15:24:56 by stempels         ###   ########.fr       */
+/*   Updated: 2026/02/23 15:40:34 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,8 +86,10 @@ bool	Request::parseRequest() {
 	// std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.
 
 	while (_list_it != _token_list.end()) {
-		if (_list_it->tkType == ERROR)
+		if (_list_it->tkType == ERROR) {
 			_progress = PARSER_ERROR;
+			break ;
+		}
 		++_list_it;
 	}
 	_list_it = _token_list.begin();
@@ -106,6 +108,8 @@ bool	Request::parseRequest() {
 			case (VERSION):
 				if ((*_list_it).tkType == EOL)
 					_progress = FIRST_LINE;
+				else
+					_progress = PARSER_ERROR;
 				break ;
 			case (FIRST_LINE):
 				parseHeader();
