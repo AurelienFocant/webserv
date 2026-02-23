@@ -104,27 +104,18 @@ bool	Request::parseRequest() {
 		}
 	}
 
-	if (_progress == PARSED)
+	if (_progress == PARSED) {
+		extractHeadersInformations();
+		if (!areHeadersValid()) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
 		handleBody();
+	}
 	if (_progress == BODY_HANDLING)
 		(this->*_body_handler)();
-/*	switch (_progress) {
-		case (DONE):
-			break ;
-		case (BODY_HANDLING):
-			break ;
-		case (PARSER_ERROR):
-			_complete = true;
-			_progress = DONE;
-			_status_code = BAD_REQUEST;
-			break ;
-		default:
-			_complete = true;
-			_progress = DONE;
-			_status_code = INTERNAL_SERVER_ERROR;
-	}
-*/
-//	removeEOC();
 
 	std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
 
@@ -133,47 +124,7 @@ bool	Request::parseRequest() {
 	return (_complete);
 }
 
-/*
-bool	Request::parseFirstLine() {
-	while (_progress != PARSER_ERROR && _progress < FIRST_LINE && _list_it != _token_list.end()) {
-		switch (_progress) {
-			case (START):
-				if (!setMethod())
-					break ;
-				//else fall-through
-			case (METHOD):
-				if (!setRequestUri())
-					break ;
-				//else fall-through
-			case (URI):
-				if (!setHttpVersion())
-					break ;
-				//else fall-through
-			case (VERSION):
-				if ((*_list_it).tkType == EOL) {
-					_progress = FIRST_LINE;
-					break ;
-				}
-				//else fall-through
-			default:
-				_progress = PARSER_ERROR;
-		}
-	}
-	if (_progress == PARSER_ERROR)
-		return (false);
-	else
-		return (true);
-}
-*/
-
 bool	Request::handleBody() {
-	extractHeadersInformations();
-	if (!areHeadersValid()) {
-		_progress = DONE;
-		_complete = true;
-		_status_code = BAD_REQUEST;
-		return (_complete);
-	}
 	if (_method == GET) { //Check for GET request
 		_progress = DONE;
 		_complete = true;
@@ -299,7 +250,6 @@ bool	Request::parseHeader() {
 	}
 	if (nbr_eol == 2)
 		_progress = PARSED;
-//	removeEOC();
 	if (_progress != PARSED)
 		return (false);
 	return (true);
@@ -308,7 +258,6 @@ bool	Request::parseHeader() {
 bool	Request::extractHeadersInformations() {
 	std::vector<t_Token>::const_iterator	it = _token_list.begin();
 	std::string								options_name;
-//	_headers.reserve(_nbr_headers);
 	while (it != _token_list.end()) {
 		switch (it->tkType) {
 			case (WORD):
@@ -498,17 +447,6 @@ bool	Request::setHttpVersion() {
 	_progress = PARSER_ERROR;
 	return (false);
 }
-
-/*
-   t_method	Request::idMethod(std::string& method) {
-   if (method.find("GET") == 0)
-   return (GET);
-   else if (method.find("POST") == 0)
-   return (POST);
-   else
-   return (UNKNOWN);
-   }
- */
 
 bool	Request::addInput(std::string input) {
 	HTTPTokenizer::addInput(input);
