@@ -74,7 +74,7 @@ bool	Request::parseRequest() {
 	// std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.
 
 	//iterate and consume token list
-	while (_progress < PARSED && (_list_it != _token_list.end() && _list_it->tkType != EOC)) { 
+	while (_progress < PARSED && (_list_it != _token_list.end() && _list_it->tkType != ERROR && _list_it->tkType != EOC)) { 
 		switch (_progress) {
 			case (START):
 				setMethod();
