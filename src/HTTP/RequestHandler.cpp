@@ -593,7 +593,7 @@ std::string	RequestHandler::_verifyFile(std::string filename)
 	if (!fileSystem::isReadable(filename) || !fileSystem::isWritable(filename))
 		return ("");
 
-	if (filename.find("../"))
+	if (filename.find("../") != std::string::npos)
 			return ("");
 
 	return (filename);
@@ -658,6 +658,7 @@ bool	RequestHandler::processPostMethod()
 
 	_response.setStatusCode(CREATED);
 	_response.setHeader("Content-Length", "0");
+	_response.setHttpVersion(_request.getHttpVersion());
 	return (true);
 }
 
@@ -680,6 +681,7 @@ bool	RequestHandler::processDeleteMethod()
 	if (unlink(_resolved_path.c_str()) != 0) {
 		_response.setStatusCode(FORBIDDEN); return (false);
 	}
+
 
 	_response.setStatusCode(NO_CONTENT);
 	return (true);
