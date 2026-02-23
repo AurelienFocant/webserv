@@ -168,12 +168,12 @@ bool	Request::parseFirstLine() {
 
 bool	Request::handleBody() {
 	extractHeadersInformations();
-	/*if (!areHeadersValid()) {
+	if (!areHeadersValid()) {
 		_progress = DONE;
 		_complete = true;
-		_status_code = BAD_REQUEST; //see if it is the correct status code
+		_status_code = BAD_REQUEST;
 		return (_complete);
-	}*/
+	}
 	if (_method == GET) { //Check for GET request
 		_progress = DONE;
 		_complete = true;
@@ -341,6 +341,46 @@ void	Request::safeInsertion(const std::string& key, const std::string& value) {
 		return ;
 }
 
+bool	Request::areHeadersValid() const {
+	std::multimap<std::string, std::string>::const_iterator it = _headers.begin();
+	if (_http_version == "HTTP/1.0") {
+		const char*		uniqueHeadersHttp_0[2] = {
+			"CONTENT_LENGTH", NULL
+			};
+			while (it != _headers.end()) {
+				int nbr_headers = _headers.count(it->first);
+				if (isUniqueHeader(it->first, uniqueHeadersHttp_0) &&  nbr_headers > 1)
+					return (false);
+				while (it != _headers.end() && nbr_headers > 0)
+					++it;
+			}
+	}
+	else if (_http_version == "HTTP/1.1") {
+		const char*		uniqueHeadersHttp_1[3] = { 
+			"HOST", "CONTENT_LENGTH", NULL};
+			while (it != _headers.end()) {
+				int nbr_headers = _headers.count(it->first);
+				if (isUniqueHeader(it->first, uniqueHeadersHttp_1) &&  nbr_headers > 1)
+					return (false);
+				while (it != _headers.end() && nbr_headers > 0)
+					++it;
+			}
+	}
+	return (true);
+}
+
+bool	Request::isUniqueHeader(const std::string& header_key, const char** unique_list) const {
+	int i = 0;
+	while (unique_list[i])
+		i++;
+	i -= 1;
+	for (; i >= 0; --i) { 
+		if (header_key == unique_list[i])
+			return (true);
+	}
+	return (false);
+}
+
 std::string	Request::normalizeHeadersKey(std::string argument) const {
 	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
 		if (*it == '-')
@@ -351,11 +391,11 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 	return (argument);
 }
 
-const char*			Request::important_argument[3] = {
-	"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
-	};
-
 void	Request::detectImportantValue(std::string& argument, std::string value) {
+	const char*	important_argument[3] = {
+		"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
+		};
+
 	int	i = 0;
 	while (important_argument[i] && important_argument[i] != argument)
 		i++;
@@ -366,7 +406,7 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 			_content_length = std::atol(value.c_str()); 
 			break ;
 		case (1):
-			if (value != "chunked")
+			if (value != "chunk")
 				_status_code = BAD_REQUEST; //FIND CORRECT ERROR
 			else
 				_content_encoding = true;
