@@ -50,7 +50,7 @@ bool	Request::cleanRequest() {
 	_nbr_headers = 0;
 	_content_encoding = false;
 	_content_type.clear();
-	_content_length = -1; 
+	_content_length = std::numeric_limits<size_t>::max(); 
 
 	//Tokenizer cleaning
 	cleanTokenList();
@@ -104,27 +104,24 @@ bool	Request::parseRequest() {
 		}
 	}
 
-	if (_progress == PARSED)
+	if (_progress == PARSED) {
+		if (!isFirstLineValid()) {
+			_progress = DONE;
+			_complete = true;
+			return (_complete);
+		}
+
+		extractHeadersInformations();
+		if (!areHeadersValid() || !areMandatoryHeadersPresent()) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
 		handleBody();
+	}
 	if (_progress == BODY_HANDLING)
 		(this->*_body_handler)();
-/*	switch (_progress) {
-		case (DONE):
-			break ;
-		case (BODY_HANDLING):
-			break ;
-		case (PARSER_ERROR):
-			_complete = true;
-			_progress = DONE;
-			_status_code = BAD_REQUEST;
-			break ;
-		default:
-			_complete = true;
-			_progress = DONE;
-			_status_code = INTERNAL_SERVER_ERROR;
-	}
-*/
-//	removeEOC();
 
 	std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
 
@@ -133,47 +130,23 @@ bool	Request::parseRequest() {
 	return (_complete);
 }
 
-/*
-bool	Request::parseFirstLine() {
-	while (_progress != PARSER_ERROR && _progress < FIRST_LINE && _list_it != _token_list.end()) {
-		switch (_progress) {
-			case (START):
-				if (!setMethod())
-					break ;
-				//else fall-through
-			case (METHOD):
-				if (!setRequestUri())
-					break ;
-				//else fall-through
-			case (URI):
-				if (!setHttpVersion())
-					break ;
-				//else fall-through
-			case (VERSION):
-				if ((*_list_it).tkType == EOL) {
-					_progress = FIRST_LINE;
-					break ;
-				}
-				//else fall-through
-			default:
-				_progress = PARSER_ERROR;
-		}
-	}
-	if (_progress == PARSER_ERROR)
+bool	Request::isFirstLineValid() {
+	if (_method == NOT_SET) {
+		_status_code = INTERNAL_SERVER_ERROR;
 		return (false);
-	else
-		return (true);
+	}
+	else if (_method == UNKNOWN) {
+		_status_code = NOT_IMPLEMENTED;
+		return (false);
+	}
+	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
+		_status_code = HTTP_VERSION_NOT_SUPPORTED;
+		return (false);
+	}
+	return (true);
 }
-*/
 
 bool	Request::handleBody() {
-	extractHeadersInformations();
-	/*if (!areHeadersValid()) {
-		_progress = DONE;
-		_complete = true;
-		_status_code = BAD_REQUEST; //see if it is the correct status code
-		return (_complete);
-	}*/
 	if (_method == GET) { //Check for GET request
 		_progress = DONE;
 		_complete = true;
@@ -299,7 +272,6 @@ bool	Request::parseHeader() {
 	}
 	if (nbr_eol == 2)
 		_progress = PARSED;
-//	removeEOC();
 	if (_progress != PARSED)
 		return (false);
 	return (true);
@@ -308,7 +280,6 @@ bool	Request::parseHeader() {
 bool	Request::extractHeadersInformations() {
 	std::vector<t_Token>::const_iterator	it = _token_list.begin();
 	std::string								options_name;
-//	_headers.reserve(_nbr_headers);
 	while (it != _token_list.end()) {
 		switch (it->tkType) {
 			case (WORD):
@@ -341,6 +312,74 @@ void	Request::safeInsertion(const std::string& key, const std::string& value) {
 		return ;
 }
 
+bool	Request::areHeadersValid() const {
+	std::multimap<std::string, std::string>::const_iterator it = _headers.begin();
+	if (_http_version == "HTTP/1.0") {
+		const char*		uniqueHeadersHttp_0[2] = {
+			"CONTENT_LENGTH", NULL
+			};
+			while (it != _headers.end()) {
+				int nbr_headers = _headers.count(it->first);
+				if (isUniqueHeader(it->first, uniqueHeadersHttp_0) &&  nbr_headers > 1)
+					return (false);
+				while (it != _headers.end() && nbr_headers > 0)
+					++it;
+			}
+	}
+	else if (_http_version == "HTTP/1.1") {
+		const char*		uniqueHeadersHttp_1[3] = { 
+			"HOST", "CONTENT_LENGTH", NULL};
+			while (it != _headers.end()) {
+				int nbr_headers = _headers.count(it->first);
+				if (isUniqueHeader(it->first, uniqueHeadersHttp_1) &&  nbr_headers > 1)
+					return (false);
+				while (it != _headers.end() && nbr_headers > 0)
+					++it;
+			}
+	}
+	if (_content_length != std::numeric_limits<size_t>::max() && _content_encoding == true)
+		return (false);
+	return (true);
+}
+
+bool	Request::isUniqueHeader(const std::string& header_key, const char** unique_list) const {
+	int i = 0;
+	while (unique_list[i])
+		i++;
+	i -= 1;
+	for (; i >= 0; --i) { 
+		if (header_key == unique_list[i])
+			return (true);
+	}
+	return (false);
+}
+
+bool	Request::areMandatoryHeadersPresent() const {
+	if (_http_version == "HTTP/1.0") {
+		const char*		mandatoryHeadersHttp_0[2] = {
+			"CONTENT_LENGTH", NULL
+		};
+		int i = 0;
+		while (mandatoryHeadersHttp_0[i]) {
+			if (_headers.count(mandatoryHeadersHttp_0[i]) < 1)
+				return (false);
+			++i;
+		}
+	}
+	else if (_http_version == "HTTP/1.1") {
+		const char*		mandatoryHeadersHttp_1[2] = {
+			"HOST", NULL
+		};
+		int i = 0;
+		while (mandatoryHeadersHttp_1[i]) {
+			if (_headers.count(mandatoryHeadersHttp_1[i]) < 1)
+				return (false);
+			++i;
+		}
+	}
+	return (true);
+}
+
 std::string	Request::normalizeHeadersKey(std::string argument) const {
 	for (std::string::iterator	it = argument.begin(); it != argument.end(); it++) {
 		if (*it == '-')
@@ -351,11 +390,11 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 	return (argument);
 }
 
-const char*			Request::important_argument[3] = {
-	"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
-	};
-
 void	Request::detectImportantValue(std::string& argument, std::string value) {
+	const char*	important_argument[3] = {
+		"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
+		};
+
 	int	i = 0;
 	while (important_argument[i] && important_argument[i] != argument)
 		i++;
@@ -366,7 +405,7 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 			_content_length = std::atol(value.c_str()); 
 			break ;
 		case (1):
-			if (value != "chunked")
+			if (value != "chunk")
 				_status_code = BAD_REQUEST; //FIND CORRECT ERROR
 			else
 				_content_encoding = true;
@@ -458,17 +497,6 @@ bool	Request::setHttpVersion() {
 	_progress = PARSER_ERROR;
 	return (false);
 }
-
-/*
-   t_method	Request::idMethod(std::string& method) {
-   if (method.find("GET") == 0)
-   return (GET);
-   else if (method.find("POST") == 0)
-   return (POST);
-   else
-   return (UNKNOWN);
-   }
- */
 
 bool	Request::addInput(std::string input) {
 	HTTPTokenizer::addInput(input);

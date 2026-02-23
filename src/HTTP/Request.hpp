@@ -81,7 +81,12 @@ class	Request	: private HTTPTokenizer {
 		bool	parseFirstLine() ;
 		bool	parseHeader() ;
 		bool	handleBody() ;
+
+		bool	isFirstLineValid() ; 
 		bool	extractHeadersInformations() ;
+		bool	areHeadersValid() const ;
+		bool	areMandatoryHeadersPresent() const ;
+		bool	isUniqueHeader(const std::string& header_key, const char** unique_list) const;
 
 		bool	defineBodyExtractionHandler() ;
 		bool	bodyHandlerTransfertEncoding() ;
