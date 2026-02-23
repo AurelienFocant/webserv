@@ -156,5 +156,6 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 	conn.cgi_fd[0] = pipe_out[0];
 	conn.cgi_fd[1] = pipe_in[1];
 	conn.child_pid = pid;
+	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }

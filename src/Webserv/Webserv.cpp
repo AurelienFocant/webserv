@@ -387,10 +387,12 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandl, Connection & conn)
 
 bool	Webserv::cgiInHandler(Connection& conn)
 {
-	int	content_length = std::atoi(conn.request.getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->check to do on partial send 
 	int byte = write(conn.cgi_fd[1], (conn.request.getBody()).c_str(), content_length);
-
-	if (byte == content_length) {
+	if (byte < 0) {
+		return (false);
+	}
+	conn.request._content_length -= byte;
+	if (conn.request._content_length == 0) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
@@ -405,22 +407,24 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		info.connection.setLastConnTime(std::time(NULL));
 		_connections.insert(std::make_pair(conn.cgi_fd[0], info));
 	}
+	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }
 
 bool	Webserv::cgiOutHandler(Connection& conn)
 {
 	char buffer[4096];
-	ssize_t bytes;
+	ssize_t bytes = 1;
 
 	std::string	cgi_response;
-	while ((bytes = read(conn.cgi_fd[0], buffer, sizeof(buffer))) > 0) //-->check for partial read
-	{
+	while (bytes > 0) {
+		bytes = read(conn.cgi_fd[0], buffer, sizeof(buffer)); //-->check for partial read
+		if (bytes < 0) {
+			return (false);
+		}
 		cgi_response.append(buffer, bytes);
 	}
 	conn.response.setCgiBody(cgi_response);
-	if (bytes < 0)
-		return (false);
 
 	if (bytes == 0) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
@@ -431,6 +435,7 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		int status;
 		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
 			//do stuff
+		//	cgi::EndOfChild(conn);
 		}
 		conn.response.setState(Response::SEND_HEADER);
 	}

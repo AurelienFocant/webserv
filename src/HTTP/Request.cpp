@@ -200,6 +200,7 @@ bool	Request::bodyHandlerTransfertEncoding() {
 		_progress = DONE;
 		_complete = true;
 		_status_code = OK;
+		_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
 	}
 	else {
 		size_t	before_len = _body.size();
@@ -217,6 +218,7 @@ bool	Request::bodyHandlerContentLength() {
 		_progress = DONE;
 		_complete = true;
 		_status_code = OK;
+		_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
 	}
 	return (_complete);
 }
