@@ -515,8 +515,10 @@ bool	RequestHandler::processGetMethod()
 
 bool	RequestHandler::_hasContentTypeHeader(void)
 {
-	if (!_request.getHeaderValues("Content-Type")[0].empty())
-		return (true);
+	if (_request.getHeaderValues("Content-Type").size()) {
+		if (!_request.getHeaderValues("Content-Type")[0].empty())
+			return (true);
+	}
 	return (false);
 }
 
@@ -526,7 +528,7 @@ bool	RequestHandler::_isMultiformData(void)
 
 	std::string	header = _request.getHeaderValues("Content-Type")[0];
 	if ((pos = header.find("multipart/form-data")) != std::string::npos) {
-			return (true);
+		return (true);
 	}
 	return (false);
 }
@@ -554,19 +556,19 @@ std::string	RequestHandler::_extractFilename(std::string boundary)
 		return "";
 
 	std::string file("filename=");
-    start_of_filename = body.find(file);
-    if (start_of_filename == std::string::npos)
-        return "";
+	start_of_filename = body.find(file);
+	if (start_of_filename == std::string::npos)
+		return "";
 
-    start_of_filename += file.size();
+	start_of_filename += file.size();
 	end_of_filename = body.find("\r\n", start_of_filename);
 	if (end_of_filename == std::string::npos)
 		return "";
 
-    if (body[start_of_filename] == '"') {
+	if (body[start_of_filename] == '"') {
 		if (body[end_of_filename - 1] != '"')
-				return "";
-        start_of_filename++;
+			return "";
+		start_of_filename++;
 		end_of_filename--;
 	}
 
@@ -594,7 +596,7 @@ std::string	RequestHandler::_verifyFile(std::string filename)
 		return ("");
 
 	if (filename.find("../") != std::string::npos)
-			return ("");
+		return ("");
 
 	return (filename);
 }
