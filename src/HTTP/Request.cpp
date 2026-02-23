@@ -50,7 +50,7 @@ bool	Request::cleanRequest() {
 	_nbr_headers = 0;
 	_content_encoding = false;
 	_content_type.clear();
-	_content_length = -1; 
+	_content_length = std::numeric_limits<size_t>::max(); 
 
 	//Tokenizer cleaning
 	cleanTokenList();
@@ -105,8 +105,14 @@ bool	Request::parseRequest() {
 	}
 
 	if (_progress == PARSED) {
+		if (!isFirstLineValid()) {
+			_progress = DONE;
+			_complete = true;
+			return (_complete);
+		}
+
 		extractHeadersInformations();
-		if (!areHeadersValid()) {
+		if (!areHeadersValid() || !areMandatoryHeadersPresent()) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = BAD_REQUEST;
@@ -122,6 +128,22 @@ bool	Request::parseRequest() {
 	if (_complete)
 		cleanTokenList();
 	return (_complete);
+}
+
+bool	Request::isFirstLineValid() {
+	if (_method == NOT_SET) {
+		_status_code = INTERNAL_SERVER_ERROR;
+		return (false);
+	}
+	else if (_method == UNKNOWN) {
+		_status_code = NOT_IMPLEMENTED;
+		return (false);
+	}
+	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
+		_status_code = HTTP_VERSION_NOT_SUPPORTED;
+		return (false);
+	}
+	return (true);
 }
 
 bool	Request::handleBody() {
@@ -315,6 +337,8 @@ bool	Request::areHeadersValid() const {
 					++it;
 			}
 	}
+	if (_content_length != std::numeric_limits<size_t>::max() && _content_encoding == true)
+		return (false);
 	return (true);
 }
 
@@ -328,6 +352,32 @@ bool	Request::isUniqueHeader(const std::string& header_key, const char** unique_
 			return (true);
 	}
 	return (false);
+}
+
+bool	Request::areMandatoryHeadersPresent() const {
+	if (_http_version == "HTTP/1.0") {
+		const char*		mandatoryHeadersHttp_0[2] = {
+			"CONTENT_LENGTH", NULL
+		};
+		int i = 0;
+		while (mandatoryHeadersHttp_0[i]) {
+			if (_headers.count(mandatoryHeadersHttp_0[i]) < 1)
+				return (false);
+			++i;
+		}
+	}
+	else if (_http_version == "HTTP/1.1") {
+		const char*		mandatoryHeadersHttp_1[2] = {
+			"HOST", NULL
+		};
+		int i = 0;
+		while (mandatoryHeadersHttp_1[i]) {
+			if (_headers.count(mandatoryHeadersHttp_1[i]) < 1)
+				return (false);
+			++i;
+		}
+	}
+	return (true);
 }
 
 std::string	Request::normalizeHeadersKey(std::string argument) const {
