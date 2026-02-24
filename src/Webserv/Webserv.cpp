@@ -238,8 +238,6 @@ bool	Webserv::_checkForRdHup(Connection & conn)
 // Main loop
 void	Webserv::run()
 {
-	// for (int i = 0; i < 20; i++) {
-	// 	std::cout << i << std::endl;
 	while (1) {
 		if (g_signum == SIGINT)
 			return ;
@@ -277,7 +275,6 @@ bool	Webserv::listenHandler(Connection & conn)
 	int clientSocket = accept(conn.getFd(), NULL, 0);
 	if (clientSocket < 0)
 		return (false);
-	// ?????????? // should we stop everything or just skip this connection ?
 
 	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) < 0) {
 		close(clientSocket);
@@ -292,7 +289,6 @@ bool	Webserv::listenHandler(Connection & conn)
 		return (false);
 	}
 
-	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
 	Connection& new_connection = *(new Connection(clientSocket, _epoll_fd, std::time(NULL)));
 	t_info	info(new_connection, &Webserv::clientInHandler);
 	_connections.insert(std::make_pair(clientSocket, info));
@@ -306,11 +302,19 @@ bool	Webserv::clientInHandler(Connection & conn)
 		std::string request_str = _receiveLoop(conn.getFd());
 
 		if (!request_str.size()) {
+			std::cout << "empty request str" << std::endl;
 			return (false);
 		}
 
 		conn.request.addInput(request_str);
 		conn.request.parseRequest();
+
+		// if (conn.request.headerComplete()) {
+			// conn.server = findVirtServ
+			// conn.matched_location = findloc();
+			// compare body size with everything parsed already
+			// conn.request.headerComplete = 0;
+		// }
 
 		if (conn.request.isCompleted()) {
 			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))

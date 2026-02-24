@@ -102,7 +102,6 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["ast_root"]				= DirectiveSpecs(MAIN, 0, 0);
 	_direcSpecs["server"]	   			= DirectiveSpecs(MAIN, 0, 0);
 	_direcSpecs["location"]	   			= DirectiveSpecs(SERVER, 1, 1);
-
 	_direcSpecs["listen"]	   			= DirectiveSpecs(SERVER, 1, 1);
 	_direcSpecs["root"]		   			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["server_name"] 			= DirectiveSpecs(SERVER, 1, 1);
@@ -116,6 +115,8 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["virtual"]				= DirectiveSpecs(LOCATION, 1, 1);
 	_direcSpecs["alias"]				= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["error_page"]			= DirectiveSpecs(SERVER|LOCATION, 2, 999);
+	_direcSpecs["max_body_size"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["cgi_timeout"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 }
 
 
@@ -135,6 +136,8 @@ void ConfigBuilder::_initHandlers()
 	_handlers["virtual"]			= &ConfigBuilder::_handleVirtualLocation;
 	_handlers["alias"]				= &ConfigBuilder::_handleAlias;
 	_handlers["error_page"]			= &ConfigBuilder::_handleErrorPages;
+	_handlers["max_body_size"]		= &ConfigBuilder::_handleMaxBodySize;
+	_handlers["cgi_timeout"]		= &ConfigBuilder::_handleCGITimeout;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -300,6 +303,34 @@ void ConfigBuilder::_handleErrorPages(const DirectiveNode& d)
 
 		_getCurrentCtxt().setErrorPage(n, *(d.args.end()));
 	}
+}
+
+void ConfigBuilder::_handleMaxBodySize(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	long size;
+	char c;
+
+	ss >> size;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid size format");
+
+	_getCurrentCtxt().setMaxBodySize(size);
+}
+
+void ConfigBuilder::_handleCGITimeout(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int time;
+	char c;
+
+	ss >> time;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid time format");
+	if (time < 1 || time > 600)
+		_error(d.line, "cgi_timeout should be between 1sec and 10min");
+
+	_getCurrentCtxt().setKeepalive_timeout(time);
 }
 
 

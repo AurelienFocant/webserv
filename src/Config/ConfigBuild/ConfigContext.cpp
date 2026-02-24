@@ -19,7 +19,9 @@ ConfigContext::ConfigContext(ContextType t)
 	, _redirect_code(0)
 	, _redirect("")
 	, _cgi(false)
+	, _cgi_timeout(60)
 	, _virtualLocation(false)
+	, _max_body_size(1048576)
 	, _locations()
 {
 	_error_pages = _initDefaultErrorPages();
@@ -42,7 +44,9 @@ ConfigContext::ConfigContext(const ConfigContext &src)
 	, _redirect_code(src._redirect_code)
 	, _redirect(src._redirect)
 	, _cgi(src._cgi)
+	, _cgi_timeout(src._cgi_timeout)
 	, _virtualLocation(src._virtualLocation)
+	, _max_body_size(src._max_body_size)
 	, _error_pages(src._error_pages)
 	, _indexes(src._indexes)
 	, _allowed_methods(src._allowed_methods)
@@ -65,11 +69,13 @@ ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
 		_redirect_code = rhs._redirect_code;
 		_redirect = rhs._redirect;
 		_cgi = rhs._cgi;
+		_cgi_timeout = rhs._cgi_timeout;
 		_virtualLocation = rhs._virtualLocation;
 		_error_pages = rhs._error_pages;
 		_indexes = rhs._indexes;
 		_allowed_methods = rhs._allowed_methods;
         _locations = rhs._locations;
+		_max_body_size = rhs._max_body_size;
 	}
 	return *this;
 }
@@ -111,4 +117,6 @@ void ConfigContext::inheritFrom(const ConfigContext &parent)
 	_redirect = parent._redirect;
 	_allowed_methods = parent._allowed_methods;
 	_error_pages = parent._error_pages;
+	_max_body_size = parent._max_body_size;
+	_cgi_timeout = parent._cgi_timeout;
 }
