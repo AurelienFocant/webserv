@@ -39,8 +39,9 @@ void	RequestHandler::handleRequest()
 		_response.setStatusCode(_request.getStatusCode());
 	else
 		extractPath() && resolvePath() && processMethods();
-
-	resp::finalizeResponse(_response, _request, _server.getErrorPages());
+	if (_response.isCGI && _response.getStatusCode() >= 400)
+		return;
+	resp::prepareResponse(_response, _request, _server.getErrorPages());
 }
 
 

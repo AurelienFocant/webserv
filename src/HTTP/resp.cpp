@@ -9,7 +9,7 @@
 
 namespace resp
 {
-	void	finalizeResponse(Response& response, const Request& request, const std::map<int, std::string>& error_pages)
+	void	prepareResponse(Response& response, const Request& request, const std::map<int, std::string>& error_pages)
 	{
 		int status_code = response.getStatusCode();
 

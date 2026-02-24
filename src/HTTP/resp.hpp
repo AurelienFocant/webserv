@@ -10,7 +10,7 @@ class Request;
 
 namespace resp
 {
-	void			finalizeResponse(Response& response, const Request& request, const std::map<int, std::string>& error_pages);
+	void			prepareResponse(Response& response, const Request& request, const std::map<int, std::string>& error_pages);
 	bool 			loadBody(Response& response, const std::string& path);
 	bool 			loadFileToString(const std::string& path, std::string& result);
 	bool			loadErrorPage(int status_code, const std::map<int, std::string>& error_pages, std::string& result);
