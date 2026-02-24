@@ -15,6 +15,7 @@
 
 #define LISTEN_SOCK	0
 #define MAX_EVENTS	1024
+#define BUFFER_SIZE 4096
 
 int g_signum;
 
@@ -190,7 +191,10 @@ void	Webserv::initWebServer()
 		server_addr.sin_addr.s_addr = INADDR_ANY;
 		server_addr.sin_port = htons(it->getPort());
 		if (bind(listenSocket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
+		{
+			perror("bind");
 			throw (std::runtime_error("bind failed"));
+		}
 
 		if (listen(listenSocket, SOMAXCONN) < 0)
 			throw (std::runtime_error("listen failed"));
@@ -322,21 +326,20 @@ bool	Webserv::clientOutHandler(Connection & conn)
 	if (conn.getEvent() & EPOLLOUT) {
 		if (conn.response.isDefault()) {
 			conn.virtual_server = _resolveVirtualServer(conn);
-			RequestHandler	reqHandl(conn);
-			reqHandl.handleRequest();
+			RequestHandler	reqHandler(conn);
+			reqHandler.handleRequest();
 
 			//check status to do ?
-			if (reqHandl.getResponse().getBodyType() == DYNAMIC) {
-				_startCGIresponse(reqHandl, conn);
+			if (reqHandler.getResponse().isCGI && (reqHandler.getResponse().getStatusCode() == OK
+				|| reqHandler.getResponse().getStatusCode() == CREATED)) {
+				_startCGIresponse(reqHandler, conn);
 			}
 		}
-
 
 		if (conn.response.getState() != Response::PROCESSING_CGI) {
 			conn.response.formatResponse();
 			conn.sendResponse();
 		}
-
 
 		if (conn.response.isDone()) {
 			if (conn.response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
@@ -359,12 +362,12 @@ bool	Webserv::clientOutHandler(Connection & conn)
 
 
 // CGI HANDLERS
-bool	Webserv::_startCGIresponse(RequestHandler & reqHandl, Connection & conn)
+bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 {
-	char **env = cgi::buildCgiEnv(reqHandl);
+	char **env = cgi::buildCgiEnv(reqHandler);
 	if (!env)
 		return (false);
-	if (!cgi::execute(reqHandl, conn, env))
+	if (!cgi::execute(reqHandler, conn, env))
 		return (false); // check what happend
 						//add CGI fd to epoll via conn
 
@@ -432,7 +435,8 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
 			//do stuff
 		}
-		conn.response.setState(Response::SEND_HEADER);
+		resp::prepareResponse(conn.response, conn.request, conn.virtual_server.getErrorPages());
+		//conn.response.setState(Response::SEND_HEADER);
 	}
 	return (true);
 }

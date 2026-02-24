@@ -1,7 +1,6 @@
 
 #include "Connection.hpp"
 #include "RequestHandler.hpp"
-#include "ResponseBuilder.hpp"
 #include "VirtualServer.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
@@ -20,9 +19,7 @@ RequestHandler::RequestHandler(Connection& currConn)
 	: _request(currConn.request)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
-	, _builder(currConn.request, currConn.response, _server.getErrorPages())
 	, _root(currConn.virtual_server.getRoot())
-	, _cage_root("")
 	, _request_path("")
 	, _resolved_path("")
 	, _matched_location(NULL)
@@ -39,18 +36,14 @@ RequestHandler::~RequestHandler() {}
 void	RequestHandler::handleRequest()
 {
 	if (_request.getStatusCode() != OK)
-	{
-		_builder.buildErrorResponse(_request.getStatusCode());
+		_response.setStatusCode(_request.getStatusCode());
+	else
+		extractPath() && resolvePath() && processMethods();
+	if (_response.isCGI && _response.getStatusCode() >= 400)
 		return;
-	}
-
-	if (!extractPath() || !resolvePath() || !processMethods())
-	{
-		if (!hasRedirect())
-			_builder.buildErrorResponse(_response.getStatusCode());
-		return;
-	}
+	resp::prepareResponse(_response, _request, _server.getErrorPages());
 }
+
 
 /* PATH PROCESSING */
 
@@ -63,9 +56,6 @@ bool	RequestHandler::extractPath()
 	}
 
 	_request_path = _request.getRequestUri();
-	//std::cout << "[DEBUG] RequestUri: " << _request.getRequestUri() << std::endl;
-	//std::cout << "[DEBUG] Path " << _request_path << std::endl;
-
 
 	size_t query_pos = _request_path.find("?");
 	if (query_pos != std::string::npos)
@@ -88,7 +78,7 @@ bool	RequestHandler::resolvePath()
 		{
 			if (!validateCGIScript())
 				return false;
-			_response.setBodyType(DYNAMIC);
+			_response.isCGI = true; //something like that
 			return true;
 		}
 
@@ -148,7 +138,8 @@ bool	RequestHandler::handleConfigRedirect()
 	if (redirect_uri.empty() || !redirect_code)
 		return false;
 	
-	_builder.buildRedirectResponse(redirect_code, redirect_uri);
+	_response.setHeader("Location", redirect_uri);
+	_response.setStatusCode(redirect_code);
 
 	return true;
 }
@@ -164,7 +155,9 @@ bool	RequestHandler::handleTrailingSlash()
 	std::string redirect_uri = _request_path + "/";
 	if (!_query.empty())
 		redirect_uri += '?' + _query;
-	_builder.buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
+
+	_response.setHeader("Location", redirect_uri);
+	_response.setStatusCode(MOVED_PERMANENTLY);
 
 	return true;
 }
@@ -218,7 +211,6 @@ void	RequestHandler::findLocation()
 				{
 					longest_match = route_path.size();
 					_matched_location = location;
-					_cage_root = location->getName();
 				}
 			}
 		}
@@ -325,7 +317,9 @@ bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded
 
 bool	RequestHandler::normalizePath()
 {
-	std::cout << "Cage root :" << _cage_root << std::endl;
+	std::string cage_root = !_matched_location ? "" : _matched_location->getName();
+
+	std::cout << "Cage root :" << cage_root << std::endl;
 	std::cout << "Request path :" << _request_path << std::endl;
 
 	std::string	decoded_path;
@@ -338,8 +332,8 @@ bool	RequestHandler::normalizePath()
 	}
 	// std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
-	// fonctionne meme hors location car _cage_root est initialise a "";
-	std::string temp_path = decoded_path.substr(_cage_root.size());
+	// fonctionne meme hors location car cage_root est initialise a "";
+	std::string temp_path = decoded_path.substr(cage_root.size());
 
 	bool slash[2] = {true, true};
 
@@ -384,7 +378,7 @@ bool	RequestHandler::normalizePath()
 		start = pos + 1;
 	}
 
-	temp_path = _cage_root;
+	temp_path = cage_root;
 
 	for (size_t i = 0; i < segments.size(); i++)
 	{
@@ -435,6 +429,7 @@ bool	RequestHandler::validatePath()
 
 bool	RequestHandler::isAllowedMethod()
 {
+	// ! autorisation par default?
 	if (!_matched_location)
 		return true;
 
@@ -448,7 +443,8 @@ bool	RequestHandler::isAllowedMethod()
 
 	if (allowed.find(method) == allowed.end())
 	{
-		_builder.buildMethodAllowedResponse(METHOD_NOT_ALLOWED, allowed);
+		_response.setStatusCode(METHOD_NOT_ALLOWED);
+		_response.setHeader("Allow", resp::buildAllowHeader(allowed));
 		return false;
 	}
 	return true;
@@ -458,7 +454,7 @@ bool	RequestHandler::processMethods()
 {
 	if (!isAllowedMethod())
 		return false;
-	if (_response.getBodyType() == DYNAMIC)
+	if (_response.isCGI)
 		return (true);
 
 	switch(_request.getMethod())
@@ -500,18 +496,20 @@ bool	RequestHandler::processGetMethod()
 		}
 	}
 
-	int	fd = fileSystem::openReadFile(_resolved_path);
+	// ADD CGI
+
+/* 	int	fd = fileSystem::openReadFile(_resolved_path);
 	if (fd < 0)
 	{
 		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
-	}
+	} */
 
-	_builder.buildFileResponse(fd, _resolved_path);
+	if (!resp::loadBody(_response, _resolved_path))
+		return false;
 
 	return true;
 }
-
 
 bool	RequestHandler::_hasContentTypeHeader(void)
 {
@@ -627,8 +625,6 @@ bool	RequestHandler::_saveDataToFile(std::string filename)
 	return (true);
 }
 
-
-
 bool	RequestHandler::processPostMethod()
 {
 	if (!_hasContentTypeHeader()) {
@@ -708,7 +704,6 @@ bool	RequestHandler::resolveIndex()
 		{
 			_resolved_path = test_path;
 			_is_directory = false;
-			// std::cout << "[DEBUG] index found: " << _resolved_path << std::endl;
 			return true;
 		}
 	}
@@ -726,24 +721,8 @@ void	RequestHandler::generateAutoIndex()
 {
 	std::string	html = ::generateAutoIndex(_resolved_path);
 
-	_builder.buildHtmlResponse(html, _resolved_path);
-}
-
-/* TESTS/DEBUG */
-void	RequestHandler::printRoutes()
-{
-	std::map<std::string, Location>::const_iterator it;
-
-	std::cout << "---------Print routes---------"<< std::endl;
-	for (it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
-	{
-		std::cout << "Key: " << it->first
-			<< "\nName-> " << it->second.getName()
-			<< "\nRoot-> " << it->second.getRoot()
-			<< "\nAlias-> " << it->second.getAlias() << std::endl;
-	}
-	std::cout << "---------------------------"<< std::endl;
-
+	_response.setBody(html);
+	_response.setHeader("Content-Type", "text/html");
 }
 
 /*Getters*/
