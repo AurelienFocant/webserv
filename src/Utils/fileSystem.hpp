@@ -27,6 +27,6 @@ namespace fileSystem {
 
 	std::string	getDirname(const std::string& path);
 
-}
+};
 
 #endif

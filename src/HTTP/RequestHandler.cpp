@@ -1,7 +1,6 @@
 
 #include "Connection.hpp"
 #include "RequestHandler.hpp"
-#include "ResponseBuilder.hpp"
 #include "VirtualServer.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
@@ -20,7 +19,6 @@ RequestHandler::RequestHandler(Connection& currConn)
 	: _request(currConn.request)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
-	, _builder(currConn.request, currConn.response, _server.getErrorPages())
 	, _root(currConn.virtual_server.getRoot())
 	, _cage_root("")
 	, _request_path("")
@@ -39,42 +37,13 @@ RequestHandler::~RequestHandler() {}
 void	RequestHandler::handleRequest()
 {
 	if (_request.getStatusCode() != OK)
-	{
 		_response.setStatusCode(_request.getStatusCode());
-		//_builder.buildErrorResponse(_request.getStatusCode());
-		return;
-	}
+	else
+		extractPath() && resolvePath() && processMethods();
 
-	if (!extractPath() || !resolvePath() || !processMethods())
-	{
-		if (!hasRedirect())
-		{
-			saveErrorPage();
-			//_builder.buildErrorResponse(_response.getStatusCode());
-		}
-		return;
-	}
+	resp::finalizeResponse(_response, _request, _server.getErrorPages());
 }
 
-
-bool	RequestHandler::saveErrorPage()
-{
-	std::string error_page = _server.getErrorPage(_response.getStatusCode());
-	if (error_page.empty())
-		return false;
-
-	// ADD check if absolute path or string to concatene
-
-	int fd = fileSystem::openReadFile(error_page);
-	if (fd < 0)
-	{
-		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
-		return false;
-	}
-	if (!fileToString(fd))
-		return false;
-	return true;
-}
 
 /* PATH PROCESSING */
 
@@ -109,7 +78,7 @@ bool	RequestHandler::resolvePath()
 		{
 			if (!validateCGIScript())
 				return false;
-			_response.setBodyType(DYNAMIC);
+			_response.isCGI = true; //something like that
 			return true;
 		}
 
@@ -462,6 +431,7 @@ bool	RequestHandler::validatePath()
 
 bool	RequestHandler::isAllowedMethod()
 {
+	// ! autorisation par default?
 	if (!_matched_location)
 		return true;
 
@@ -475,7 +445,8 @@ bool	RequestHandler::isAllowedMethod()
 
 	if (allowed.find(method) == allowed.end())
 	{
-		_builder.buildMethodAllowedResponse(METHOD_NOT_ALLOWED, allowed);
+		_response.setStatusCode(METHOD_NOT_ALLOWED);
+		_response.setHeader("Allow", resp::buildAllowHeader(allowed));
 		return false;
 	}
 	return true;
@@ -485,7 +456,7 @@ bool	RequestHandler::processMethods()
 {
 	if (!isAllowedMethod())
 		return false;
-	if (_response.getBodyType() == DYNAMIC)
+	if (_response.isCGI)
 		return (true);
 
 	switch(_request.getMethod())
@@ -527,42 +498,20 @@ bool	RequestHandler::processGetMethod()
 		}
 	}
 
-	int	fd = fileSystem::openReadFile(_resolved_path);
+	// ADD CGI
+
+/* 	int	fd = fileSystem::openReadFile(_resolved_path);
 	if (fd < 0)
 	{
 		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
-	}
-	if (!fileToString(fd))
+	} */
+
+	if (!resp::loadBody(_response, _resolved_path))
 		return false;
 
-	_builder.buildFileResponse(fd, _resolved_path);
-
 	return true;
 }
-
-bool RequestHandler::fileToString(int fd)
-{
-	char buffer[BUFFER_SIZE];
-	std::string body = "";
-	ssize_t bytes_read;
-
-	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
-		body.append(buffer);;
-	if (bytes_read < 0)
-		{
-			_response.setStatusCode(INTERNAL_SERVER_ERROR);
-			std::cerr << "[Error] Failed to read file: " << strerror(errno) << std::endl;
-			close(fd);
-			return false;
-		}
-	close(fd);
-	_response.setBodyContent(body);
-	_response.setBodySize(body.size());
-
-	return true;
-}
-
 
 bool	RequestHandler::_hasContentTypeHeader(void)
 {
@@ -676,8 +625,6 @@ bool	RequestHandler::_saveDataToFile(std::string filename)
 	return (true);
 }
 
-
-
 bool	RequestHandler::processPostMethod()
 {
 	if (!_hasContentTypeHeader()) {
@@ -773,7 +720,8 @@ void	RequestHandler::generateAutoIndex()
 {
 	std::string	html = ::generateAutoIndex(_resolved_path);
 
-	_builder.buildHtmlResponse(html, _resolved_path);
+	_response.setBody(html);
+	_response.setHeader("Conetent-Type", "text/html");
 }
 
 /* TESTS/DEBUG */

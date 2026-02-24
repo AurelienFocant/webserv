@@ -12,8 +12,8 @@
 #include <ctime>
 
 
-#include "ResponseBuilder.hpp"
 #include "HTTPenum.hpp"
+#include "resp.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
 
@@ -22,7 +22,6 @@ class Response;
 class Request;
 class Location;
 class VirtualServer;
-class ResponseBuilder;
 
 class RequestHandler
 {
@@ -33,7 +32,6 @@ class RequestHandler
 	const Request&			_request;
 	Response&				_response;
 	VirtualServer&			_server;
-	ResponseBuilder			_builder;
 
 	/* Path Resolution */
 	std::string				_root;
@@ -72,19 +70,12 @@ class RequestHandler
 	bool			processGetMethod();
 	bool			processPostMethod();
 	bool			processDeleteMethod();
-	bool 			fileToString(int fd);
-	bool			saveErrorPage();
 	bool			_hasContentTypeHeader();
 	bool			_isMultiformData();
 	std::string		_extractBoundary();
 	std::string		_extractFilename(std::string boundary);
 	std::string		_verifyFile(std::string filename);
 	bool			_saveDataToFile(std::string filename);
-
-	/* GET Method */
-
-	/*POST Method*/
-	bool			createNewUser() ;
 
 	/* Directory listing / Index */
 	bool			resolveIndex();
