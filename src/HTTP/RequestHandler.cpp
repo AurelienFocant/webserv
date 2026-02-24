@@ -20,7 +20,6 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _response(currConn.response)
 	, _server(currConn.virtual_server)
 	, _root(currConn.virtual_server.getRoot())
-	, _cage_root("")
 	, _request_path("")
 	, _resolved_path("")
 	, _matched_location(NULL)
@@ -140,7 +139,6 @@ bool	RequestHandler::handleConfigRedirect()
 	
 	_response.setHeader("Location", redirect_uri);
 	_response.setStatusCode(redirect_code);
-	//_builder.buildRedirectResponse(redirect_code, redirect_uri);
 
 	return true;
 }
@@ -159,8 +157,6 @@ bool	RequestHandler::handleTrailingSlash()
 
 	_response.setHeader("Location", redirect_uri);
 	_response.setStatusCode(MOVED_PERMANENTLY);
-
-	//_builder.buildRedirectResponse(MOVED_PERMANENTLY, redirect_uri);
 
 	return true;
 }
@@ -214,7 +210,6 @@ void	RequestHandler::findLocation()
 				{
 					longest_match = route_path.size();
 					_matched_location = location;
-					_cage_root = location->getName();
 				}
 			}
 		}
@@ -321,7 +316,9 @@ bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded
 
 bool	RequestHandler::normalizePath()
 {
-	std::cout << "Cage root :" << _cage_root << std::endl;
+	std::string cage_root = !_matched_location ? "" : _matched_location->getName();
+
+	std::cout << "Cage root :" << cage_root << std::endl;
 	std::cout << "Request path :" << _request_path << std::endl;
 
 	std::string	decoded_path;
@@ -334,8 +331,8 @@ bool	RequestHandler::normalizePath()
 	}
 	// std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
-	// fonctionne meme hors location car _cage_root est initialise a "";
-	std::string temp_path = decoded_path.substr(_cage_root.size());
+	// fonctionne meme hors location car cage_root est initialise a "";
+	std::string temp_path = decoded_path.substr(cage_root.size());
 
 	bool slash[2] = {true, true};
 
@@ -380,7 +377,7 @@ bool	RequestHandler::normalizePath()
 		start = pos + 1;
 	}
 
-	temp_path = _cage_root;
+	temp_path = cage_root;
 
 	for (size_t i = 0; i < segments.size(); i++)
 	{
@@ -702,7 +699,6 @@ bool	RequestHandler::resolveIndex()
 		{
 			_resolved_path = test_path;
 			_is_directory = false;
-			// std::cout << "[DEBUG] index found: " << _resolved_path << std::endl;
 			return true;
 		}
 	}
@@ -721,24 +717,7 @@ void	RequestHandler::generateAutoIndex()
 	std::string	html = ::generateAutoIndex(_resolved_path);
 
 	_response.setBody(html);
-	_response.setHeader("Conetent-Type", "text/html");
-}
-
-/* TESTS/DEBUG */
-void	RequestHandler::printRoutes()
-{
-	std::map<std::string, Location>::const_iterator it;
-
-	std::cout << "---------Print routes---------"<< std::endl;
-	for (it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
-	{
-		std::cout << "Key: " << it->first
-			<< "\nName-> " << it->second.getName()
-			<< "\nRoot-> " << it->second.getRoot()
-			<< "\nAlias-> " << it->second.getAlias() << std::endl;
-	}
-	std::cout << "---------------------------"<< std::endl;
-
+	_response.setHeader("Content-Type", "text/html");
 }
 
 /*Getters*/

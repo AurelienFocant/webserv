@@ -35,7 +35,6 @@ class RequestHandler
 
 	/* Path Resolution */
 	std::string				_root;
-	std::string				_cage_root;
 	std::string				_request_path;
 	std::string				_resolved_path;
 	const Location*			_matched_location;
@@ -81,9 +80,6 @@ class RequestHandler
 	bool			resolveIndex();
 	bool			hasAutoIndex();
 	void			generateAutoIndex();
-
-	/* For testing */
-	void			printRoutes();
 
 	public:
 
