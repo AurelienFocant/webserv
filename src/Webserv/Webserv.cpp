@@ -436,7 +436,6 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 			//do stuff
 		}
 		resp::prepareResponse(conn.response, conn.request, conn.virtual_server.getErrorPages());
-		//conn.response.setState(Response::SEND_HEADER);
 	}
 	return (true);
 }

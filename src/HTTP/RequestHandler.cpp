@@ -39,7 +39,7 @@ void	RequestHandler::handleRequest()
 		_response.setStatusCode(_request.getStatusCode());
 	else
 		extractPath() && resolvePath() && processMethods();
-	if (_response.isCGI && _response.getStatusCode() >= 400)
+	if (_response.isCGI && _response.getStatusCode() < 300)
 		return;
 	resp::prepareResponse(_response, _request, _server.getErrorPages());
 }
