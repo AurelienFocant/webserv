@@ -2,6 +2,7 @@
 /*                                                                            */
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
+
 /*                                                    +:+ +:+         +:+     */
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -145,7 +146,7 @@ bool	Request::parseRequest() {
 	if (_progress == BODY_HANDLING)
 		(this->*_body_handler)();
 
-	std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
+	// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
 
 	if (_complete)
 		cleanTokenList();

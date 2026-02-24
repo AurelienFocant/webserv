@@ -45,6 +45,7 @@ void	Connection::sendResponse()
 	}
 */
 	ssize_t bytesSent = send(_fd, data, data_size, MSG_NOSIGNAL);
+	std::cout << response << std::endl;
 
 	if (bytesSent > 0)
 		response.updateBytesSend(bytesSent);
@@ -65,12 +66,12 @@ bool	Connection::hasTimedOut(void)
 
 
 // Getters Setters
-void	Connection::setEvent(uint32_t event)
+void	Connection::setEvent(struct epoll_event event)
 {
 	_event = event;
 }
 
-uint32_t	Connection::getEvent(void) const
+struct epoll_event	Connection::getEvent(void) const
 {
 	return (_event);
 }

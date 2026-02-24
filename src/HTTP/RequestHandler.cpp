@@ -617,9 +617,10 @@ bool	RequestHandler::_saveDataToFile(std::string filename)
 
 	int bytes_sent = 0;
 	int start = 0;
-	while ((bytes_sent = write(fd, &(s_buffer.c_str()[start]), bytes_to_send)) > 0) {
+	while ((bytes_sent = write(fd, &(s_buffer.c_str()[start]), 4000)) > 0) {
 		bytes_to_send -= bytes_sent;
 		start += bytes_sent;
+		std::cout << bytes_to_send << " left to send" << std::endl;
 	}
 	close(fd);
 	return (true);

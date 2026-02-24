@@ -38,9 +38,9 @@ class Connection
 	//Copy constructor private for testing
 		Connection	( const Connection& src );
 
-		int			_fd;
-		uint32_t	_event;
-		const int	_epoll_fd;
+		int					_fd;
+		const int			_epoll_fd;
+		struct epoll_event	_event;
 
 		const	std::time_t	_first_conn;
 				std::time_t	_last_conn;
@@ -62,8 +62,8 @@ class Connection
 
 
 
-		void		setEvent(uint32_t event);
-		uint32_t	getEvent(void) const;
+		void		setEvent(struct epoll_event event);
+		struct epoll_event	getEvent(void) const;
 		int			getFd(void) const;
 		const int&	getEpollFd(void) const {return (_epoll_fd);};
 

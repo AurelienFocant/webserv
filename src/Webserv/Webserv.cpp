@@ -110,8 +110,8 @@ void	Webserv::_closeStaleConnections(void)
 		if (conn.conn_closed)
 			return (_closeConnection(conn));
 		// what about if its the very first connection and doesnt have any virtual server ?
-		if (conn.hasTimedOut())
-			return (_closeConnection(conn));
+		// if (conn.hasTimedOut())
+		// 	return (_closeConnection(conn));
 	}
 }
 
@@ -218,16 +218,17 @@ void	Webserv::initWebServer()
 
 bool	Webserv::_checkForRdHup(Connection & conn)
 {
-			if (conn.getEvent() & EPOLLRDHUP) {
+			if (conn.getEvent().events & EPOLLRDHUP) {
 				std::cout << "[Error] RDHUP" <<std::endl; 
 				conn.conn_closed = true;
 				return (false);
 			}
 
 			// error
-			if (conn.getEvent() & EPOLLERR || conn.getEvent() & EPOLLHUP) {
+			if (conn.getEvent().events & EPOLLERR || conn.getEvent().events & EPOLLHUP) {
 				std::cout << "[Error] HUP or ERR" <<std::endl; 
-				conn.conn_closed = true;
+				if (conn.getEvent().data.fd == conn.getFd())
+					conn.conn_closed = true;
 				return (false);
 			}
 
@@ -259,7 +260,7 @@ void	Webserv::run()
 				continue ;
 
 			Connection & currConn = it->second.connection;	// currConn is the value of <key, value>
-			currConn.setEvent(ready_events[i].events);
+			currConn.setEvent(ready_events[i]);
 
 			_checkForRdHup(currConn);
 			(this->*(it->second.handler))(currConn);
@@ -300,7 +301,7 @@ bool	Webserv::listenHandler(Connection & conn)
 
 bool	Webserv::clientInHandler(Connection & conn)
 {
-	if (conn.getEvent() & EPOLLIN) {
+	if (conn.getEvent().events & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
 
@@ -323,7 +324,7 @@ bool	Webserv::clientInHandler(Connection & conn)
 
 bool	Webserv::clientOutHandler(Connection & conn)
 {
-	if (conn.getEvent() & EPOLLOUT) {
+	if (conn.getEvent().events & EPOLLOUT) {
 		if (conn.response.isDefault()) {
 			conn.virtual_server = _resolveVirtualServer(conn);
 			RequestHandler	reqHandler(conn);
