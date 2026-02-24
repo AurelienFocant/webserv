@@ -65,24 +65,6 @@ namespace resp
 			return false;
 
 		body = ss.str();
-
-	/* 		char buffer[BUFFER_SIZE];
-		std::string body = "";
-		ssize_t bytes_read;
-
-		while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
-			body.append(buffer);;
-		if (bytes_read < 0)
-			{
-				_response.setStatusCode(INTERNAL_SERVER_ERROR);
-				std::cerr << "[Error] Failed to read file: " << strerror(errno) << std::endl;
-				close(fd);
-				return false;
-			}
-		close(fd);
-		_response.setBodyContent(body);
-		_response.setBodySize(body.size()); */
-
 		return true;
 }
 
@@ -91,17 +73,7 @@ namespace resp
 		std::map<int, std::string>::const_iterator it = error_pages.find(status_code);
 		if (it == error_pages.end())
 			return false;
-
 		// ADD check if absolute path or string to concatene
-
-/* 		int fd = fileSystem::openReadFile(error_page);
-		if (fd < 0)
-		{
-			_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
-			return false;
-		}
-		if (!fileToString(fd))
-			return false; */
 
 		loadFileToString(it->second, body);
 		return true;
