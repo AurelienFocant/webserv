@@ -469,6 +469,10 @@ t_HttpCode		Request::getStatusCode() const {
 	return(_status_code);
 }
 
+const int&				Request::getState() const {
+	return (_progress);
+}
+
 std::vector<std::string>	Request::getHeaderValues(std::string header_name) const {
 	header_name = normalizeHeadersKey(header_name);
 	std::pair<

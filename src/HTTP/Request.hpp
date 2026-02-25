@@ -39,6 +39,7 @@ class	Request	: private HTTPTokenizer {
 		std::string		getBody() const ;
 		bool			isCompleted() const ;
 		t_HttpCode		getStatusCode() const ;
+		const int&		getState() const ;
 
 		std::vector<std::string>	getHeaderValues(std::string header_name) const ;
 		const std::multimap<std::string, std::string>&	getHeaders() const ;
