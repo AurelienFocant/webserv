@@ -6,7 +6,7 @@
 /*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/23 15:18:42 by stempels          #+#    #+#             */
-/*   Updated: 2026/02/25 12:20:34 by stempels         ###   ########.fr       */
+/*   Updated: 2026/02/25 13:40:43 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ bool	Request::isFirstLineValid() {
 		return (false);
 	}
 	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
-		_status_code = HTTP_VERSION_NOT_SUPPORTED;
+		_status_code = BAD_REQUEST;
 		return (false);
 	}
 	return (true);
@@ -250,8 +250,8 @@ bool	Request::defineBodyExtractionHandler() {
 	}
 	else {
 		_progress = DONE;
-		_complete = true;
-		_status_code = NOT_IMPLEMENTED;
+//		_complete = true;
+//		_status_code = NOT_IMPLEMENTED;
 		return (false);
 	}
 	_progress = BODY_HANDLING;
