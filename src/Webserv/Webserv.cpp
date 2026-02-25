@@ -334,7 +334,6 @@ bool	Webserv::clientOutHandler(Connection & conn)
 {
 	if (conn.getEvent().events & EPOLLOUT) {
 		if (conn.request_handler.getResponse().isDefault()) {
-			//conn.virtual_server = _resolveVirtualServer(conn);
 			conn.request_handler.handleRequest();
 
 			//check status to do ?

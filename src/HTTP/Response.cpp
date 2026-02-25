@@ -4,9 +4,6 @@ Response::Response()
 : isCGI(false)
 , _state(DEFAULT)
 , _status_code(OK)
-, _http_version("")
-, _body("")
-, _data("")
 , _offset(0)
 {}
 
