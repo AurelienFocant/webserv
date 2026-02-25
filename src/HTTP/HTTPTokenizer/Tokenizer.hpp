@@ -6,7 +6,7 @@
 
 typedef enum e_tokenType
 {
-	ERROR, WORD, COLON, COMA, EOL, EOC, SEMICOLON, LBRACE, RBRACE
+	ERROR, WORD, COLON, COMA, EOL, SEMICOLON, LBRACE, RBRACE
 
 }	t_tokenType;
 
