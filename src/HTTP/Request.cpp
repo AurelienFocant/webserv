@@ -276,6 +276,7 @@ bool	Request::bodyHandlerTransfertEncoding() {
 		_status_code = OK;
 	}
 	else {
+		//check for max_body size
 		size_t	before_len = _body.size();
 		_body += extractInput(_content_length);
 		_content_length -= (_body.size() - before_len);
@@ -284,6 +285,7 @@ bool	Request::bodyHandlerTransfertEncoding() {
 }
 
 bool	Request::bodyHandlerContentLength() {
+	//check for max_body size
 	size_t	before_len = _body.size();
 	_body += extractInput(_content_length);
 	_content_length -= (_body.size() - before_len);
@@ -363,8 +365,9 @@ bool	Request::areHeadersValid() const {
 			}
 	}
 	else if (_http_version == "HTTP/1.1") {
-		const char*		uniqueHeadersHttp_1[3] = { 
-			"HOST", "CONTENT_LENGTH", NULL};
+		const char*		uniqueHeadersHttp_1[2] = { 
+			"CONTENT_LENGTH", NULL
+			};
 			while (it != _headers.end()) {
 				int nbr_headers = _headers.count(it->first);
 				if (isUniqueHeader(it->first, uniqueHeadersHttp_1) &&  nbr_headers > 1)
@@ -392,8 +395,8 @@ bool	Request::isUniqueHeader(const std::string& header_key, const char** unique_
 
 bool	Request::areMandatoryHeadersPresent() const {
 	if (_http_version == "HTTP/1.0") {
-		const char*		mandatoryHeadersHttp_0[2] = {
-			"CONTENT_LENGTH", NULL
+		const char*		mandatoryHeadersHttp_0[1] = {
+			NULL
 		};
 		int i = 0;
 		while (mandatoryHeadersHttp_0[i]) {
@@ -404,7 +407,7 @@ bool	Request::areMandatoryHeadersPresent() const {
 	}
 	else if (_http_version == "HTTP/1.1") {
 		const char*		mandatoryHeadersHttp_1[2] = {
-			"HOST", NULL
+		"HOST", NULL
 		};
 		int i = 0;
 		while (mandatoryHeadersHttp_1[i]) {
