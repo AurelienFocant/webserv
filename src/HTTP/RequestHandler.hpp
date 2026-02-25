@@ -94,7 +94,7 @@ class RequestHandler
 
 	/* Main method*/
 	void			handleRequest();
-	void			processRequest(const std::string& request_str);
+	void			processRequest(const std::string& request_str, int client_fd);
 
 	/* Getters */
 	std::string		getRoot() const {return _root;}

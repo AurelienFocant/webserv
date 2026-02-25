@@ -115,7 +115,7 @@ void	Webserv::_closeStaleConnections(void)
 	}
 }
 
-VirtualServer&	Webserv::_resolveVirtualServer(Connection const& conn)
+const VirtualServer&	Webserv::_resolveVirtualServer(const Connection& conn)
 {
 	sockaddr_in addr;
 	socklen_t len = sizeof(addr);
@@ -127,7 +127,7 @@ VirtualServer&	Webserv::_resolveVirtualServer(Connection const& conn)
 
 	unsigned int port = ntohs(addr.sin_port);
 
-	std::string	host = conn.request.getHeaderValues("host")[0];
+	std::string	host = conn.request_handler.getRequest().getHeaderValues("host")[0];
 
 	size_t	colon = host.find(':');
 	if (colon != std::string::npos)
@@ -308,6 +308,12 @@ bool	Webserv::clientInHandler(Connection & conn)
 
 		conn.request_handler.processRequest(request_str);
 
+		if (conn.request_handler.getRequest().getState() == PARSED)
+		{
+			request_handler.setVirtualServer() = _resolveVirtualServer(conn);
+			request_handler.findLocation();
+		}
+
 		if (conn.request_handler.getRequest().isCompleted()) {
 			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
@@ -322,7 +328,7 @@ bool	Webserv::clientOutHandler(Connection & conn)
 {
 	if (conn.getEvent().events & EPOLLOUT) {
 		if (conn.response.isDefault()) {
-			conn.virtual_server = _resolveVirtualServer(conn);
+			//conn.virtual_server = _resolveVirtualServer(conn);
 			RequestHandler	reqHandler(conn);
 			reqHandler.handleRequest();
 

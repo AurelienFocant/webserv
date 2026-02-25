@@ -32,7 +32,7 @@ RequestHandler::RequestHandler(Connection& currConn)
 
 RequestHandler::~RequestHandler() {}
 
-void	RequestHandler::processRequest(const std::string& input)
+void	RequestHandler::processRequest(const std::string& input, const int client_fd)
 {
 		addInput(input);
 		_request.parseRequest();
