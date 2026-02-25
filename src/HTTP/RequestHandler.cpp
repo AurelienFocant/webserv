@@ -15,10 +15,15 @@
 
 /* ////////////REQUEST HANDLER////////////////// */
 
+RequestHandler::RequestHandler()
+{
+	clean();
+} 
+
+
 RequestHandler::RequestHandler(Connection& currConn) 
 	: _request()
-	, _response()
-	, _server(currConn.virtual_server)
+	, _server(NULL)
 	, _root(currConn.virtual_server.getRoot())
 	, _request_path("")
 	, _resolved_path("")
@@ -28,27 +33,24 @@ RequestHandler::RequestHandler(Connection& currConn)
 	, _script_name("")
 	, _path_info("")
 	, _query("")
+	, _response()
 {}
 
 RequestHandler::~RequestHandler() {}
 
-void	RequestHandler::processRequest(const std::string& input, const int client_fd)
+void	RequestHandler::processRequest(const std::string& input)
 {
-		addInput(input);
+		_request.addInput(input);
 		_request.parseRequest();
-
-		if (_request.getState() == BODY_HANDLING)
-			_request.handleBody();
-		// if (conn.request.headerComplete()) {
-			// conn.server = findVirtServ
-			// conn.matched_location = findloc();
-			// compare body size with everything parsed already
-			// conn.request.headerComplete = 0;
-		// }
-
-
+		return ;
 }
 
+void	RequestHandler::processBody()
+{
+	if (_matched_location)
+		_request.handleBody((*_matched_location).getMaxBodySize());
+	return ;
+}
 
 void	RequestHandler::addInput(const std::string& input)
 {
@@ -64,7 +66,7 @@ void	RequestHandler::handleRequest()
 		extractPath() && resolvePath() && processMethods();
 	if (_response.isCGI && _response.getStatusCode() < 300)
 		return;
-	resp::prepareResponse(_response, _request, _server.getErrorPages());
+	resp::prepareResponse(_response, _request, _server->getErrorPages());
 }
 
 
@@ -200,7 +202,7 @@ void	RequestHandler::findLocation()
 	std::string	ext;
 	size_t		longest_match = 0;
 
-	for (std::map<std::string, Location>::const_iterator it = _server.getLocations().begin(); it != _server.getLocations().end(); it++)
+	for (std::map<std::string, Location>::const_iterator it = _server->getLocations().begin(); it != _server->getLocations().end(); it++)
 	{
 		const std::string&	route_path = it->first;
 		const Location*		location = &(it->second);
@@ -712,7 +714,7 @@ bool	RequestHandler::processDeleteMethod()
 /* INDEX/DIRECTORY HANDLING */
 bool	RequestHandler::resolveIndex()
 {
-	std::vector<std::string> indexes =_server.getIndexes();
+	std::vector<std::string> indexes =_server->getIndexes();
 
 	if (indexes.empty())
 		return false;
@@ -738,7 +740,7 @@ bool	RequestHandler::hasAutoIndex()
 {
 	if (_matched_location)
 		return (_matched_location->getAutoIndex());
-	return _server.getAutoindex();
+	return _server->getAutoindex();
 }
 
 void	RequestHandler::generateAutoIndex()
@@ -749,7 +751,7 @@ void	RequestHandler::generateAutoIndex()
 	_response.setHeader("Content-Type", "text/html");
 }
 
-/*Getters*/
+/* Getters */
 const Request&	RequestHandler::getRequest() const
 {
 	return (_request);
@@ -757,4 +759,37 @@ const Request&	RequestHandler::getRequest() const
 
 const Response&	RequestHandler::getResponse() const {
 	return (_response);
+}
+
+const VirtualServer*	RequestHandler::getVirtualServer() const
+{
+	return _server;
+}
+
+/* Setters */
+void	RequestHandler::setVirtualServer(const VirtualServer& server)
+{
+	_server = &server;
+}
+
+void	RequestHandler::setRoot(const std::string& root)
+{
+	_root = root;
+}
+
+
+void	RequestHandler::clean()
+{
+	_request.cleanRequest();
+	_response.cleanResponse();
+	_server = NULL;
+	_root.clear();
+	_request_path.clear();
+	_resolved_path.clear();
+	_matched_location = NULL;
+	_matched_extension = NO_EXT;
+	_is_directory = false;
+	_script_name.clear();
+	_path_info.clear();
+	_query.clear();
 }

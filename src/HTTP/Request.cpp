@@ -111,8 +111,9 @@ bool	Request::parseRequest() {
 	return (_complete);
 }
 
-bool	Request::handleBody() {
+bool	Request::handleBody(int max_body) {
 		//add body size checking
+		(void)max_body;
 		(this->*_body_handler)();
 
 		// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.

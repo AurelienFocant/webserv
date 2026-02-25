@@ -29,7 +29,7 @@ class	Request	: private HTTPTokenizer {
 
 	/*Publics Methods*/
 		bool			parseRequest();
-		bool			handleBody();
+		bool			handleBody(int max_body);
 		bool			cleanRequest();
 		bool			addInput(const std::string& input) ;
 

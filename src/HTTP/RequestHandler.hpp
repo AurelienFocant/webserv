@@ -32,8 +32,7 @@ class RequestHandler
 	/*PRIVATE ATTRIBUTES */
 	/* Objects */
 	Request					_request;
-	Response				_response;
-	VirtualServer&			_server;
+	const VirtualServer*	_server;
 
 	/* Path Resolution */
 	std::string				_root;
@@ -55,7 +54,6 @@ class RequestHandler
 	bool			extractPath();
 	bool			resolvePath();
 	bool			validatePath();
-	void			findLocation();
 
 	bool			decodePath(const std::string& encoded, std::string& decoded);
 	bool			normalizePath();
@@ -89,23 +87,36 @@ class RequestHandler
 
 	/* PUBLIC METHODS */
 	/* Constructors / Destructors */
+	RequestHandler ();
 	RequestHandler	(Connection& currConn);
 	~RequestHandler	();
 
 	RequestHandler&	operator=(const RequestHandler& rhs);
 
+	/* Public Attributes */
+	Response		_response;
+
+
 	/* Main method*/
 	void			handleRequest();
-	void			processRequest(const std::string& request_str, int client_fd);
+	void			processRequest(const std::string& request_str);
+	void			processBody();
+	void			findLocation();
+	void			clean();
 
 	/* Getters */
-	std::string		getRoot() const {return _root;}
-	const Request&	getRequest() const ;
-	const Response&	getResponse() const ;
-	std::string		getQuery() const { return (_query);};
-	std::string		getScriptName() const { return (_script_name);};
-	t_extension		getExtension() const { return (_matched_extension);};
-	std::string		getResolvedPath() const { return (_resolved_path);};
+	std::string				getRoot() const {return _root;}
+	const Request&			getRequest() const ;
+	const Response&			getResponse() const ;
+	const VirtualServer*	getVirtualServer() const ;
+	std::string				getQuery() const { return (_query);};
+	std::string				getScriptName() const { return (_script_name);};
+	t_extension				getExtension() const { return (_matched_extension);};
+	std::string				getResolvedPath() const { return (_resolved_path);};
+
+	/* Setters */
+	void					setVirtualServer(const VirtualServer& server);
+	void					setRoot(const std::string& root);
 
 };
 
