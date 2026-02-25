@@ -341,6 +341,7 @@ bool	Webserv::clientOutHandler(Connection & conn)
 				|| conn.request_handler.getResponse().getStatusCode() == CREATED)) {
 				_startCGIresponse(conn.request_handler, conn);
 			}
+			
 		}
 
 		if (conn.request_handler.getResponse().getState() != Response::PROCESSING_CGI) {

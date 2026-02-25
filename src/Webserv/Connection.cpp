@@ -10,7 +10,6 @@ void	Connection::sendResponse()
 	data = request_handler._response.getDataToSend(data_size);
 
 	ssize_t bytesSent = send(_fd, data, data_size, MSG_NOSIGNAL);
-	std::cout << request_handler._response << std::endl;
 
 	if (bytesSent > 0)
 		request_handler._response.updateBytesSend(bytesSent);
