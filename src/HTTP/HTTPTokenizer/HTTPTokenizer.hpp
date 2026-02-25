@@ -23,7 +23,7 @@ class	HTTPTokenizer : private Tokenizer {
 		std::string				extractInput(char character) ;
 		bool					addInput(std::string input) ;
 		void					cleanTokenList() ;
-		void					removeEOC();
+		void					advance();
 
 	/*Getters*/
 		std::string				getInput() const ;
@@ -34,7 +34,7 @@ class	HTTPTokenizer : private Tokenizer {
 
 	protected:
 		std::vector<t_Token>					_token_list;
-		std::vector<t_Token>::const_iterator	_list_it;
+		std::vector<t_Token>::iterator	_list_it;
 		
 	private:
 	/*Private Attributes*/

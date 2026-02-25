@@ -62,8 +62,6 @@ std::string	Tokenizer::getTokenType(t_Token token) {
 			return ("COMA");	
 		case (EOL):
 			return ("EOL");	
-		case (EOC):
-			return ("EOC");	
 		default:
 			return ("\0");
 	}

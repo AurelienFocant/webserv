@@ -75,11 +75,9 @@ class	Request	: private HTTPTokenizer {
 
 	/*Private Methods*/
 //		t_method	idMethod(std::string& method) ;
-		bool	setMethod() ;
-		bool	setRequestUri() ;
-		bool	setHttpVersion() ;
-		bool	parseFirstLine() ;
-		bool	parseHeader() ;
+		void	parseFirstLine() ;
+		void	extractFirstLineInfo() ;
+		void	parseHeader() ;
 		bool	handleBody() ;
 
 		bool	isFirstLineValid() ; 
