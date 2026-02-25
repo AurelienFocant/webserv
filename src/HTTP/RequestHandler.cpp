@@ -37,6 +37,8 @@ void	RequestHandler::processRequest(const std::string& input)
 		addInput(input);
 		_request.parseRequest();
 
+		if (_request.getState() == BODY_HANDLING)
+			_request.handleBody();
 		// if (conn.request.headerComplete()) {
 			// conn.server = findVirtServ
 			// conn.matched_location = findloc();

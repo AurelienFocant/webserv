@@ -26,6 +26,7 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
+#include "RequestHandler.hpp"
 #include "VirtualServer.hpp"
 
 class RequestHandler;

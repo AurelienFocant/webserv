@@ -16,6 +16,8 @@
 #include "resp.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 
 class Connection;
 class Response;
