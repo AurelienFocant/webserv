@@ -37,6 +37,8 @@ void	RequestHandler::processRequest(const std::string& input, const int client_f
 		addInput(input);
 		_request.parseRequest();
 
+		if (_request.getState() == BODY_HANDLING)
+			_request.handleBody();
 		// if (conn.request.headerComplete()) {
 			// conn.server = findVirtServ
 			// conn.matched_location = findloc();
@@ -44,14 +46,6 @@ void	RequestHandler::processRequest(const std::string& input, const int client_f
 			// conn.request.headerComplete = 0;
 		// }
 
-		if (_request._progress == BODY_HANDLING)
-			(this->*_body_handler)();
-
-		// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
-
-		if (_complete)
-			cleanTokenList();
-		return (_complete);
 
 }
 
