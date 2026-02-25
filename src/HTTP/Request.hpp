@@ -29,6 +29,7 @@ class	Request	: private HTTPTokenizer {
 
 	/*Publics Methods*/
 		bool			parseRequest();
+		bool			handleBody();
 		bool			cleanRequest();
 		bool			addInput(const std::string& input) ;
 
@@ -79,7 +80,7 @@ class	Request	: private HTTPTokenizer {
 		void	parseFirstLine() ;
 		void	extractFirstLineInfo() ;
 		void	parseHeader() ;
-		bool	handleBody() ;
+		bool	setupBodyHandler() ;
 
 		bool	isFirstLineValid() ; 
 		bool	extractHeadersInformations() ;

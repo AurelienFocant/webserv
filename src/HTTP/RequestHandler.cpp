@@ -44,14 +44,6 @@ void	RequestHandler::processRequest(const std::string& input)
 			// conn.request.headerComplete = 0;
 		// }
 
-		if (_request._progress == BODY_HANDLING)
-			(this->*_body_handler)();
-
-		// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
-
-		if (_complete)
-			cleanTokenList();
-		return (_complete);
 
 }
 

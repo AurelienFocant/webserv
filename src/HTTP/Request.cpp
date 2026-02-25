@@ -86,15 +86,6 @@ bool	Request::parseRequest() {
 	
 	// std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.
 
-/*
-	while (_list_it != _token_list.end()) {
-		if (_list_it->tkType == ERROR) {
-			_progress = PARSER_ERROR;
-			break ;
-		}
-		++_list_it;
-	}
-*/
 	if (_progress < FIRST_LINE) {
 		parseFirstLine();
 	}
@@ -115,9 +106,23 @@ bool	Request::parseRequest() {
 			_status_code = BAD_REQUEST;
 			return (_complete);
 		}
-		handleBody();
+		setupBodyHandler();
 	}
+	return (_complete);
 }
+
+bool	Request::handleBody() {
+		//add body size checking
+		(this->*_body_handler)();
+
+		// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
+
+		if (_complete)
+			cleanTokenList();
+		return (_complete);
+}
+
+/*Private Methods*/
 
 void	Request::parseFirstLine() {
 	//iterate and consume token list
@@ -212,7 +217,7 @@ bool	Request::isFirstLineValid() {
 	return (true);
 }
 
-bool	Request::handleBody() {
+bool	Request::setupBodyHandler() {
 	if (_method == GET) { //Check for GET request
 		_progress = DONE;
 		_complete = true;
