@@ -306,20 +306,12 @@ bool	Webserv::clientInHandler(Connection & conn)
 			return (false);
 		}
 
-		conn.request.addInput(request_str);
-		conn.request.parseRequest();
+		conn.request_handler.processRequest(request_str);
 
-		// if (conn.request.headerComplete()) {
-			// conn.server = findVirtServ
-			// conn.matched_location = findloc();
-			// compare body size with everything parsed already
-			// conn.request.headerComplete = 0;
-		// }
-
-		if (conn.request.isCompleted()) {
+		if (conn.request_handler.getRequest().isCompleted()) {
 			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
-			
+		
 			_connections.find(conn.getFd())->second.handler = &Webserv::clientOutHandler;
 		}
 	}

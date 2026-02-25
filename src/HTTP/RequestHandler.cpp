@@ -16,8 +16,8 @@
 /* ////////////REQUEST HANDLER////////////////// */
 
 RequestHandler::RequestHandler(Connection& currConn) 
-	: _request(currConn.request)
-	, _response(currConn.response)
+	: _request()
+	, _response()
 	, _server(currConn.virtual_server)
 	, _root(currConn.virtual_server.getRoot())
 	, _request_path("")
@@ -31,6 +31,35 @@ RequestHandler::RequestHandler(Connection& currConn)
 {}
 
 RequestHandler::~RequestHandler() {}
+
+void	RequestHandler::processRequest(const std::string& input)
+{
+		addInput(input);
+		_request.parseRequest();
+
+		// if (conn.request.headerComplete()) {
+			// conn.server = findVirtServ
+			// conn.matched_location = findloc();
+			// compare body size with everything parsed already
+			// conn.request.headerComplete = 0;
+		// }
+
+		if (_request._progress == BODY_HANDLING)
+			(this->*_body_handler)();
+
+		// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
+
+		if (_complete)
+			cleanTokenList();
+		return (_complete);
+
+}
+
+
+void	RequestHandler::addInput(const std::string& input)
+{
+	_request.addInput(input);
+}
 
 
 void	RequestHandler::handleRequest()

@@ -28,8 +28,7 @@
 #include "Response.hpp"
 #include "VirtualServer.hpp"
 
-class Request;
-class Response;
+class RequestHandler;
 class Webserv;
 
 class Connection
@@ -49,18 +48,13 @@ class Connection
 	public:
 		bool			conn_closed;
 		VirtualServer	virtual_server;
-
-		Request		request;
-		Response	response;
+		RequestHandler	request_handler;
 
 		bool	hasTimedOut(void);
 		void	sendResponse();
 		pid_t		child_pid;
 		int			cgi_fd[2];
 		std::time_t	cgi_timeout;
-
-
-
 
 		void		setEvent(struct epoll_event event);
 		struct epoll_event	getEvent(void) const;

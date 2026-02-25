@@ -30,7 +30,7 @@ class	Request	: private HTTPTokenizer {
 	/*Publics Methods*/
 		bool			parseRequest();
 		bool			cleanRequest();
-		bool			addInput(std::string input) ;
+		bool			addInput(const std::string& input) ;
 
 	/*Setters - Getters*/
 		t_method		getMethod() const ;

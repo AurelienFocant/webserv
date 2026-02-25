@@ -117,14 +117,6 @@ bool	Request::parseRequest() {
 		}
 		handleBody();
 	}
-	if (_progress == BODY_HANDLING)
-		(this->*_body_handler)();
-
-	// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
-
-	if (_complete)
-		cleanTokenList();
-	return (_complete);
 }
 
 void	Request::parseFirstLine() {
@@ -501,8 +493,7 @@ const std::multimap<std::string, std::string>&	Request::getHeaders() const {
 }
 
 /*Setters*/
-
-bool	Request::addInput(std::string input) {
+bool	Request::addInput(const std::string& input) {
 	HTTPTokenizer::addInput(input);
 	return (true);
 }

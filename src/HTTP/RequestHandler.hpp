@@ -29,8 +29,8 @@ class RequestHandler
 
 	/*PRIVATE ATTRIBUTES */
 	/* Objects */
-	const Request&			_request;
-	Response&				_response;
+	Request					_request;
+	Response				_response;
 	VirtualServer&			_server;
 
 	/* Path Resolution */
@@ -47,6 +47,8 @@ class RequestHandler
 	std::string				_query;
 
 	/* PRIVATE METHODS */
+	void			addInput(const std::string& input);
+
 	/* Path processing */
 	bool			extractPath();
 	bool			resolvePath();
@@ -92,6 +94,7 @@ class RequestHandler
 
 	/* Main method*/
 	void			handleRequest();
+	void			processRequest(const std::string& request_str);
 
 	/* Getters */
 	std::string		getRoot() const {return _root;}
