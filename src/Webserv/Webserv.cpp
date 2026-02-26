@@ -15,7 +15,6 @@
 
 #define LISTEN_SOCK	0
 #define MAX_EVENTS	1024
-#define BUFFER_SIZE 4096
 
 int g_signum;
 
@@ -73,10 +72,10 @@ std::string	_receiveLoop(int fd)
 	// TO BE REDONE !! //
 
 	int		bytes_read; 
-	char	buf[BUFFER_SIZE];
+	char	buf[1024];
 	std::string	s;
 
-	while ((bytes_read = recv(fd, &buf, BUFFER_SIZE, 0)) > 0) {
+	while ((bytes_read = recv(fd, &buf, 1024, 0)) > 0) {
 		s.append(buf, bytes_read);
 	}
 	return (s);
@@ -300,10 +299,8 @@ bool	Webserv::clientInHandler(Connection & conn)
 	if (conn.getEvent().events & EPOLLIN) {
 
 		std::string request_str = _receiveLoop(conn.getFd());
-		std::cout << request_str << std::endl;
-
+		// std::string request_str = conn.receive();
 		if (!request_str.size()) {
-			std::cout << "empty request str" << std::endl;
 			return (false);
 		}
 

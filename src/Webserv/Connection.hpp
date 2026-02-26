@@ -52,6 +52,7 @@ class Connection
 		RequestHandler	request_handler;
 
 		bool	hasTimedOut(void);
+		std::string	receive();
 		void	sendResponse();
 		pid_t		child_pid;
 		int			cgi_fd[2];

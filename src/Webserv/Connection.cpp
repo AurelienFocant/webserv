@@ -2,6 +2,29 @@
 
 #include <iostream>
 
+#define BUFFER_SIZE	1024
+
+std::string	Connection::receive()
+{
+	int		bytes_read; 
+	char	buf[BUFFER_SIZE];
+	std::string	s;
+
+	bytes_read = recv(_fd, &buf, BUFFER_SIZE, 0);
+	if (!bytes_read)
+	{
+		conn_closed = true;
+		return ("");
+	}
+	if (bytes_read < 0)
+	{
+		return ("");
+	}
+
+	s.append(buf, bytes_read);
+	return (s);
+}
+
 void	Connection::sendResponse()
 {
 	const char *data;
