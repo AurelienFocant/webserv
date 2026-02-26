@@ -19,6 +19,7 @@ namespace resp
 			if (!resp::loadErrorPage(status_code, error_pages, body))
 			{
 				// do stuff;
+				// 500 error?
 			}
 			response.setBody(body);
 			response.setHeader("Content-Type", "text/html");
@@ -73,7 +74,11 @@ namespace resp
 		std::map<int, std::string>::const_iterator it = error_pages.find(status_code);
 		if (it == error_pages.end())
 			return false;
+
 		// ADD check if absolute path or string to concatene
+/* 		std::string error_path;
+		retrieve _root from RH
+		it->second[0] == '/' ? error_path = it->second : error_path = root + it->second; */
 
 		loadFileToString(it->second, body);
 		return true;

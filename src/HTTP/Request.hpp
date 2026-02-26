@@ -29,8 +29,9 @@ class	Request	: private HTTPTokenizer {
 
 	/*Publics Methods*/
 		bool			parseRequest();
+		bool			handleBody(int max_body);
 		bool			cleanRequest();
-		bool			addInput(std::string input) ;
+		bool			addInput(const std::string& input) ;
 
 	/*Setters - Getters*/
 		t_method		getMethod() const ;
@@ -39,6 +40,7 @@ class	Request	: private HTTPTokenizer {
 		std::string		getBody() const ;
 		bool			isCompleted() const ;
 		t_HttpCode		getStatusCode() const ;
+		const int&		getState() const ;
 
 		std::vector<std::string>	getHeaderValues(std::string header_name) const ;
 		const std::multimap<std::string, std::string>&	getHeaders() const ;
@@ -78,7 +80,7 @@ class	Request	: private HTTPTokenizer {
 		void	parseFirstLine() ;
 		void	extractFirstLineInfo() ;
 		void	parseHeader() ;
-		bool	handleBody() ;
+		bool	setupBodyHandler() ;
 
 		bool	isFirstLineValid() ; 
 		bool	extractHeadersInformations() ;

@@ -115,7 +115,7 @@ void	Webserv::_closeStaleConnections(void)
 	}
 }
 
-VirtualServer&	Webserv::_resolveVirtualServer(Connection const& conn)
+const VirtualServer&	Webserv::_resolveVirtualServer(const Connection& conn)
 {
 	sockaddr_in addr;
 	socklen_t len = sizeof(addr);
@@ -127,7 +127,7 @@ VirtualServer&	Webserv::_resolveVirtualServer(Connection const& conn)
 
 	unsigned int port = ntohs(addr.sin_port);
 
-	std::string	host = conn.request.getHeaderValues("host")[0];
+	std::string	host = conn.request_handler.getRequest().getHeaderValues("host")[0];
 
 	size_t	colon = host.find(':');
 	if (colon != std::string::npos)
@@ -307,20 +307,25 @@ bool	Webserv::clientInHandler(Connection & conn)
 			return (false);
 		}
 
-		conn.request.addInput(request_str);
-		conn.request.parseRequest();
+		conn.request_handler.processRequest(request_str);
 
-		// if (conn.request.headerComplete()) {
-			// conn.server = findVirtServ
-			// conn.matched_location = findloc();
-			// compare body size with everything parsed already
-			// conn.request.headerComplete = 0;
-		// }
+		if (conn.request_handler.getRequest().getState() > PARSED && conn.request_handler.getVirtualServer() == NULL)
+		{
+			conn.request_handler.setVirtualServer(_resolveVirtualServer(conn));
+			conn.request_handler.findLocation();
+		}
 
-		if (conn.request.isCompleted()) {
+		if (conn.request_handler.getVirtualServer() != NULL)
+		{
+			conn.request_handler.setRoot(conn.request_handler.getVirtualServer()->getRoot());
+			if (!conn.request_handler.getRequest().isCompleted())
+				conn.request_handler.processBody();
+		}
+
+		if (conn.request_handler.getRequest().isCompleted()) {
 			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
-			
+		
 			_connections.find(conn.getFd())->second.handler = &Webserv::clientOutHandler;
 		}
 	}
@@ -330,32 +335,30 @@ bool	Webserv::clientInHandler(Connection & conn)
 bool	Webserv::clientOutHandler(Connection & conn)
 {
 	if (conn.getEvent().events & EPOLLOUT) {
-		if (conn.response.isDefault()) {
-			conn.virtual_server = _resolveVirtualServer(conn);
-			RequestHandler	reqHandler(conn);
-			reqHandler.handleRequest();
+		if (conn.request_handler.getResponse().isDefault()) {
+			conn.request_handler.handleRequest();
 
 			//check status to do ?
-			if (reqHandler.getResponse().isCGI && (reqHandler.getResponse().getStatusCode() == OK
-				|| reqHandler.getResponse().getStatusCode() == CREATED)) {
-				_startCGIresponse(reqHandler, conn);
+			if (conn.request_handler.getResponse().isCGI && (conn.request_handler.getResponse().getStatusCode() == OK
+				|| conn.request_handler.getResponse().getStatusCode() == CREATED)) {
+				_startCGIresponse(conn.request_handler, conn);
 			}
+			
 		}
 
-		if (conn.response.getState() != Response::PROCESSING_CGI) {
-			conn.response.formatResponse();
+		if (conn.request_handler.getResponse().getState() != Response::PROCESSING_CGI) {
+			conn.request_handler._response.formatResponse();
 			conn.sendResponse();
 		}
 
-		if (conn.response.isDone()) {
-			if (conn.response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
+		if (conn.request_handler.getResponse().isDone()) {
+			if (conn.request_handler.getResponse().getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
 			{
 				conn.conn_closed = true;
 				return (false);
 			}
 
-			conn.response.cleanResponse();
-			conn.request.cleanRequest();
+			conn.request_handler.clean();
 
 			if (!_addFdToEpoll(conn.getFd(), EPOLLIN | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
@@ -390,14 +393,14 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 	//			info.connection = conn;
 	//			info.handler = &Webserv::cgiIn;
 	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
-	conn.response.setState(Response::PROCESSING_CGI);
+	conn.request_handler._response.setState(Response::PROCESSING_CGI);
 	return (true);
 }
 
 bool	Webserv::cgiInHandler(Connection& conn)
 {
-	int	content_length = std::atoi(conn.request.getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->check to do on partial send 
-	int byte = write(conn.cgi_fd[1], (conn.request.getBody()).c_str(), content_length);
+	int	content_length = std::atoi(conn.request_handler.getRequest().getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->check to do on partial send 
+	int byte = write(conn.cgi_fd[1], (conn.request_handler.getRequest().getBody()).c_str(), content_length);
 
 	if (byte == content_length) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
@@ -427,7 +430,7 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 	{
 		cgi_response.append(buffer, bytes);
 	}
-	conn.response.setCgiBody(cgi_response);
+	conn.request_handler._response.setCgiBody(cgi_response);
 	if (bytes < 0)
 		return (false);
 
@@ -441,7 +444,7 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
 			//do stuff
 		}
-		resp::prepareResponse(conn.response, conn.request, conn.virtual_server.getErrorPages());
+		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.virtual_server.getErrorPages());
 	}
 	return (true);
 }

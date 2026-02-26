@@ -31,14 +31,15 @@ class Webserv
 		void	_openConfig(); 
 		void	_parseConfig();
 
-		VirtualServer&	_resolveVirtualServer(Connection const& conn);
-
 		bool	_checkForRdHup(Connection & conn);
 		void	_closeConnection(Connection & conn);
 		void	_closeStaleConnections(void);
 		bool	_addFdToEpoll(int client_fd, int events, int flags);
 
 		bool	_startCGIresponse(RequestHandler & reqHandl, Connection & conn);
+
+		const VirtualServer&	_resolveVirtualServer(const Connection& conn);
+
 
 		Webserv(void);
 
@@ -60,6 +61,7 @@ class Webserv
 		bool	clientOutHandler(Connection & conn);
 		bool	cgiInHandler(Connection& conn);
 		bool	cgiOutHandler(Connection& conn);
+		
 
 		//quick fix added for getting server root location -> deducted from the executable path
 };
