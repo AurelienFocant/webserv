@@ -139,6 +139,7 @@ void ConfigBuilder::_initHandlers()
 	_handlers["error_page"]			= &ConfigBuilder::_handleErrorPages;
 	_handlers["max_body_size"]		= &ConfigBuilder::_handleMaxBodySize;
 	_handlers["cgi_timeout"]		= &ConfigBuilder::_handleCGITimeout;
+	_handlers["cgi_exec"]			= &ConfigBuilder::_handleCGIExec;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)

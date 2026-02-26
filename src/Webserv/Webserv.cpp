@@ -218,16 +218,15 @@ void	Webserv::initWebServer()
 bool	Webserv::_checkForRdHup(Connection & conn)
 {
 			if (conn.getEvent().events & EPOLLRDHUP) {
-				std::cout << "[Error] RDHUP" <<std::endl; 
 				conn.conn_closed = true;
 				return (false);
 			}
 
-			// error
 			if (conn.getEvent().events & EPOLLERR || conn.getEvent().events & EPOLLHUP) {
-				std::cout << "[Error] HUP or ERR" <<std::endl; 
-				if (conn.getEvent().data.fd == conn.getFd())
+				if (conn.getEvent().data.fd == conn.getFd()) {
+					std::cout << "[Error] HUP or ERR" <<std::endl; 
 					conn.conn_closed = true;
+				}
 				return (false);
 			}
 

@@ -38,6 +38,7 @@ class RequestHandler
 	std::string				_root;
 	std::string				_request_path;
 	std::string				_resolved_path;
+	std::string				_cgi_exec;
 	const Location*			_matched_location;
 	t_extension				_matched_extension;
 	bool					_is_directory;
@@ -105,14 +106,15 @@ class RequestHandler
 	void			clean();
 
 	/* Getters */
-	std::string				getRoot() const {return _root;}
-	const Request&			getRequest() const ;
-	const Response&			getResponse() const ;
-	const VirtualServer*	getVirtualServer() const ;
-	std::string				getQuery() const { return (_query);};
-	std::string				getScriptName() const { return (_script_name);};
-	t_extension				getExtension() const { return (_matched_extension);};
-	std::string				getResolvedPath() const { return (_resolved_path);};
+	std::string				getRoot()		const {return _root;}
+	const Request&			getRequest()	const ;
+	const Response&			getResponse()	const ;
+	const VirtualServer*	getVirtualServer()	const ;
+	std::string				getQuery()	const { return (_query);};
+	std::string				getScriptName()	const { return (_script_name);};
+	t_extension				getExtension()	const	{ return (_matched_extension);};
+	std::string				getResolvedPath()	const	{ return (_resolved_path);};
+	std::string				getCGIExec()		const	{return _cgi_exec;}
 
 	/* Setters */
 	void					setVirtualServer(const VirtualServer& server);

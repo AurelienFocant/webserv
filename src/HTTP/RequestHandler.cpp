@@ -92,15 +92,16 @@ bool	RequestHandler::extractPath()
 bool	RequestHandler::resolvePath()
 {
 	findLocation();
- 
+
+
 	if (_matched_location)
 	{
-		//Detect CGI
-		if (detectCGI())
+		if (_matched_location->getCGI())
 		{
-			if (!validateCGIScript())
-				return false;
-			_response.isCGI = true; //something like that
+			// need to check if all those exist !
+			_resolved_path = _matched_location->getRoot() + _request_path;
+			_cgi_exec = _matched_location->getRoot() + _matched_location->getCGIExec();
+			_response.isCGI = true;
 			return true;
 		}
 
@@ -114,7 +115,7 @@ bool	RequestHandler::resolvePath()
 
 		if (!normalizePath())
 			return false;
-		
+
 		if (!_matched_location->getAlias().empty())
 		{
 			//Alias : replace prefix of location
@@ -159,7 +160,7 @@ bool	RequestHandler::handleConfigRedirect()
 
 	if (redirect_uri.empty() || !redirect_code)
 		return false;
-	
+
 	_response.setHeader("Location", redirect_uri);
 	_response.setStatusCode(redirect_code);
 
@@ -215,9 +216,9 @@ void	RequestHandler::findLocation()
 				size_t ext_end = start + ext.size();
 				if (ext_end == _request_path.size() || _request_path[ext_end - 1] == '/' || _request_path[ext_end] == '/')
 				{
-					//_matched_location = location;
-					if (_matched_extension == NO_EXT)
-						_matched_extension = extensionFromString(ext);
+					_matched_location = location;
+					// if (_matched_extension == NO_EXT)
+					// 	_matched_extension = extensionFromString(ext);
 				}
 			}
 		}
@@ -249,7 +250,7 @@ bool	RequestHandler::detectCGI()
 {
 	if (!_matched_location->getCGI())
 		return false;
-	
+
 	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
 		return false;
 
@@ -273,7 +274,7 @@ bool	RequestHandler::detectCGI()
 
 bool	RequestHandler::validateCGIScript()
 {
-	std::string cgi_bin_path = 	_root + "/cgi-bin/";
+	std::string cgi_bin_path = 	_matched_location->getRoot() + _matched_location->getCGIExec();
 	DIR* dir_ptr = opendir(cgi_bin_path.c_str());
 	if (!dir_ptr)
 	{
@@ -365,7 +366,7 @@ bool	RequestHandler::normalizePath()
 		temp_path = "/" + temp_path;
 	}
 	slash[1] = (!temp_path.empty()
-		&& temp_path[temp_path.size() - 1] == '/');
+			&& temp_path[temp_path.size() - 1] == '/');
 	if (!slash[1])
 		temp_path += '/';
 
@@ -412,7 +413,7 @@ bool	RequestHandler::normalizePath()
 
 	if (temp_path.empty() || (slash[1] && temp_path.size() != 1))
 		temp_path += '/';
-	
+
 	_request_path = temp_path;
 
 	// std::cout << "[DEBUG] Normalized path " << _request_path << std::endl;
@@ -424,14 +425,14 @@ bool	RequestHandler::normalizePath()
 bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
-	
+
 	if (_matched_location && _matched_location->getVirtual())
 		return true;
 
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
 		if (errno == ENOENT)
-			 _response.setStatusCode(NOT_FOUND);
+			_response.setStatusCode(NOT_FOUND);
 		else if (errno == EACCES)
 			_response.setStatusCode(FORBIDDEN);
 		else
@@ -483,7 +484,7 @@ bool	RequestHandler::processMethods()
 	{
 		case GET:
 			return processGetMethod();
- 		case POST:
+		case POST:
 			return processPostMethod();
 		case DELETE:
 			return processDeleteMethod();
@@ -520,12 +521,12 @@ bool	RequestHandler::processGetMethod()
 
 	// ADD CGI
 
-/* 	int	fd = fileSystem::openReadFile(_resolved_path);
-	if (fd < 0)
-	{
+	/* 	int	fd = fileSystem::openReadFile(_resolved_path);
+		if (fd < 0)
+		{
 		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
 		return false;
-	} */
+		} */
 
 	if (!resp::loadBody(_response, _resolved_path))
 		return false;
