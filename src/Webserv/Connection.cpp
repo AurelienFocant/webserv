@@ -5,47 +5,14 @@
 void	Connection::sendResponse()
 {
 	const char *data;
-	size_t		data_size = 0;
+	size_t		to_send = 0;
 
-	data = response.getDataToSend(data_size);
-/*
-	if (!data || !data_size)
-	{
-		if (response.isDone())
-		{
-			if (response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
-			{
-				conn_closed = true;
-		//		response.cleanResponse();
-				return;
-			}
-			response.cleanResponse();
+	data = response.getDataToSend(to_send);
 
-			// full response sent --> stop watching EPOLLOUT
-			struct epoll_event	ev;
-			ev.events = EPOLLIN | EPOLLRDHUP; // keep listening for reads
-			ev.data.fd = _fd;
+	if (to_send > MAX_CHUNK_SIZE)
+		to_send = MAX_CHUNK_SIZE;
 
-			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _fd, &ev) < 0) {
-				perror("epoll_ctl MOD");
-				conn_closed = true;
-			}
-
-			// reset response state
-			// SHOULD CHECK IF NO BUFFER IS LEFT FULL SOMEWHERE ? SEE WITH AURORE
-			response.setState(Response::DEFAULT);
-			response.setHeaderSent(0);
-		}
-		else
-		{
-			std::cerr << "[Error] No data to send but response not done" << std::endl;
-			conn_closed = true;
-		}
-		return ;
-	}
-*/
-	ssize_t bytesSent = send(_fd, data, data_size, MSG_NOSIGNAL);
-	std::cout << response << std::endl;
+	ssize_t bytesSent = send(_fd, data, to_send, MSG_NOSIGNAL);
 
 	if (bytesSent > 0)
 		response.updateBytesSend(bytesSent);

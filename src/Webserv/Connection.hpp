@@ -28,6 +28,8 @@
 #include "Response.hpp"
 #include "VirtualServer.hpp"
 
+#define	MAX_CHUNK_SIZE 8192
+
 class Request;
 class Response;
 class Webserv;
