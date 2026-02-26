@@ -44,6 +44,8 @@ void	RequestHandler::processBody()
 {
 	if (_matched_location)
 		_request.handleBody((*_matched_location).getMaxBodySize());
+	else
+		_request.handleBody((*_server).getMaxBodySize());
 	return ;
 }
 
