@@ -47,6 +47,7 @@ class ConfigBuilder
 		void _handleErrorPages		(const DirectiveNode& d);
 		void _handleMaxBodySize		(const DirectiveNode& d);
 		void _handleCGITimeout		(const DirectiveNode& d);
+		void _handleCGIExec			(const DirectiveNode& d);
 
 		std::stack<ConfigContext>	_contextStack;
 		ConfigContext&	_getCurrentCtxt(void);

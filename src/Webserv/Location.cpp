@@ -10,6 +10,7 @@ Location::Location(ConfigContext& ctxt)
 	, _autoindex(ctxt.getAutoindex())
 	, _cgi(ctxt.getCGI())
 	, _cgi_timeout(ctxt.getCGITimeout())
+	, _cgi_exec(ctxt.getCGIExec())
 	, _virtual(ctxt.getVirtualLocation())
 	, _max_body_size(ctxt.getMaxBodySize())
 	, _keepalive_time(ctxt.getKeepalive_time())
@@ -29,6 +30,7 @@ Location::Location(const Location& src)
 	, _autoindex(src._autoindex)
 	, _cgi(src._cgi)
 	, _cgi_timeout(src._cgi_timeout)
+	, _cgi_exec(src._cgi_exec)
 	, _virtual(src._virtual)
 	, _max_body_size(src._max_body_size)
 	, _keepalive_time(src._keepalive_time)
@@ -57,6 +59,7 @@ Location&	Location::operator= (const Location& rhs)
 		_indexes			= rhs._indexes;
 		_allowed_methods	= rhs._allowed_methods;
 		_cgi_timeout		= rhs._cgi_timeout;
+		_cgi_exec			= rhs._cgi_exec;
 		_max_body_size 		= rhs._max_body_size;
 	}
 	return (*this);

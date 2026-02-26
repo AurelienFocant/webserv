@@ -20,6 +20,7 @@ class Location
 	bool		_autoindex;
 	bool		_cgi;
 	int			_cgi_timeout;
+	std::string	_cgi_exec;
 	bool		_virtual;
 	int			_max_body_size;
 
@@ -46,6 +47,8 @@ class Location
 	std::map<int, std::string>	getErrorPages()		const	{return _error_pages;}
 	std::string					getErrorPage(int n)	const	{return _error_pages.at(n);}
 	long						getMaxBodySize()	const	{return _max_body_size;}
+		std::string	getCGIExec()	const	{return _cgi_exec;}
+		void		setCGIExec(std::string x)	{_cgi_exec = x;}
 
 	void	setName(const std::string& name)					{_name = name;}
 	void	setRoot(const std::string& root)					{_root = root;}

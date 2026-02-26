@@ -20,6 +20,7 @@ ConfigContext::ConfigContext(ContextType t)
 	, _redirect("")
 	, _cgi(false)
 	, _cgi_timeout(60)
+	, _cgi_exec("")
 	, _virtualLocation(false)
 	, _max_body_size(1048576)
 	, _locations()
@@ -45,6 +46,7 @@ ConfigContext::ConfigContext(const ConfigContext &src)
 	, _redirect(src._redirect)
 	, _cgi(src._cgi)
 	, _cgi_timeout(src._cgi_timeout)
+	, _cgi_exec(src._cgi_exec)
 	, _virtualLocation(src._virtualLocation)
 	, _max_body_size(src._max_body_size)
 	, _error_pages(src._error_pages)
@@ -57,25 +59,26 @@ ConfigContext::ConfigContext(const ConfigContext &src)
 ConfigContext& ConfigContext::operator=(const ConfigContext &rhs)
 {
     if (this != &rhs) {
-        _type = rhs._type;
-        _port = rhs._port;
-        _root = rhs._root;
-		_alias = rhs._alias;
-        _serverName = rhs._serverName;
-		_locationName = rhs._locationName;
-		_autoindex = rhs._autoindex;
-		_keepalive_time = rhs._keepalive_time;
-		_keepalive_timeout = rhs._keepalive_timeout;
-		_redirect_code = rhs._redirect_code;
-		_redirect = rhs._redirect;
-		_cgi = rhs._cgi;
-		_cgi_timeout = rhs._cgi_timeout;
-		_virtualLocation = rhs._virtualLocation;
-		_error_pages = rhs._error_pages;
-		_indexes = rhs._indexes;
-		_allowed_methods = rhs._allowed_methods;
-        _locations = rhs._locations;
-		_max_body_size = rhs._max_body_size;
+        _type				= rhs._type;
+        _port				= rhs._port;
+        _root				= rhs._root;
+		_alias				= rhs._alias;
+        _serverName			= rhs._serverName;
+		_locationName		= rhs._locationName;
+		_autoindex			= rhs._autoindex;
+		_keepalive_time		= rhs._keepalive_time;
+		_keepalive_timeout	= rhs._keepalive_timeout;
+		_redirect_code		= rhs._redirect_code;
+		_redirect			= rhs._redirect;
+		_cgi				= rhs._cgi;
+		_cgi_timeout		= rhs._cgi_timeout;
+		_cgi_exec			= rhs._cgi_exec;
+		_virtualLocation	= rhs._virtualLocation;
+		_error_pages		= rhs._error_pages;
+		_indexes			= rhs._indexes;
+		_allowed_methods	= rhs._allowed_methods;
+        _locations			= rhs._locations;
+		_max_body_size		= rhs._max_body_size;
 	}
 	return *this;
 }
@@ -105,18 +108,19 @@ std::map<int, std::string>	ConfigContext::_initDefaultErrorPages(void)
 
 void ConfigContext::inheritFrom(const ConfigContext &parent)
 {
-	_port = parent._port;
-	_root = parent._root;
-	_alias = parent._alias;
-	_serverName = parent._serverName;
-	_indexes = parent._indexes;
-	_autoindex = parent._autoindex;
-	_keepalive_time = parent._keepalive_time;
-	_keepalive_timeout = parent._keepalive_timeout;
-	_redirect_code = parent._redirect_code;
-	_redirect = parent._redirect;
-	_allowed_methods = parent._allowed_methods;
-	_error_pages = parent._error_pages;
-	_max_body_size = parent._max_body_size;
-	_cgi_timeout = parent._cgi_timeout;
+	_port				= parent._port;
+	_root	   			= parent._root;
+	_alias	   			= parent._alias;
+	_serverName			= parent._serverName;
+	_indexes   			= parent._indexes;
+	_autoindex 			= parent._autoindex;
+	_keepalive_time		= parent._keepalive_time;
+	_keepalive_timeout	= parent._keepalive_timeout;
+	_redirect_code		= parent._redirect_code;
+	_redirect			= parent._redirect;
+	_allowed_methods	= parent._allowed_methods;
+	_error_pages		= parent._error_pages;
+	_max_body_size		= parent._max_body_size;
+	_cgi_timeout		= parent._cgi_timeout;
+	_cgi_exec			= parent._cgi_exec;
 }

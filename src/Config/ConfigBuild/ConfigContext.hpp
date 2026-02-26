@@ -27,6 +27,7 @@ class ConfigContext {
 		std::string	_redirect;
 		bool		_cgi;
 		int			_cgi_timeout;
+		std::string	_cgi_exec;
 		bool		_virtualLocation;
 		int			_max_body_size;
 
@@ -56,6 +57,7 @@ class ConfigContext {
 		std::set<std::string>					getAllowedMethods()		const	{return _allowed_methods;}
 		bool									getCGI()	   			const	{return _cgi;}
 		int										getCGITimeout()			const	{return _cgi_timeout;}	
+		std::string								getCGIExec()			const	{return _cgi_exec;}
 		bool									getVirtualLocation()	const	{return _virtualLocation;}
 		std::string								getAlias()				const	{return _alias;}
 		std::map<int, std::string>				getErrorPages()	   		const	{return _error_pages;}
@@ -76,6 +78,7 @@ class ConfigContext {
 		void		setAllowedMethods(std::set<std::string> m)					{_allowed_methods = m;}
 		void		setCGI(bool b)												{_cgi = b;}
 		void		setCGITimeout(int n)										{_cgi_timeout = n;}
+		void		setCGIExec(std::string x)									{_cgi_exec = x;}
 		void		setVirtualLocation(bool b)									{_virtualLocation = b;}
 		void		setAlias(std::string a)										{_alias = a;}
 		void		setErrorPages(std::map<int, std::string> ep)				{_error_pages = ep;}

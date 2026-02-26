@@ -12,6 +12,7 @@ VirtualServer::VirtualServer(void)
 	, _keepalive_time()
 	, _keepalive_timeout()
 	, _cgi_timeout(60)
+	, _cgi_exec("")
 	, _max_body_size(1048576)
 	, _error_pages()
 	, _indexes()
@@ -31,6 +32,7 @@ VirtualServer::VirtualServer(ConfigContext const& ctxt)
 	, _keepalive_time(ctxt.getKeepalive_time())
 	, _keepalive_timeout(ctxt.getKeepalive_timeout())
 	, _cgi_timeout(ctxt.getCGITimeout())
+	, _cgi_exec(ctxt.getCGIExec())
 	, _max_body_size(ctxt.getMaxBodySize())
 	, _error_pages(ctxt.getErrorPages())
 	, _indexes(ctxt.getIndexes())
@@ -49,6 +51,8 @@ VirtualServer::VirtualServer(const VirtualServer& src)
 	, _autoindex(src._autoindex)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout	(src._keepalive_timeout)
+	, _cgi_timeout(src._cgi_timeout)
+	, _cgi_exec(src._cgi_exec)
 	, _error_pages(src._error_pages)
 	, _indexes(src._indexes)
 	, _allowed_methods(src._allowed_methods)
@@ -73,6 +77,7 @@ VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
 		_allowed_methods	= rhs._allowed_methods;
 		_locations			= rhs._locations;
 		_cgi_timeout		= rhs._cgi_timeout;
+		_cgi_exec			= rhs._cgi_exec;
 		_max_body_size		= rhs._max_body_size;
 	}
 	return (*this);

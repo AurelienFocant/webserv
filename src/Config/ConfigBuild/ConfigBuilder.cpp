@@ -117,6 +117,7 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["error_page"]			= DirectiveSpecs(SERVER|LOCATION, 2, 999);
 	_direcSpecs["max_body_size"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["cgi_timeout"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["cgi_exec"]				= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 }
 
 
@@ -331,6 +332,11 @@ void ConfigBuilder::_handleCGITimeout(const DirectiveNode& d)
 		_error(d.line, "cgi_timeout should be between 1sec and 10min");
 
 	_getCurrentCtxt().setKeepalive_timeout(time);
+}
+
+void ConfigBuilder::_handleCGIExec(const DirectiveNode& d)
+{
+	_getCurrentCtxt().setCGIExec(d.args[0]);
 }
 
 
