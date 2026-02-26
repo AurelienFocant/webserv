@@ -79,7 +79,6 @@ form.addEventListener("submit", function (e) {
     })
     .then(res => {
         if (res.status === 201) {
-            // ✅ Reload page after successful creation
             window.location.reload();
         } else {
             throw new Error("Upload failed");
