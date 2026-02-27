@@ -58,6 +58,10 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 		//some errors happened, setup response code accordingly
 		return (false);
 	}
+	free(argv[0]);
+	argv[0] = NULL;
+	free(argv[1]);
+	argv[1] = NULL;
 
 	delete[](env);
 
@@ -173,11 +177,15 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 		//In case of error in the child, clean everything and exit
 		close(pipe_in[0]);
 		close(pipe_out[1]);
+
 		delete[](env);
+		free(argv[0]);
+		argv[0] = NULL;
+		free(argv[1]);
+		argv[1] = NULL;
 
 		std::cerr << errno << std::endl;
 		perror("EXECVE FAILED");
-
 		exit(EXIT_FAILURE);
 	}
 
