@@ -30,7 +30,7 @@ void	Connection::sendResponse()
 	const char *data;
 	size_t		to_send = 0;
 
-	data = response.getDataToSend(to_send);
+	data = request_handler._response.getDataToSend(to_send);
 
 	if (to_send > MAX_CHUNK_SIZE)
 		to_send = MAX_CHUNK_SIZE;
