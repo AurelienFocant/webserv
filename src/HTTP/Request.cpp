@@ -134,8 +134,10 @@ void	Request::parseFirstLine() {
 				extractFirstLineInfo();
 				break ;
 			case (EOL):
-				_progress = FIRST_LINE;
-				break ;
+				if (_progress == VERSION) {
+					_progress = FIRST_LINE;
+					break ;
+				}
 			case (ERROR):
 				_complete = true;
 				_progress = DONE;

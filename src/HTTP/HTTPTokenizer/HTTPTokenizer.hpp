@@ -15,7 +15,6 @@ class	HTTPTokenizer : private Tokenizer {
 		HTTPTokenizer(const HTTPTokenizer& src);
 		virtual ~HTTPTokenizer();
 
-	/*Overloaded Operators*/
 	/*Public Methods*/
 		std::vector<t_Token>	scanTokens() ;
 		std::string				getWord(std::string delim_list) ;
@@ -23,18 +22,20 @@ class	HTTPTokenizer : private Tokenizer {
 		std::string				extractInput(char character) ;
 		bool					addInput(std::string input) ;
 		void					cleanTokenList() ;
-		void					advance();
+		void					trimStart(std::string& string) ;
+		void					advance() ;
 
 	/*Getters*/
 		std::string				getInput() const ;
-		std::vector<t_Token>	getTokenList() const;
+		std::vector<t_Token>	getTokenList() const ;
 		
 	/*Static*/
-		static std::string	getTokenType(t_Token token) ;
+		static std::string		getTokenType(t_Token token) ;
 
 	protected:
+	/*Protected Attributes*/
 		std::vector<t_Token>					_token_list;
-		std::vector<t_Token>::iterator	_list_it;
+		std::vector<t_Token>::iterator			_list_it;
 		
 	private:
 	/*Private Attributes*/
