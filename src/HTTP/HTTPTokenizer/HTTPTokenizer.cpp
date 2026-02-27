@@ -22,41 +22,42 @@ HTTPTokenizer::~HTTPTokenizer() {
 
 std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 	t_Token	new_token;
+	_it = _input.begin();
 
 	//Tokenizing first line of request
 	while (_tokenizing < 4 && _it != _input.end() && _nbr_eol == 0) {
 		switch (*_it) {
-			case (' '):
-				_input.erase(0, 1);
-				break ;
 			case ('\r'):
-				_it++;
+				++_it;
 				if (*_it == '\n') {
 					new_token.tkType = EOL;
 					new_token.lexeme = "\\r\\n";
 					_token_list.push_back(new_token);
-					_it -= 1;
-					_input.erase(0, 2);
+					++_it;
+					_tokenizing = 4;
 					_nbr_eol = 1;
 				}
 				else {
 					new_token.tkType = ERROR;
 					new_token.lexeme = "ERROR";
 					_token_list.push_back(new_token);
-					_it -= 1;
-					_input.erase(0, 1);
 					return (_token_list);
 				}
 				break ;
 			default:
 				new_token.tkType = WORD;
 				new_token.lexeme = getWord(" \r");
-				_token_list.push_back(new_token);
-				_tokenizing++;
+				if (!new_token.lexeme.empty()) {
+					_token_list.push_back(new_token);
+					_tokenizing++;
+				}
 		}
+		if (_it != _input.begin())
+			_input.erase(0, _it - _input.begin());
+		_it = _input.begin();
 	}
-//	nbr_eol = 0;
 	//Tokenizing Header
+	_it = _input.begin();
 	while (_it != _input.end() && _nbr_eol < 2) {
 		switch (*_it) {
 			case (':'):
@@ -64,31 +65,28 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 				new_token.tkType = COLON;
 				new_token.lexeme = ":";
 				_token_list.push_back(new_token);
-				_input.erase(0, 1);
+				++_it;
 				break ;
 			case (','):
 				_nbr_eol = 0;
 				new_token.tkType = COMA;
 				new_token.lexeme = ",";
 				_token_list.push_back(new_token);
-				_input.erase(0, 1);
+				++_it;
 				break ;
 			case ('\r'):
 				_it++;
 				if (peek() == '\n') {
+					++_it;
 					_nbr_eol++;
 					new_token.tkType = EOL;
 					new_token.lexeme = "\\r\\n";
 					_token_list.push_back(new_token);
-					_it -= 1;
-					_input.erase(0, 2);
 				}
 				else {
 					new_token.tkType = ERROR;
 					new_token.lexeme = "ERROR";
 					_token_list.push_back(new_token);
-					_it -= 1;
-					_input.erase(0, 1);
 					return (_token_list);
 				}
 				break ;
@@ -99,43 +97,44 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 					new_token.lexeme = getWord(",\r");
 				else
 					new_token.lexeme = getWord(":,\r");
-				_token_list.push_back(new_token);
+				if (!new_token.lexeme.empty())
+					_token_list.push_back(new_token);
 		}
+		if (_it != _input.begin())
+			_input.erase(0, _it - _input.begin());
+		_it = _input.begin();
 	}
-//	if (_it == _input.end() || nbr_eol == 2)
-//		_progress++;
-/*
-	//Tokenizing Body
-	if (_it != _input.end()) {
-		new_token.tkType = WORD;
-		new_token.lexeme = getWord("");
-		_token_list.push_back(new_token);
-	}
-*/
-/*	if (_it == _input.end()) {
-		new_token.tkType = EOC;
-		new_token.lexeme = "\0";
-		_token_list.push_back(new_token);
-	}
-*/
-//	_list_it = _token_list.begin();
 	return (_token_list);
 }
 
 std::string	HTTPTokenizer::getWord(std::string delim_list) {
-	//std::string::const_iterator	it_start = _it;
-	while (*_it == ' ' || *_it == '\t') {
-		_input.erase(0, 1);
-//		advance();
-	}
 	std::string::const_iterator	end_word = _it;
-	while (end_word != _input.end() && delim_list.find(*end_word) == std::numeric_limits<unsigned long>::max())
+	while (end_word != _input.end()
+		&& (*end_word == ' ' || *end_word == '\t')) {
 		end_word++;
-	std::string	word = _input.substr(_it - _input.begin(), end_word - _it);
-	_input.erase(_it - _input.begin(), word.size());
-	while (*(word.end() - 1) == ' ')
-		word.erase(word.size() - 1);
+	}
+	while (end_word != _input.end()
+		&& delim_list.find(*end_word) == std::numeric_limits<unsigned long>::max()) {
+		end_word++;
+	}
+	std::string	word("");
+	if (end_word != _input.end()) {
+		word = _input.substr(0, end_word - _input.begin());
+		trimStart(word);
+		_it = end_word;
+	}
 	return (word);
+}
+
+void	HTTPTokenizer::trimStart(std::string& string) {
+	std::string::iterator	it = string.begin();
+	while (it != string.end()
+		&& (*it == ' ' || *it == '\t')) {
+		++it;
+	}
+	if (it != string.begin())
+		string.erase(0, it - string.begin());
+	return ;
 }
 
 std::string	HTTPTokenizer::getInput() const {

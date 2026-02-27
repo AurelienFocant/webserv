@@ -24,7 +24,7 @@ class VirtualServer
 		std::time_t		_keepalive_timeout;
 		int				_cgi_timeout;
 		std::string		_cgi_exec;
-		int				_max_body_size;
+		size_t			_max_body_size;
 
 		std::map<int, std::string>		_error_pages;
 		std::vector<std::string>		_indexes;
@@ -57,7 +57,8 @@ class VirtualServer
 		std::time_t		getKeepaliveTimeout(void)					const	{return _keepalive_timeout;}
 		int				getCGITimeout()								const	{return _cgi_timeout;}	
 		std::string		getCGIExec()								const	{return _cgi_exec;}
-		long			getMaxBodySize()							const	{return _max_body_size;}
+		size_t			getMaxBodySize()							const	{return _max_body_size;}
+
 		std::map<int, std::string>		const&	getErrorPages()		const	{return _error_pages;}
 		std::vector<std::string>		const&	getIndexes(void)	const	{return _indexes;}
 		std::map<std::string, Location>	const&	getLocations(void)				const	{return _locations;}

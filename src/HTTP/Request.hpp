@@ -29,7 +29,7 @@ class	Request	: private HTTPTokenizer {
 
 	/*Publics Methods*/
 		bool			parseRequest();
-		bool			handleBody(int max_body);
+		bool			handleBody(unsigned int max_body);
 		bool			cleanRequest();
 		bool			addInput(const std::string& input) ;
 
@@ -52,7 +52,7 @@ class	Request	: private HTTPTokenizer {
 		int										_progress;
 		bool									_complete;
 		t_HttpCode								_status_code;
-		bool									(Request::*_body_handler)( void );
+		bool									(Request::*_body_handler)(unsigned int max_body);
 
 		//Request informations
 		t_method								_method;
@@ -89,8 +89,8 @@ class	Request	: private HTTPTokenizer {
 		bool	isUniqueHeader(const std::string& header_key, const char** unique_list) const;
 
 		bool	defineBodyExtractionHandler() ;
-		bool	bodyHandlerTransfertEncoding() ;
-		bool	bodyHandlerContentLength() ;
+		bool	bodyHandlerTransfertEncoding(unsigned int max_body) ;
+		bool	bodyHandlerContentLength(unsigned int max_body) ;
 		bool	bodyHandlerMultipart() ;
 
 		std::string	normalizeHeadersKey(std::string argument) const ;
