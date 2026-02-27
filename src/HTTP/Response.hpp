@@ -39,7 +39,7 @@ class	Response
 
 	void				formatResponse();
 	
-	const char*			getDataToSend(size_t& size);
+	const char*			getDataToSend(size_t& to_send);
 	void				updateBytesSend(size_t bytes_sent);
 
 	bool				isDefault() const;
