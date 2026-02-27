@@ -37,14 +37,14 @@ std::string	Response::buildHttpResponse()
 	return response.str();
 }
 
-const char*	Response::getDataToSend(size_t& size)
+const char*	Response::getDataToSend(size_t& to_send)
 {
 	if (_state != SENDING || _offset >= _data.size())
 	{
-		size = 0;
+		to_send = 0;
 		return NULL;
 	}
-	size = _data.size() - _offset;
+	to_send = _data.size() - _offset;
 	return _data.c_str() + _offset;
 }
 

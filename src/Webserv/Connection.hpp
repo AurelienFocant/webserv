@@ -29,7 +29,11 @@
 #include "RequestHandler.hpp"
 #include "VirtualServer.hpp"
 
+#define	MAX_CHUNK_SIZE 8192
+
 class RequestHandler;
+class Request;
+class Response;
 class Webserv;
 
 class Connection

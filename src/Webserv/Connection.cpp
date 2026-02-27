@@ -28,11 +28,14 @@ std::string	Connection::receive()
 void	Connection::sendResponse()
 {
 	const char *data;
-	size_t		data_size = 0;
+	size_t		to_send = 0;
 
-	data = request_handler._response.getDataToSend(data_size);
+	data = request_handler._response.getDataToSend(to_send);
 
-	ssize_t bytesSent = send(_fd, data, data_size, MSG_NOSIGNAL);
+	if (to_send > MAX_CHUNK_SIZE)
+		to_send = MAX_CHUNK_SIZE;
+
+	ssize_t bytesSent = send(_fd, data, to_send, MSG_NOSIGNAL);
 
 	if (bytesSent > 0)
 		request_handler._response.updateBytesSend(bytesSent);
