@@ -20,6 +20,7 @@ form.addEventListener("submit", function (e) {
     .then(responseText => {
         // Create a Blob with the response text
         const blob = new Blob([responseText], { type: "text/html" });
+		const text = await blob.text();
         // Create an object URL for the Blob
         const url = URL.createObjectURL(blob);
         // Open the URL in a new tab

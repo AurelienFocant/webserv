@@ -19,10 +19,13 @@ def main():
     comment = html.escape(comment)
 
     # HTTP headers
-    print("Content-Type: text/html")
-    print()
+    # print("Content-Type: text/html")
+    # print()
 
-    print("<html><body>")
+    print("<!DOCTYPE html>")
+    print("<html>")
+    print("<head><meta charset=\"UTF-8\"><title>WebServ</title></head>")
+    print("<body>")
     if comment:
         print("<h1>Comment Received</h1>")
         print(f"<p>{comment}</p>")
