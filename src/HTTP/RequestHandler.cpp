@@ -15,16 +15,9 @@
 
 /* ////////////REQUEST HANDLER////////////////// */
 
-RequestHandler::RequestHandler()
-{
-	clean();
-} 
-
-
-RequestHandler::RequestHandler(Connection& currConn) 
+RequestHandler::RequestHandler() 
 	: _request()
 	, _server(NULL)
-	, _root(currConn.virtual_server.getRoot())
 	, _matched_location(NULL)
 	, _matched_extension(NO_EXT)
 	, _is_directory(false)
@@ -91,9 +84,6 @@ bool	RequestHandler::extractPath()
 
 bool	RequestHandler::resolvePath()
 {
-	findLocation();
-
-
 	if (_matched_location)
 	{
 		if (_matched_location->getCGI())

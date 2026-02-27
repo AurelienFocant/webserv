@@ -88,8 +88,7 @@ class RequestHandler
 
 	/* PUBLIC METHODS */
 	/* Constructors / Destructors */
-	RequestHandler ();
-	RequestHandler	(Connection& currConn);
+	RequestHandler	();
 	~RequestHandler	();
 
 	RequestHandler&	operator=(const RequestHandler& rhs);
