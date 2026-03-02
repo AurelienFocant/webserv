@@ -80,10 +80,14 @@ bool	Request::cleanRequest() {
 
 bool	Request::parseRequest() {
 	// if more token are needed or available, create and add them to token list.
+	std::cerr << "coucou0" << std::endl;
+	std::cerr << "status code before parseReq: " << _status_code << std::endl;
 	if (_progress < PARSED)
 		HTTPTokenizer::scanTokens();
-	if (_token_list.empty())
+	if (_token_list.empty()) {
+		std::cerr << "coucou1" << std::endl;
 		return (_complete);
+	}
 	_list_it = _token_list.begin();
 	
 	// std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.
@@ -105,11 +109,14 @@ bool	Request::parseRequest() {
 		if (!areHeadersValid() || !areMandatoryHeadersPresent()) {
 			_progress = DONE;
 			_complete = true;
+			std::cerr << "got bad request here2" << std::endl;
 			_status_code = BAD_REQUEST;
 			return (_complete);
 		}
 		setupBodyHandler();
 	}
+	std::cerr << "coucou4" << std::endl;
+	std::cerr << "status code after parseReq: " << _status_code << std::endl;
 	return (_complete);
 }
 
@@ -143,6 +150,7 @@ void	Request::parseFirstLine() {
 				_complete = true;
 				_progress = DONE;
 				_status_code = BAD_REQUEST;
+				std::cerr << "got bad request here3" << std::endl;
 				break ;
 			default:
 				_complete = true;
@@ -176,6 +184,7 @@ void	Request::parseHeader() {
 				_progress = DONE;
 				_complete = true;
 				_status_code = BAD_REQUEST;
+				std::cerr << "got bad request here4" << std::endl;
 			}
 			++_list_it;
 	}
@@ -202,6 +211,8 @@ void	Request::extractFirstLineInfo() {
 			_complete = true;
 			_progress = DONE;
 			_status_code = BAD_REQUEST;
+			std::cerr << "got bad request here5" << std::endl;
+			++_list_it;
 	}
 	return ;
 }
@@ -216,6 +227,7 @@ bool	Request::isFirstLineValid() {
 		return (false);
 	}
 	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
+		std::cerr << "got bad request here6" << std::endl;
 		_status_code = BAD_REQUEST;
 		return (false);
 	}
@@ -239,6 +251,7 @@ bool	Request::setupBodyHandler() {
 	}
 	else {
 		_complete = true;
+		std::cerr << "got bad request here7" << std::endl;
 		_status_code = BAD_REQUEST;
 	}
 	return (_complete);
@@ -462,8 +475,10 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 			_content_length = std::atol(value.c_str()); 
 			break ;
 		case (1):
-			if (value != "chunk")
+			if (value != "chunk") {
+				std::cerr << "got bad request here8" << std::endl;
 				_status_code = BAD_REQUEST; //FIND CORRECT ERROR
+			}
 			else
 				_content_encoding = true;
 			break ;

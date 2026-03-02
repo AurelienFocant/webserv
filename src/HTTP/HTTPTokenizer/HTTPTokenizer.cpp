@@ -30,7 +30,9 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 		switch (*_it) {
 			case ('\r'):
 				++_it;
-				if (*_it == '\n') {
+				if (!*_it)
+					break ;
+				else if (*_it == '\n') {
 					new_token.tkType = EOL;
 					new_token.lexeme = "\\r\\n";
 					_token_list.push_back(new_token);
@@ -165,7 +167,9 @@ void	HTTPTokenizer::cleanTokenList() {
 }
 
 bool	HTTPTokenizer::addInput(std::string input) {
+	std::cerr << "_input before cat	" << _input << std::endl;
 	_input += input;
+	std::cerr << "_input after cat	" << _input << std::endl;
 	_it = _input.begin();
 	return (true);
 }

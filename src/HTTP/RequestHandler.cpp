@@ -37,6 +37,7 @@ void	RequestHandler::processRequest(const std::string& input)
 {
 		_request.addInput(input);
 		_request.parseRequest();
+		std::cerr << "status code after parsing: " << _request.getStatusCode() << std::endl;
 		return ;
 }
 
@@ -73,6 +74,7 @@ bool	RequestHandler::extractPath()
 {
 	if (_request.getRequestUri().empty() || _request.getRequestUri().at(0) != '/')
 	{
+		std::cerr << "got bad request here1" << std::endl;
 		_response.setStatusCode(BAD_REQUEST);
 		return false;
 	}

@@ -8,7 +8,6 @@ std::string	Connection::receive()
 {
 	int		bytes_read; 
 	char	buf[BUFFER_SIZE];
-	std::string	s;
 
 	bytes_read = recv(_fd, &buf, BUFFER_SIZE, 0);
 	if (!bytes_read)
@@ -21,7 +20,7 @@ std::string	Connection::receive()
 		return ("");
 	}
 
-	s.append(buf, bytes_read);
+	std::string s(buf, bytes_read);
 	return (s);
 }
 
@@ -31,6 +30,7 @@ void	Connection::sendResponse()
 	size_t		to_send = 0;
 
 	data = request_handler._response.getDataToSend(to_send);
+	// std::cout << data << std::endl;
 
 	if (to_send > MAX_CHUNK_SIZE)
 		to_send = MAX_CHUNK_SIZE;
