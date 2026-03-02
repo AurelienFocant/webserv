@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <set>
+#include <map>
 
 #include "ConfigBuilder.hpp"
 #include "DirectiveSpecs.hpp"
@@ -46,6 +47,11 @@ void ConfigBuilder::visit(const BlockNode& node)
 
 
 	if (name == "server") {
+		std::string location_name("MAIN");
+		Location loc(_getCurrentCtxt());
+		loc.setName(location_name);
+		_getCurrentCtxt().addLocation(loc.getName(), loc);
+
 		VirtualServer server(_getCurrentCtxt());
 		_popContext();
 		_addServer(server);
@@ -113,7 +119,7 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["allowed_methods"]		= DirectiveSpecs(SERVER|LOCATION, 1, 3);
 	_direcSpecs["cgi"]					= DirectiveSpecs(LOCATION, 1, 1);
 	_direcSpecs["virtual"]				= DirectiveSpecs(LOCATION, 1, 1);
-	_direcSpecs["alias"]				= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["alias"]				= DirectiveSpecs(LOCATION, 1, 1);
 	_direcSpecs["error_page"]			= DirectiveSpecs(SERVER|LOCATION, 2, 999);
 	_direcSpecs["max_body_size"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["cgi_timeout"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
