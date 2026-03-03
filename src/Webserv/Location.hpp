@@ -8,6 +8,7 @@
 #include <map>
 
 class ConfigContext;
+class VirtualServer;
 
 class Location 
 {
@@ -47,8 +48,7 @@ class Location
 	std::map<int, std::string>	getErrorPages()		const	{return _error_pages;}
 	std::string					getErrorPage(int n)	const	{return _error_pages.at(n);}
 	long						getMaxBodySize()	const	{return _max_body_size;}
-		std::string	getCGIExec()	const	{return _cgi_exec;}
-		void		setCGIExec(std::string x)	{_cgi_exec = x;}
+	std::string					getCGIExec()		const	{return _cgi_exec;}
 
 	void	setName(const std::string& name)					{_name = name;}
 	void	setRoot(const std::string& root)					{_root = root;}
@@ -62,12 +62,14 @@ class Location
 	void   	setErrorPage(int code, std::string page)			{_error_pages.insert(std::make_pair(code, page));}
 	void	setMaxBodySize(long l)								{_max_body_size = l;}
 	void	setCGITimeout(int n)								{_cgi_timeout = n;}
+	void	setCGIExec(std::string x)							{_cgi_exec = x;}
 
 	void					setAllowedMethods(std::set<std::string> m)	{_allowed_methods = m;}
 	std::set<std::string>	getAllowedMethods(void) const				{return _allowed_methods;}
 
 
 	Location	(ConfigContext& ctxt);
+	Location	(VirtualServer & serv);
 	Location	(const Location& other);
 	Location&	operator= (const Location& rhs);
 	~Location	();

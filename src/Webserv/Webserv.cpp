@@ -263,7 +263,7 @@ void	Webserv::run()
 			currConn.setLastConnTime(std::time(NULL));
 		}
 
-		_closeStaleConnections();
+		//_closeStaleConnections();
 		//->add check enfant timeout
 	}
 }
@@ -297,8 +297,8 @@ bool	Webserv::clientInHandler(Connection & conn)
 {
 	if (conn.getEvent().events & EPOLLIN) {
 
-		std::string request_str = _receiveLoop(conn.getFd());
-		// std::string request_str = conn.receive();
+		//std::string request_str = _receiveLoop(conn.getFd());
+		std::string request_str = conn.receive();
 		if (!request_str.size()) {
 			return (false);
 		}

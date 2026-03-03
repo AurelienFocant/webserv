@@ -4,7 +4,6 @@
 VirtualServer::VirtualServer(void)
 	: _port()
 	, _root()
-	, _alias()
 	, _server_name()
 	, _redirect()
 	, _redirect_code()
@@ -24,7 +23,6 @@ VirtualServer::VirtualServer(void)
 VirtualServer::VirtualServer(ConfigContext const& ctxt)
 	: _port(ctxt.getPort())
 	, _root(ctxt.getRoot())
-	, _alias(ctxt.getAlias())
 	, _server_name(ctxt.getServerName())
 	, _redirect(ctxt.getRedirect())
 	, _redirect_code(ctxt.getRedirectCode())
@@ -44,7 +42,6 @@ VirtualServer::VirtualServer(ConfigContext const& ctxt)
 VirtualServer::VirtualServer(const VirtualServer& src)
 	: _port(src._port)
 	, _root(src._root)
-	, _alias(src._alias)
 	, _server_name(src._server_name)
 	, _redirect(src._redirect)
 	, _redirect_code(src._redirect_code)
@@ -66,7 +63,6 @@ VirtualServer&	VirtualServer::operator=( const VirtualServer& rhs )
 	if (this != &rhs) {
 		_port				= rhs._port;
 		_root				= rhs._root;
-		_alias				= rhs._alias;
 		_server_name		= rhs._server_name;
 		_redirect			= rhs._redirect;
 		_redirect_code		= rhs._redirect_code;

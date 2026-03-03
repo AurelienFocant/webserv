@@ -21,6 +21,24 @@ Location::Location(ConfigContext& ctxt)
 {
 }
 
+Location::Location(VirtualServer & serv)
+	: _root(serv.getRoot())
+	, _redirect(serv.getRedirect())
+	, _redirect_code(serv.getRedirectCode())
+	, _autoindex(serv.getAutoindex())
+	, _cgi(false)
+	, _cgi_timeout(serv.getCGITimeout())
+	, _cgi_exec(serv.getCGIExec())
+	, _virtual(false)
+	, _max_body_size(serv.getMaxBodySize())
+	, _keepalive_time(serv.getKeepalive_time())
+	, _keepalive_timeout(serv.getKeepalive_timeout())
+	, _error_pages(serv.getErrorPages())
+	, _indexes(serv.getIndexes())
+	, _allowed_methods(serv.getAllowedMethods())
+{
+}
+
 Location::Location(const Location& src)
 	: _name(src._name)
 	, _root(src._root)

@@ -26,6 +26,7 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 
 	//Tokenizing first line of request
 	while (_tokenizing < 4 && _it != _input.end() && _nbr_eol == 0) {
+		_it = _input.begin();
 		switch (*_it) {
 			case ('\r'):
 				++_it;
@@ -52,13 +53,15 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 					_tokenizing++;
 				}
 		}
-		if (_it != _input.begin())
-			_input.erase(0, _it - _input.begin());
+		if (_it == _input.begin())
+			break ;
+		_input.erase(0, _it - _input.begin());
 		_it = _input.begin();
 	}
 	//Tokenizing Header
 	_it = _input.begin();
 	while (_it != _input.end() && _nbr_eol < 2) {
+		_it = _input.begin();
 		switch (*_it) {
 			case (':'):
 				_nbr_eol = 0;
@@ -100,8 +103,9 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 				if (!new_token.lexeme.empty())
 					_token_list.push_back(new_token);
 		}
-		if (_it != _input.begin())
-			_input.erase(0, _it - _input.begin());
+		if (_it == _input.begin())
+			break ;
+		_input.erase(0, _it - _input.begin());
 		_it = _input.begin();
 	}
 	return (_token_list);

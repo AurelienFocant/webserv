@@ -82,6 +82,8 @@ bool	Request::parseRequest() {
 	// if more token are needed or available, create and add them to token list.
 	if (_progress < PARSED)
 		HTTPTokenizer::scanTokens();
+	if (_token_list.empty())
+		return (_complete);
 	_list_it = _token_list.begin();
 	
 	// std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.

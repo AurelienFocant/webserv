@@ -15,7 +15,6 @@ class VirtualServer
 	private:
 		unsigned int	_port;
 		std::string		_root;
-		std::string		_alias;
 	 	std::string		_server_name;
 		std::string		_redirect;
 		int				_redirect_code;
@@ -29,6 +28,7 @@ class VirtualServer
 		std::map<int, std::string>		_error_pages;
 		std::vector<std::string>		_indexes;
 		std::set<std::string>			_allowed_methods;
+
 		std::map<std::string, Location>	_locations;
 
 
@@ -37,7 +37,6 @@ class VirtualServer
 		void	setRoot(std::string root)									{_root = root;}
 		void	setServName(std::string name)								{_server_name = name;}
 		void	setAutoindex(bool b)										{_autoindex = b;}
-		void	setAlias(std::string a)										{_alias = a;}
 		void	setIndexes(std::vector<std::string> const& src)				{_indexes.assign(src.begin(), src.end());}
 		void	setErrorPages(std::map<int, std::string> ep)				{_error_pages = ep;}
 		void	setErrorPage(int code, std::string page)					{_error_pages.insert(std::make_pair(code, page));}
@@ -51,18 +50,22 @@ class VirtualServer
 		std::string		getRoot(void)								const	{return _root;}
 		std::string		getServName(void)							const	{return _server_name;}
 		bool			getAutoindex(void)							const	{return _autoindex;}
-		std::string		getAlias()									const	{return _alias;}
 		std::string		getErrorPage(int code)						const	{return _error_pages.at(code);}
 		std::time_t		getKeepaliveTime(void)						const	{return _keepalive_time;}
 		std::time_t		getKeepaliveTimeout(void)					const	{return _keepalive_timeout;}
 		int				getCGITimeout()								const	{return _cgi_timeout;}	
 		std::string		getCGIExec()								const	{return _cgi_exec;}
 		size_t			getMaxBodySize()							const	{return _max_body_size;}
-
-		std::map<int, std::string>		const&	getErrorPages()		const	{return _error_pages;}
-		std::vector<std::string>		const&	getIndexes(void)	const	{return _indexes;}
-		std::map<std::string, Location>	const&	getLocations(void)				const	{return _locations;}
-		Location						const&	getLocationAt(std::string key)	const	{return _locations.at(key);}
+		std::string		getRedirect()								const	{return _redirect;}
+		int				getRedirectCode()							const	{return _redirect_code;}
+		std::time_t		getKeepalive_time()							const	{return _keepalive_time;}
+		std::time_t		getKeepalive_timeout()						const	{return _keepalive_timeout;}
+																	
+		std::set<std::string>			const& getAllowedMethods()				const	{return _allowed_methods;}
+		std::map<int, std::string>		const& getErrorPages()					const	{return _error_pages;}
+		std::vector<std::string>		const& getIndexes(void)					const	{return _indexes;}
+		std::map<std::string, Location>	const& getLocations(void)				const	{return _locations;}
+		Location						const& getLocationAt(std::string key)	const	{return _locations.at(key);}
 
 		VirtualServer	( void );
 		VirtualServer	(ConfigContext const& ctxt);
