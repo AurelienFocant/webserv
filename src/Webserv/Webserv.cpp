@@ -445,28 +445,38 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
 			//do stuff
 		}
-		size_t end = cgi_response.find("\n\n");
-		if (end != std::string::npos)
-		{
-			std::string headers_str= cgi_response.substr(0, end + 1);
-			std::cout << "CGI HEADERS: " << headers_str << std::endl;
-			std::stringstream headers;
-			headers << headers_str;
-			std::string line;	
-			while (std::getline(headers, line))
-			{
-				size_t colon = line.find(":");
-				if (colon != std::string::npos)
-				{
-					std::string key = headers_str.substr(0, colon);
-					std::string value = headers_str.substr(colon + 1, headers_str.size() - 2);
-					conn.request_handler._response.setHeader(key, value);
-				}
-			}
-			std::string body = cgi_response.substr(end + 2, cgi_response.size() - 1); 
-			conn.request_handler._response.setBody(body);
 
+		size_t end = cgi_response.find("\n\n");
+		if (end == std::string::npos)
+		{
+			conn.request_handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+			return false;
 		}
+		std::string headers_str = cgi_response.substr(0, end);
+		std::string body;
+		if (end + 2 <= cgi_response.size())
+			body = cgi_response.substr(end + 2); 
+
+		std::cout << "[DEBUG] Cgi headers: " << headers_str << std::endl;
+		std::cout << "[DEBUG] Cgi body: " << body << std::endl;
+
+		std::stringstream ss;
+		ss << headers_str;
+		std::string line;	
+		while (std::getline(ss, line))
+		{
+			if (line.empty())
+				continue;
+			size_t colon = line.find(":");
+			if (colon == std::string::npos)
+				continue;
+			std::string key = headers_str.substr(0, colon);
+			std::string value = headers_str.substr(colon + 2);
+
+			conn.request_handler._response.setHeader(key, value);
+		}
+		conn.request_handler._response.setBody(body);
+
 		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 	}
 	return (true);
