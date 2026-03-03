@@ -10,3 +10,5 @@ data/webserv.nginx.conf
 breakpoints
 data/**/upload/*
 !data/**/upload/.gitkeep
+data/**/comments/*
+!data/**/comments/.gitkeep

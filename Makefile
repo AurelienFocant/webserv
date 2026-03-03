@@ -78,11 +78,11 @@ CPPFLAGS						+=	$(addprefix -I, $(SRC_SUBDIRS))
 
 
 #----------------------------LINKING--------------------------#
-$(NAME):		$(LIBFT) $(MINILIBX) $(OBJ_FILES) | linking
+$(NAME):		$(OBJ_FILES) | linking
 	$(CC) $(OPTIFLAGS) $(OBJ_FILES) $(LIBFLAGS) -o $@
 	@printf "\n"
 
-$(DEBUG_EXEC):	$(LIBFT) $(MINILIBX) $(DEBUG_OBJ) | linking
+$(DEBUG_EXEC):	$(DEBUG_OBJ) | linking
 	$(LINKER) $(DEBUGFLAGS) $(DEBUG_OBJ) $(LIBFLAGS) -o $@
 	@printf "\n"
 
