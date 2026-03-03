@@ -32,8 +32,8 @@ def main():
         f.write(comment)
 
     # HTTP headers
-    # print("Content-Type: text/html")
-    # print()
+    print("Content-Type: text/html")
+    print()
 
     print("<!DOCTYPE html>")
     print("<html>")

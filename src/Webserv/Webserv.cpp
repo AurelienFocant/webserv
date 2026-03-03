@@ -446,16 +446,16 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 			//do stuff
 		}
 
-		size_t end = cgi_response.find("\n\n");
+		size_t end = conn.request_handler._response.getBody().find("\n\n");
 		if (end == std::string::npos)
 		{
 			conn.request_handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
 			return false;
 		}
-		std::string headers_str = cgi_response.substr(0, end);
+		std::string headers_str = conn.request_handler._response.getBody().substr(0, end);
 		std::string body;
-		if (end + 2 <= cgi_response.size())
-			body = cgi_response.substr(end + 2); 
+		if (end + 2 <= conn.request_handler._response.getBody().size())
+			body = conn.request_handler._response.getBody().substr(end + 2); 
 
 		std::cout << "[DEBUG] Cgi headers: " << headers_str << std::endl;
 		std::cout << "[DEBUG] Cgi body: " << body << std::endl;
