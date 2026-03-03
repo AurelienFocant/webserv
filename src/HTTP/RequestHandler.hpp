@@ -59,7 +59,6 @@ class RequestHandler
 	bool			decodePath(const std::string& encoded, std::string& decoded);
 	bool			normalizePath();
 	bool			detectCGI();
-	bool			validateCGIScript();
 
 	/*  Redirections */
 	bool			handleConfigRedirect();
@@ -88,8 +87,7 @@ class RequestHandler
 
 	/* PUBLIC METHODS */
 	/* Constructors / Destructors */
-	RequestHandler ();
-	RequestHandler	(Connection& currConn);
+	RequestHandler	();
 	~RequestHandler	();
 
 	RequestHandler&	operator=(const RequestHandler& rhs);

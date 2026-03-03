@@ -59,9 +59,9 @@ bool	Connection::hasTimedOut(void)
 {
 	std::time_t	now = std::time(NULL);
 
-	if (std::difftime(now, _last_conn) > this->virtual_server.getKeepaliveTimeout())
+	if (std::difftime(now, _last_conn) > request_handler.getVirtualServer()->getKeepaliveTimeout())
 		return (true);
-	if (std::difftime(now, _first_conn) > this->virtual_server.getKeepaliveTime())
+	if (std::difftime(now, _first_conn) > request_handler.getVirtualServer()->getKeepaliveTime())
 		return (true);
 	return (false);
 }
@@ -105,7 +105,7 @@ Connection::Connection(int fd, const int& epoll_fd, std::time_t time)
 	, _first_conn(time)
 	, _last_conn(time)
 	, conn_closed(false)
-	, virtual_server()
+	//, virtual_server()
 	, request_handler()
 	, child_pid(0)
 	, cgi_timeout(0)
@@ -120,7 +120,7 @@ Connection::Connection( const Connection& src )
 	, _first_conn(src._first_conn)
 	, _last_conn(src._last_conn)
 	, conn_closed(src.conn_closed)
-	, virtual_server(src.virtual_server)
+	//, virtual_server(src.virtual_server)
 	, child_pid(src.child_pid)
 	, cgi_timeout(src.cgi_timeout)
 

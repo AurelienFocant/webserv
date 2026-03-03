@@ -445,7 +445,7 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
 			//do stuff
 		}
-		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.virtual_server.getErrorPages());
+		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 	}
 	return (true);
 }

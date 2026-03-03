@@ -52,7 +52,7 @@ class Connection
 
 	public:
 		bool			conn_closed;
-		VirtualServer	virtual_server; // Remove and keep only the one in Request Handler? 
+		//VirtualServer	virtual_server; // Remove and keep only the one in Request Handler? 
 		RequestHandler	request_handler;
 
 		bool	hasTimedOut(void);
