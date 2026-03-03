@@ -141,8 +141,13 @@ bool	RequestHandler::resolvePath()
 	if (detectCGI())
 	{
 		_resolved_path = _matched_location->getRoot() + _script_name;
-		//_cgi_exec = _matched_location->getRoot() + _matched_location->getCGIExec();
-		_cgi_exec = _matched_location->getCGIExec();
+		if (!_cgi_exec.empty())
+		{
+			if (*_matched_location->getRoot().end() != '/')
+			_cgi_exec = *_matched_location->getRoot().end() != '/'
+			? _matched_location->getRoot() + '/' + _matched_location->getCGIExec()
+			: _matched_location->getRoot() + _matched_location->getCGIExec();
+		}
 		_response.isCGI = true;
 		if (!normalizePath())
 			return false;
@@ -273,8 +278,7 @@ bool	RequestHandler::normalizePath()
 {
 	std::string cage_root = _matched_location->getName() == "MAIN" || _matched_extension != NO_EXT  ? "" : _matched_location->getName();
 
-	std::cout << "Cage root :" << cage_root << std::endl;
-	std::cout << "Request path :" << _request_path << std::endl;
+	std::cout << "[DEBUG] Request path :" << _request_path << std::endl;
 
 	std::string	decoded_path;
 
@@ -286,7 +290,6 @@ bool	RequestHandler::normalizePath()
 	}
 	// std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
-	// fonctionne meme hors location car cage_root est initialise a "";
 	std::string temp_path = decoded_path.substr(cage_root.size());
 
 	bool slash[2] = {true, true};
@@ -300,8 +303,6 @@ bool	RequestHandler::normalizePath()
 			&& temp_path[temp_path.size() - 1] == '/');
 	if (!slash[1])
 		temp_path += '/';
-
-	// std::cout << "[DEBUG] Path to normalize " << temp_path << std::endl;
 
 	std::vector<std::string> segments;
 
@@ -341,14 +342,10 @@ bool	RequestHandler::normalizePath()
 		else
 			temp_path += "/" + segments[i];
 	}
-
 	if (temp_path.empty() || (slash[1] && temp_path.size() != 1))
 		temp_path += '/';
 
 	_request_path = temp_path;
-
-	// std::cout << "[DEBUG] Normalized path " << _request_path << std::endl;
-
 	return true;
 }
 
