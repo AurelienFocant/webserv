@@ -529,6 +529,12 @@ const std::multimap<std::string, std::string>&	Request::getHeaders() const {
 }
 
 /*Setters*/
+
+void	Request::setComplete(bool status) {
+	_complete = status;
+	return ;
+}
+
 bool	Request::addInput(const std::string& input) {
 	HTTPTokenizer::addInput(input);
 	return (true);

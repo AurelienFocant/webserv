@@ -131,6 +131,12 @@ void	Response::setBody(const std::string& content)
 	_body = content;
 }
 
+void	Response::addCgiBody(char* content) {
+	if (content)
+		_body += content;
+	return ;
+}
+
 /* RESET */
 
 void	Response::cleanResponse()

@@ -425,21 +425,12 @@ bool	Webserv::cgiInHandler(Connection& conn)
 bool	Webserv::cgiOutHandler(Connection& conn)
 {
 	char buffer[4096];
-	ssize_t bytes = 1;
 
-	std::string	cgi_response;
-	while (bytes > 0) {
-		bytes = read(conn.cgi_fd[0], buffer, sizeof(buffer)); //-->check for partial read
-		if (bytes < 0) {
-			return (false);
-		}
-		cgi_response.append(buffer, bytes);
-	}
-	conn.request_handler._response.setCgiBody(cgi_response);
-	if (bytes < 0)
+	ssize_t	bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer)); //-->check for partial read
+	if (bytes_read < 0) {
 		return (false);
-
-	if (bytes == 0) {
+	}
+	else if (bytes_read == 0) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
 		_connections.erase(conn.cgi_fd[0]);
 		close(conn.cgi_fd[0]);
@@ -450,7 +441,11 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 			//do stuff
 		//	cgi::EndOfChild(conn);
 		}
-		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+		conn.request_handler.requestIsComplete();
+//		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+	}
+	else {
+		conn.request_handler._response.addCgiBody(buffer);
 	}
 	return (true);
 }

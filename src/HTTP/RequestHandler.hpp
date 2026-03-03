@@ -117,6 +117,7 @@ class RequestHandler
 	/* Setters */
 	void					setVirtualServer(const VirtualServer& server);
 	void					setRoot(const std::string& root);
+	void					requestIsComplete();
 
 };
 
