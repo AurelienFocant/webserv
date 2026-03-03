@@ -58,6 +58,6 @@ class ConfigBuilder
 		void	_visitChild(ConfigNode const* node);
 		bool	_has_root;
 		bool	_has_alias;
-		// bool	_has_cgi;
-		// bool	_has_cgi_exec;
+		bool	_has_cgi;
+		bool	_has_cgi_exec;
 };

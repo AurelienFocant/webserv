@@ -42,6 +42,8 @@ void ConfigBuilder::visit(const BlockNode& node)
 
 	_has_root = 0;
 	_has_alias = 0;
+	_has_cgi = 0;
+	_has_cgi_exec = 0;
 	for (size_t i = 0; i < node.children.size(); ++i)
 		_visitChild((node.children[i]));
 
@@ -276,6 +278,11 @@ void ConfigBuilder::_handleCGI(const DirectiveNode& d)
 {
 	std::string arg = d.args[0];
 
+	if (_has_cgi)
+		_error(d.line, "'cgi' directive is a duplicate");
+	if (_has_cgi_exec)
+		_error(d.line, "'cgi' and 'cgi_exec' directives are mutually exclusive");
+
 	if (arg == "off") {
 		_getCurrentCtxt().setCGI(false); return;
 	}
@@ -283,6 +290,8 @@ void ConfigBuilder::_handleCGI(const DirectiveNode& d)
 		_getCurrentCtxt().setCGI(true); return;
 	}
 	_error(d.line, "only on of off values after 'cgi' directive");
+
+	_has_cgi = 1;
 }
 
 void ConfigBuilder::_handleVirtualLocation(const DirectiveNode& d)
@@ -343,7 +352,13 @@ void ConfigBuilder::_handleCGITimeout(const DirectiveNode& d)
 
 void ConfigBuilder::_handleCGIExec(const DirectiveNode& d)
 {
+	if (_has_cgi_exec)
+		_error(d.line, "'cgi' directive is a duplicate");
+	if (_has_cgi)
+		_error(d.line, "'cgi' and 'cgi_exec' directives are mutually exclusive");
+
 	_getCurrentCtxt().setCGIExec(d.args[0]);
+	_has_cgi_exec = 1;
 }
 
 
@@ -388,6 +403,8 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 ConfigBuilder::ConfigBuilder()
 	: _has_root(false)
 	, _has_alias(false)
+	, _has_cgi(false)
+	, _has_cgi_exec(false)
 {
 }
 
