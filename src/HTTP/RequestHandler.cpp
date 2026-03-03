@@ -130,74 +130,44 @@ void	RequestHandler::findLocation()
 		}
 	}
 
-/* 	if (!_matched_location)
-		_matched_location = &(_server->getLocationAt("MAIN")); */
-
+	if (!_matched_location)
+		_matched_location = &(_server->getLocationAt("MAIN"));
 	//std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
 	//std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
 }
 
 bool	RequestHandler::resolvePath()
 {
-	//findLocation();
-
-	if (_matched_location)
+	if (detectCGI())
 	{
-		if (detectCGI())
-		{
-			// need to check if all those exist !
-			//if cgi else le reste -> si pas d'erreur tous passent par le meme validatePath a la fin
-			_resolved_path = _matched_location->getRoot() + _script_name;
-			//_cgi_exec = _matched_location->getRoot() + _matched_location->getCGIExec();
-			_cgi_exec = _matched_location->getCGIExec();
-			if (!validateCGIScript())
-				return false;
-			_response.isCGI = true;
-			return true;
-		}
-
+		_resolved_path = _matched_location->getRoot() + _script_name;
+		//_cgi_exec = _matched_location->getRoot() + _matched_location->getCGIExec();
+		_cgi_exec = _matched_location->getCGIExec();
+		_response.isCGI = true;
 		if (!normalizePath())
 			return false;
-
-		//Config Redirections
-		if (handleConfigRedirect())
-			return false;
-
-		if (!_matched_location->getAlias().empty())
-		{
-			//Alias : replace prefix of location
-			std::string	location_path	= _matched_location->getName();
-			std::string	remaining_path	= _request_path.substr(location_path.size());
-			_resolved_path = _matched_location->getAlias() + remaining_path;
-		}
-		else if (!_matched_location->getRoot().empty())
-		{
-			//Location root : replace main root
-			_root = _matched_location->getRoot();
-			_resolved_path = _root + _request_path;
-		}
-		else
-		{
-			//Default root
-			_resolved_path = _root + _request_path;
-		}
 	}
 	else
 	{
 		if (!normalizePath())
 			return false;
-
-		//Default root
-		_resolved_path = _root + _request_path;
+		if (handleConfigRedirect())
+			return false;
+		if (!_matched_location->getAlias().empty())
+		{
+			std::string	location_path	= _matched_location->getName();
+			std::string	remaining_path	= _request_path.substr(location_path.size());
+			_resolved_path = _matched_location->getAlias() + remaining_path;
+		}
+		else 
+		{
+			if (!_matched_location->getRoot().empty())
+				_root = _matched_location->getRoot();
+			_resolved_path = _root + _request_path;
+		}
 	}
-
 	// std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
-
-	if (!validatePath())
-		return false;
-
-	return true;
-
+	return validatePath();
 }
 
 bool	RequestHandler::handleConfigRedirect()
@@ -266,40 +236,6 @@ bool	RequestHandler::detectCGI()
 	return true;
 }
 
-bool	RequestHandler::validateCGIScript()
-{
-	return validatePath();
-/* 	std::string cgi_bin_path = 	_matched_location->getRoot() + _matched_location->getCGIExec();
-	DIR* dir_ptr = opendir(cgi_bin_path.c_str());
-	if (!dir_ptr)
-	{
-		// throw exception that set status to INTERNAL_ERROR?
-		_response.setStatusCode(INTERNAL_SERVER_ERROR);
-		return false;
-	}
-	size_t start = _script_name.rfind('/');
-	if (start == std::string::npos)
-	{
-		closedir(dir_ptr);
-		return false;
-	}
-
-	std::string script_basename = _script_name.substr(start + 1);
-	struct dirent* dir_entry;
-	while ((dir_entry = readdir(dir_ptr)) != NULL)
-	{
-		if ((std::strcmp(dir_entry->d_name, script_basename.c_str()) == 0))
-		{
-			_resolved_path = _root + "/cgi-bin/" + script_basename;
-			closedir(dir_ptr);
-			return true;
-		}
-	}
-	closedir(dir_ptr);
-	_response.setStatusCode(FORBIDDEN);
-	return false; */
-}
-
 bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded)
 {
 	//avoid useless reallocations (borne superieure)
@@ -335,7 +271,7 @@ bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded
 
 bool	RequestHandler::normalizePath()
 {
-	std::string cage_root = !_matched_location ? "" : _matched_location->getName();
+	std::string cage_root = _matched_location->getName() == "MAIN" || _matched_extension != NO_EXT  ? "" : _matched_location->getName();
 
 	std::cout << "Cage root :" << cage_root << std::endl;
 	std::cout << "Request path :" << _request_path << std::endl;

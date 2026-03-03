@@ -59,7 +59,6 @@ class RequestHandler
 	bool			decodePath(const std::string& encoded, std::string& decoded);
 	bool			normalizePath();
 	bool			detectCGI();
-	bool			validateCGIScript();
 
 	/*  Redirections */
 	bool			handleConfigRedirect();
