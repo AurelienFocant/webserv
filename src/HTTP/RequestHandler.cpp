@@ -141,8 +141,10 @@ bool	RequestHandler::resolvePath()
 	if (detectCGI())
 	{
 		_resolved_path = _matched_location->getRoot() + _script_name;
-		//_cgi_exec = _matched_location->getRoot() + _matched_location->getCGIExec();
-		_cgi_exec = _matched_location->getCGIExec();
+		if (*_matched_location->getRoot().end() != '/')
+		_cgi_exec = *_matched_location->getRoot().end() != '/'
+		? _matched_location->getRoot() + '/' + _matched_location->getCGIExec()
+		: _matched_location->getRoot() + _matched_location->getCGIExec();
 		_response.isCGI = true;
 		if (!normalizePath())
 			return false;
