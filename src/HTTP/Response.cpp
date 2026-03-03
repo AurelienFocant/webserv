@@ -2,9 +2,9 @@
 	
 Response::Response()
 : isCGI(false)
+, _offset(0)
 , _state(DEFAULT)
 , _status_code(OK)
-, _offset(0)
 {}
 
 Response::~Response() {}
@@ -141,8 +141,8 @@ void	Response::cleanResponse()
 	_headers.clear();
 	_body.clear();
 	_data.clear();
-	_offset = 0;
 	isCGI = false;
+	_offset = 0;
 }
 
 /* DEBUG */

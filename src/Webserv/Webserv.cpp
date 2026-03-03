@@ -395,10 +395,14 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 
 bool	Webserv::cgiInHandler(Connection& conn)
 {
-	int	content_length = std::atoi(conn.request_handler.getRequest().getHeaderValues("CONTENT_LENGTH").at(0).c_str()); //-->check to do on partial send 
-	int byte = write(conn.cgi_fd[1], (conn.request_handler.getRequest().getBody()).c_str(), content_length);
+	int bytes_read = 0;
+	conn.sendCgiContent(bytes_read);
+	if (bytes_read < 0) {
+		//Error do something;
+		return (false);
+	}
 
-	if (byte == content_length) {
+	if (conn.request_handler._response._offset == conn.request_handler.getRequest().getContentLength()) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
@@ -412,6 +416,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		t_info	info(conn, &Webserv::cgiOutHandler);
 		info.connection.setLastConnTime(std::time(NULL));
 		_connections.insert(std::make_pair(conn.cgi_fd[0], info));
+		conn.request_handler._response._offset = 0;
 	}
 	return (true);
 }

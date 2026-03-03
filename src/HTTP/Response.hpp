@@ -34,6 +34,7 @@ class	Response
 	/* Public Attributes */
 
 	bool				isCGI;
+	size_t								_offset;
 
 	/*Publics Methods*/
 
@@ -79,7 +80,6 @@ class	Response
 	std::string							_body;
 
 	std::string							_data;
-	size_t								_offset;
 
 	/* Private Methods */
 

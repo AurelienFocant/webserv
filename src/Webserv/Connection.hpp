@@ -58,6 +58,7 @@ class Connection
 		bool	hasTimedOut(void);
 		std::string	receive();
 		void	sendResponse();
+		void	sendCgiContent(int& bytes_send);
 		pid_t		child_pid;
 		int			cgi_fd[2];
 		std::time_t	cgi_timeout;

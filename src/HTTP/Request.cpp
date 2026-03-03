@@ -277,6 +277,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = OK;
+			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
 		}
 	}
 	else {
@@ -310,6 +311,7 @@ bool	Request::bodyHandlerContentLength(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = OK;
+			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
 		}
 	}
 	return (_complete);
@@ -500,6 +502,10 @@ t_HttpCode		Request::getStatusCode() const {
 
 const int&				Request::getState() const {
 	return (_progress);
+}
+
+size_t				Request::getContentLength() const {
+	return (_content_length);
 }
 
 std::vector<std::string>	Request::getHeaderValues(std::string header_name) const {

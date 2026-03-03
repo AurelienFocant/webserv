@@ -26,23 +26,26 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 
 	//Tokenizing first line of request
 	while (_tokenizing < 4 && _it != _input.end() && _nbr_eol == 0) {
-		_it = _input.begin();
 		switch (*_it) {
+			case ('\0'):
+				break ;
 			case ('\r'):
-				++_it;
-				if (*_it == '\n') {
-					new_token.tkType = EOL;
-					new_token.lexeme = "\\r\\n";
-					_token_list.push_back(new_token);
-					++_it;
-					_tokenizing = 4;
-					_nbr_eol = 1;
-				}
-				else {
-					new_token.tkType = ERROR;
-					new_token.lexeme = "ERROR";
-					_token_list.push_back(new_token);
-					return (_token_list);
+				switch (peek()) {
+					case ('\n'):
+						new_token.tkType = EOL;
+						new_token.lexeme = "\\r\\n";
+						_token_list.push_back(new_token);
+						_tokenizing = 4;
+						_nbr_eol = 1;
+						_it = _it + 2;
+						break ;
+					case ('\0'):
+						break ;
+					default: 
+						new_token.tkType = ERROR;
+						new_token.lexeme = "ERROR";
+						_token_list.push_back(new_token);
+						return (_token_list);
 				}
 				break ;
 			default:
@@ -61,8 +64,9 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 	//Tokenizing Header
 	_it = _input.begin();
 	while (_it != _input.end() && _nbr_eol < 2) {
-		_it = _input.begin();
 		switch (*_it) {
+			case ('\0'):
+				break ;
 			case (':'):
 				_nbr_eol = 0;
 				new_token.tkType = COLON;
@@ -78,19 +82,22 @@ std::vector<t_Token>	HTTPTokenizer::scanTokens() {
 				++_it;
 				break ;
 			case ('\r'):
-				_it++;
-				if (peek() == '\n') {
-					++_it;
-					_nbr_eol++;
-					new_token.tkType = EOL;
-					new_token.lexeme = "\\r\\n";
-					_token_list.push_back(new_token);
-				}
-				else {
-					new_token.tkType = ERROR;
-					new_token.lexeme = "ERROR";
-					_token_list.push_back(new_token);
-					return (_token_list);
+				switch (peek()) {
+					case ('\n'):
+						new_token.tkType = EOL;
+						new_token.lexeme = "\\r\\n";
+						_token_list.push_back(new_token);
+						_tokenizing = 4;
+						_nbr_eol = 1;
+						_it = _it + 2;
+						break ;
+					case ('\0'):
+						break ;
+					default: 
+						new_token.tkType = ERROR;
+						new_token.lexeme = "ERROR";
+						_token_list.push_back(new_token);
+						return (_token_list);
 				}
 				break ;
 			default:

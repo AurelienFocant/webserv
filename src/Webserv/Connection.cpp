@@ -43,6 +43,18 @@ void	Connection::sendResponse()
 		return;
 }
 
+void	Connection::sendCgiContent(int& bytes_sent)
+{
+	std::string content = request_handler.getRequest().getBody();
+	if (content.size() <= request_handler._response._offset)
+		return ;
+	bytes_sent = write(cgi_fd[1], content.c_str() + request_handler._response._offset, content.size() - request_handler._response._offset);
+	if (bytes_sent <= 0)
+		return ;
+	request_handler._response._offset += bytes_sent;
+	return ;
+}
+
 bool	Connection::hasTimedOut(void)
 {
 	std::time_t	now = std::time(NULL);
