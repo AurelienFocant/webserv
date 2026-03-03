@@ -44,10 +44,22 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 {
 	char* argv[3];
 
-	argv[0] = strdup(handler.getCGIExec().c_str());
-	argv[1] = strdup(handler.getResolvedPath().c_str());
-	argv[2] = NULL;
-	if (!argv[0] || !argv[1])
+	if (!handler.getCGIExec().empty())
+	{
+		argv[0] = strdup(handler.getCGIExec().c_str());
+		argv[1] = strdup(handler.getResolvedPath().c_str());
+		argv[2] = NULL;
+	}
+	else
+	{
+		//argv[0] = strdup(handler.getScriptName().c_str());
+		argv[0] = strdup(handler.getResolvedPath().c_str());
+		argv[1] = strdup(handler.getResolvedPath().c_str());
+		argv[2] = NULL;
+
+	}
+
+	if (!argv[0] /* || !argv[1] */)
 	{
 		// handler.setStatusCode(500);
 		return (false);
@@ -60,8 +72,8 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 	}
 	free(argv[0]);
 	argv[0] = NULL;
-	free(argv[1]);
-	argv[1] = NULL;
+/* 	free(argv[1]);
+	argv[1] = NULL; */
 
 	delete[](env);
 
