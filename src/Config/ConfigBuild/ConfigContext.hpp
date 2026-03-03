@@ -26,7 +26,10 @@ class ConfigContext {
 		int			_redirect_code;
 		std::string	_redirect;
 		bool		_cgi;
+		int			_cgi_timeout;
+		std::string	_cgi_exec;
 		bool		_virtualLocation;
+		int			_max_body_size;
 
 		std::map<int, std::string>		_error_pages;
 		std::vector<std::string>		_indexes;
@@ -53,10 +56,13 @@ class ConfigContext {
 		std::time_t								getKeepalive_timeout()	const	{return _keepalive_timeout;}
 		std::set<std::string>					getAllowedMethods()		const	{return _allowed_methods;}
 		bool									getCGI()	   			const	{return _cgi;}
+		int										getCGITimeout()			const	{return _cgi_timeout;}	
+		std::string								getCGIExec()			const	{return _cgi_exec;}
 		bool									getVirtualLocation()	const	{return _virtualLocation;}
 		std::string								getAlias()				const	{return _alias;}
 		std::map<int, std::string>				getErrorPages()	   		const	{return _error_pages;}
 		std::string								getErrorPage(int code)  const	{return _error_pages.at(code);}
+		long									getMaxBodySize()		const	{return _max_body_size;}
 
 		void        setPort(int port)											{_port = port;}
 		void        setRoot(const std::string &root)							{_root = root;}
@@ -71,10 +77,13 @@ class ConfigContext {
 		void		setKeepalive_timeout(std::time_t t) 						{_keepalive_timeout = t;}
 		void		setAllowedMethods(std::set<std::string> m)					{_allowed_methods = m;}
 		void		setCGI(bool b)												{_cgi = b;}
+		void		setCGITimeout(int n)										{_cgi_timeout = n;}
+		void		setCGIExec(std::string x)									{_cgi_exec = x;}
 		void		setVirtualLocation(bool b)									{_virtualLocation = b;}
 		void		setAlias(std::string a)										{_alias = a;}
 		void		setErrorPages(std::map<int, std::string> ep)				{_error_pages = ep;}
 		void		setErrorPage(int code, std::string page)					{_error_pages.insert(std::make_pair(code, page));}
+		void		setMaxBodySize(long l)										{_max_body_size = l;}
 
 		ConfigContext(void);
 		ConfigContext(ContextType t);

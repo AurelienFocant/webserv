@@ -6,7 +6,8 @@
 
 // Enum handling function at the end of this document, add them with the others
 
-typedef	enum s_method {		//Enum for HTTP METHOD -> UNKNOWN must be the last one
+typedef	enum s_method
+{		//Enum for HTTP METHOD -> UNKNOWN must be the last one
 	NOT_SET = -1,
 	GET = 0,
 	POST,
@@ -14,7 +15,8 @@ typedef	enum s_method {		//Enum for HTTP METHOD -> UNKNOWN must be the last one
 	UNKNOWN
 }		t_method;
 
-typedef	enum s_progress {	//Enum for request traitment progression -> UNKNOWN_STATE must be the last one
+typedef	enum s_progress
+{	//Enum for request traitment progression -> UNKNOWN_STATE must be the last one
 			PARSER_ERROR = -1,
 			START = 0,
 			METHOD,
@@ -27,14 +29,16 @@ typedef	enum s_progress {	//Enum for request traitment progression -> UNKNOWN_ST
 			UNKNOWN_STATE
 }		t_progress;
 
-typedef	enum s_extension {		//Enum for SCRIPT EXTENSIONS -> UNKNOWN_EXT must be the last one
+typedef	enum s_extension
+{		//Enum for SCRIPT EXTENSIONS -> UNKNOWN_EXT must be the last one
 	NO_EXT = -1,
 	PY = 0,
 	SH = 1,
 	UNKNOWN_EXT
 }		t_extension;
 
-typedef enum s_httpCode {	//Enum for HTTP Status codes
+typedef enum s_httpCode
+{	//Enum for HTTP Status codes
 	// ERROR_TYPE = 			Error_code	http version
 	INIT_STATE						= -1,
 

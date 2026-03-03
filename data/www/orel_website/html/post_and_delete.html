@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>WebServ File Manager</title>
+		<link rel="stylesheet" href="../css/styles.css">
+		<link rel="icon" type="image/ico" sizes="32x32" href="../favicon.ico">
+	</head>
+	<body>
+
+		<header>
+			<a href="/" class="home-link">WebServ</a>
+			<h1>Server File Manager</h1>
+			<p>Upload new files to the server. Delete files you no longer need with one click.</p>
+		</header>
+
+		<div class="container">
+			<h2>Upload new files</h2>
+			<form id="uploadForm" class="ctn" action="/upload/" method="post" enctype="multipart/form-data">
+				<div class="action">
+					<input class="bt" type="file" id="myFile" name="myfile">
+					<input class="bt" type="submit" value="Upload your file">
+				</div>
+			</form>
+		</div>
+
+		<div class="container">
+			<h2>Files on Server</h2>
+			<ul id="fileList">
+				<li class="loading">Loading...</li>
+			</ul>
+		</div>
+
+		<script src="../js/postForm.js"></script>
+
+	</body>
+</html>

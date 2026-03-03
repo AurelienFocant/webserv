@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <set>
+#include <map>
 
 #include "ConfigBuilder.hpp"
 #include "DirectiveSpecs.hpp"
@@ -40,11 +41,19 @@ void ConfigBuilder::visit(const BlockNode& node)
 
 
 	_has_root = 0;
+	_has_alias = 0;
+	_has_cgi = 0;
+	_has_cgi_exec = 0;
 	for (size_t i = 0; i < node.children.size(); ++i)
 		_visitChild((node.children[i]));
 
 
 	if (name == "server") {
+		std::string location_name("MAIN");
+		Location loc(_getCurrentCtxt());
+		loc.setName(location_name);
+		_getCurrentCtxt().addLocation(loc.getName(), loc);
+
 		VirtualServer server(_getCurrentCtxt());
 		_popContext();
 		_addServer(server);
@@ -101,7 +110,6 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["ast_root"]				= DirectiveSpecs(MAIN, 0, 0);
 	_direcSpecs["server"]	   			= DirectiveSpecs(MAIN, 0, 0);
 	_direcSpecs["location"]	   			= DirectiveSpecs(SERVER, 1, 1);
-
 	_direcSpecs["listen"]	   			= DirectiveSpecs(SERVER, 1, 1);
 	_direcSpecs["root"]		   			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 	_direcSpecs["server_name"] 			= DirectiveSpecs(SERVER, 1, 1);
@@ -113,8 +121,11 @@ void ConfigBuilder::_initDirectiveSpecs()
 	_direcSpecs["allowed_methods"]		= DirectiveSpecs(SERVER|LOCATION, 1, 3);
 	_direcSpecs["cgi"]					= DirectiveSpecs(LOCATION, 1, 1);
 	_direcSpecs["virtual"]				= DirectiveSpecs(LOCATION, 1, 1);
-	_direcSpecs["alias"]				= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["alias"]				= DirectiveSpecs(LOCATION, 1, 1);
 	_direcSpecs["error_page"]			= DirectiveSpecs(SERVER|LOCATION, 2, 999);
+	_direcSpecs["max_body_size"]		= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["cgi_timeout"]			= DirectiveSpecs(SERVER|LOCATION, 1, 1);
+	_direcSpecs["cgi_exec"]				= DirectiveSpecs(SERVER|LOCATION, 1, 1);
 }
 
 
@@ -134,6 +145,9 @@ void ConfigBuilder::_initHandlers()
 	_handlers["virtual"]			= &ConfigBuilder::_handleVirtualLocation;
 	_handlers["alias"]				= &ConfigBuilder::_handleAlias;
 	_handlers["error_page"]			= &ConfigBuilder::_handleErrorPages;
+	_handlers["max_body_size"]		= &ConfigBuilder::_handleMaxBodySize;
+	_handlers["cgi_timeout"]		= &ConfigBuilder::_handleCGITimeout;
+	_handlers["cgi_exec"]			= &ConfigBuilder::_handleCGIExec;
 }
 
 void ConfigBuilder::_handleListen(const DirectiveNode& d)
@@ -156,8 +170,22 @@ void ConfigBuilder::_handleRoot(const DirectiveNode& d)
 	if (_has_root)
 		_error(d.line, "root directive is a duplicate");
 
+	if (_has_alias)
+		_error(d.line, "cannot have both root and alias in the same block");
+
 	_getCurrentCtxt().setRoot(d.args[0]);
 	_has_root = 1;
+}
+
+void ConfigBuilder::_handleAlias(const DirectiveNode& d)
+{
+	if (_has_alias)
+		_error(d.line, "alias directive is a duplicate");
+
+	if (_has_root)
+		_error(d.line, "cannot have both root and alias in the same block");
+	_getCurrentCtxt().setAlias(d.args[0]);
+	_has_alias = 1;
 }
 
 void ConfigBuilder::_handleIndex(const DirectiveNode& d)
@@ -250,11 +278,20 @@ void ConfigBuilder::_handleCGI(const DirectiveNode& d)
 {
 	std::string arg = d.args[0];
 
+	if (_has_cgi)
+		_error(d.line, "'cgi' directive is a duplicate");
+	if (_has_cgi_exec)
+		_error(d.line, "'cgi' and 'cgi_exec' directives are mutually exclusive");
+
 	if (arg == "off") {
-		_getCurrentCtxt().setCGI(false); return;
+		_getCurrentCtxt().setCGI(false); 
+		_has_cgi = 1;
+		return;
 	}
 	if (arg == "on") {
-		_getCurrentCtxt().setCGI(true); return;
+		_getCurrentCtxt().setCGI(true);
+		_has_cgi = 1;
+		return;
 	}
 	_error(d.line, "only on of off values after 'cgi' directive");
 }
@@ -272,11 +309,6 @@ void ConfigBuilder::_handleVirtualLocation(const DirectiveNode& d)
 	_error(d.line, "only on of off values after 'virtual' directive");
 }
 
-void ConfigBuilder::_handleAlias(const DirectiveNode& d)
-{
-	_getCurrentCtxt().setAlias(d.args[0]);
-}
-
 void ConfigBuilder::_handleErrorPages(const DirectiveNode& d)
 {
 	std::vector<std::string>::const_iterator it;
@@ -290,6 +322,45 @@ void ConfigBuilder::_handleErrorPages(const DirectiveNode& d)
 
 		_getCurrentCtxt().setErrorPage(n, *(d.args.end()));
 	}
+}
+
+void ConfigBuilder::_handleMaxBodySize(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	long size;
+	char c;
+
+	ss >> size;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid size format");
+
+	_getCurrentCtxt().setMaxBodySize(size);
+}
+
+void ConfigBuilder::_handleCGITimeout(const DirectiveNode& d)
+{
+	std::stringstream ss(d.args[0]);
+	int time;
+	char c;
+
+	ss >> time;
+	if (ss.fail() || (ss >> c))
+		_error(d.line, "invalid time format");
+	if (time < 1 || time > 600)
+		_error(d.line, "cgi_timeout should be between 1sec and 10min");
+
+	_getCurrentCtxt().setKeepalive_timeout(time);
+}
+
+void ConfigBuilder::_handleCGIExec(const DirectiveNode& d)
+{
+	if (_has_cgi_exec)
+		_error(d.line, "'cgi' directive is a duplicate");
+	if (_has_cgi)
+		_error(d.line, "'cgi' and 'cgi_exec' directives are mutually exclusive");
+
+	_getCurrentCtxt().setCGIExec(d.args[0]);
+	_has_cgi_exec = 1;
 }
 
 
@@ -332,7 +403,10 @@ void ConfigBuilder::_error(int line, const std::string& msg)
 
 // Constructors
 ConfigBuilder::ConfigBuilder()
-	: _has_root(0)
+	: _has_root(false)
+	, _has_alias(false)
+	, _has_cgi(false)
+	, _has_cgi_exec(false)
 {
 }
 

@@ -25,21 +25,11 @@ namespace fileSystem {
 
 	bool isReadable(const std::string& path)
 	{
-	/* 	int	fd = open(path.c_str(), O_RDONLY);
-		if (fd < 0)
-			return false;
-		close(fd);
-		return true; */
 		return (access(path.c_str(), R_OK) == 0);
 	}
 
 	bool isWritable(const std::string& path)
 	{
-	/* 	int	fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		if (fd < 0)
-			return false;
-		close(fd);
-		return true; */
 		return (access(path.c_str(), W_OK) == 0);
 
 	}

@@ -12,6 +12,6 @@ namespace httpUtils {
 	std::string	getTime();
 
 	std::string intToString(size_t value); 
-}
+};
 
 #endif

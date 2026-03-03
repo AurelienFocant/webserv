@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Comment me!</title>
+		<link rel="stylesheet" href="../css/styles.css">
+		<link rel="icon" type="image/ico" sizes="32x32" href="../favicon.ico">
+	</head>
+	<body>
+
+		<header>
+			<h1>Leave your best comment!</h1>
+		</header>
+
+		<div class="container">
+			<form id="postComment" action="/comment.py" method="post" class="comment-box">
+				<label for="comment">Your comment:</label><br>
+				<textarea id="comment" name="comment" placeholder="Type your comment here..." required></textarea><br>
+				<button type="submit">Send</button>
+			</form>
+		</div>
+
+		<script src="../js/postComment.js"></script>
+
+	</body>
+</html>

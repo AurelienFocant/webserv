@@ -12,17 +12,18 @@
 #include <ctime>
 
 
-#include "ResponseBuilder.hpp"
 #include "HTTPenum.hpp"
+#include "resp.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 
 class Connection;
 class Response;
 class Request;
 class Location;
 class VirtualServer;
-class ResponseBuilder;
 
 class RequestHandler
 {
@@ -30,16 +31,14 @@ class RequestHandler
 
 	/*PRIVATE ATTRIBUTES */
 	/* Objects */
-	const Request&			_request;
-	Response&				_response;
-	VirtualServer&			_server;
-	ResponseBuilder			_builder;
+	Request					_request;
+	const VirtualServer*	_server;
 
 	/* Path Resolution */
 	std::string				_root;
-	std::string				_cage_root;
 	std::string				_request_path;
 	std::string				_resolved_path;
+	std::string				_cgi_exec;
 	const Location*			_matched_location;
 	t_extension				_matched_extension;
 	bool					_is_directory;
@@ -50,16 +49,16 @@ class RequestHandler
 	std::string				_query;
 
 	/* PRIVATE METHODS */
+	void			addInput(const std::string& input);
+
 	/* Path processing */
 	bool			extractPath();
 	bool			resolvePath();
 	bool			validatePath();
-	void			findLocation();
 
 	bool			decodePath(const std::string& encoded, std::string& decoded);
 	bool			normalizePath();
 	bool			detectCGI();
-	bool			validateCGIScript();
 
 	/*  Redirections */
 	bool			handleConfigRedirect();
@@ -79,39 +78,45 @@ class RequestHandler
 	std::string		_verifyFile(std::string filename);
 	bool			_saveDataToFile(std::string filename);
 
-	/* GET Method */
-
-	/*POST Method*/
-	bool			createNewUser() ;
-
 	/* Directory listing / Index */
 	bool			resolveIndex();
 	bool			hasAutoIndex();
 	void			generateAutoIndex();
 
-	/* For testing */
-	void			printRoutes();
-
 	public:
 
 	/* PUBLIC METHODS */
 	/* Constructors / Destructors */
-	RequestHandler	(Connection& currConn);
+	RequestHandler	();
 	~RequestHandler	();
 
 	RequestHandler&	operator=(const RequestHandler& rhs);
 
+	/* Public Attributes */
+	Response		_response;
+
+
 	/* Main method*/
 	void			handleRequest();
+	void			processRequest(const std::string& request_str);
+	void			processBody();
+	void			findLocation();
+	void			clean();
 
 	/* Getters */
-	std::string		getRoot() const {return _root;}
-	const Request&	getRequest() const ;
-	const Response&	getResponse() const ;
-	std::string		getQuery() const { return (_query);};
-	std::string		getScriptName() const { return (_script_name);};
-	t_extension		getExtension() const { return (_matched_extension);};
-	std::string		getResolvedPath() const { return (_resolved_path);};
+	std::string				getRoot()		const {return _root;}
+	const Request&			getRequest()	const ;
+	const Response&			getResponse()	const ;
+	const VirtualServer*	getVirtualServer()	const ;
+	std::string				getQuery()	const { return (_query);};
+	std::string				getScriptName()	const { return (_script_name);};
+	t_extension				getExtension()	const	{ return (_matched_extension);};
+	std::string				getResolvedPath()	const	{ return (_resolved_path);};
+	std::string				getCGIExec()		const	{return _cgi_exec;}
+
+	/* Setters */
+	void					setVirtualServer(const VirtualServer& server);
+	void					setRoot(const std::string& root);
 
 };
 

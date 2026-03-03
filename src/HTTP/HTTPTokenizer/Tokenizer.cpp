@@ -34,7 +34,9 @@ Tokenizer::~Tokenizer( void )
 
 char	Tokenizer::peek() const
 {
-	return (*_it);
+	if (_it + 1 == _input.end())
+		return ('\0');
+	return (*(_it + 1));
 }
 
 char	Tokenizer::advance()
@@ -62,8 +64,6 @@ std::string	Tokenizer::getTokenType(t_Token token) {
 			return ("COMA");	
 		case (EOL):
 			return ("EOL");	
-		case (EOC):
-			return ("EOC");	
 		default:
 			return ("\0");
 	}

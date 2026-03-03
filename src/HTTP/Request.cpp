@@ -1,3 +1,16 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Request.cpp                                        :+:      :+:    :+:   */
+
+/*                                                    +:+ +:+         +:+     */
+/*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/23 15:18:42 by stempels          #+#    #+#             */
+/*   Updated: 2026/02/25 13:40:43 by stempels         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Request.hpp"
 
 const std::string	Request::authorized_method = "GET POST";
@@ -69,41 +82,18 @@ bool	Request::parseRequest() {
 	// if more token are needed or available, create and add them to token list.
 	if (_progress < PARSED)
 		HTTPTokenizer::scanTokens();
+	if (_token_list.empty())
+		return (_complete);
 	_list_it = _token_list.begin();
 	
 	// std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.
 
-	//iterate and consume token list
-	while (_progress < PARSED && (_list_it != _token_list.end() && _list_it->tkType != EOC)) { 
-		switch (_progress) {
-			case (START):
-				setMethod();
-				break ;
-			case (METHOD):
-				setRequestUri();
-				break ;
-			case (URI):
-				setHttpVersion();
-				break ;
-			case (VERSION):
-				if ((*_list_it).tkType == EOL)
-					_progress = FIRST_LINE;
-				break ;
-			case (FIRST_LINE):
-				parseHeader();
-				break ;
-			case (PARSER_ERROR):
-				_complete = true;
-				_progress = DONE;
-				_status_code = BAD_REQUEST;
-				break ;
-			default:
-				_complete = true;
-				_progress = DONE;
-				_status_code = INTERNAL_SERVER_ERROR;
-		}
+	if (_progress < FIRST_LINE) {
+		parseFirstLine();
 	}
-
+	if (_progress < PARSED) {
+		parseHeader();
+	}
 	if (_progress == PARSED) {
 		if (!isFirstLineValid()) {
 			_progress = DONE;
@@ -118,16 +108,102 @@ bool	Request::parseRequest() {
 			_status_code = BAD_REQUEST;
 			return (_complete);
 		}
-		handleBody();
+		setupBodyHandler();
 	}
-	if (_progress == BODY_HANDLING)
-		(this->*_body_handler)();
-
-	std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
-
-	if (_complete)
-		cleanTokenList();
 	return (_complete);
+}
+
+bool	Request::handleBody(unsigned int max_body) {
+		//add body size checking
+		if (_progress == BODY_HANDLING)
+			(this->*_body_handler)(max_body);
+
+		// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
+
+		if (_complete)
+			cleanTokenList();
+		return (_complete);
+}
+
+/*Private Methods*/
+
+void	Request::parseFirstLine() {
+	//iterate and consume token list
+	while (_progress < FIRST_LINE && _list_it != _token_list.end()) { 
+		switch (_list_it->tkType) {
+			case (WORD):
+				extractFirstLineInfo();
+				break ;
+			case (EOL):
+				if (_progress == VERSION) {
+					_progress = FIRST_LINE;
+					break ;
+				}	// fall thru
+			case (ERROR):
+				_complete = true;
+				_progress = DONE;
+				_status_code = BAD_REQUEST;
+				break ;
+			default:
+				_complete = true;
+				_progress = DONE;
+				_status_code = INTERNAL_SERVER_ERROR;
+		}
+		advance();
+	}
+	return ;
+}
+
+void	Request::parseHeader() {
+	int	seq_pos = 0;
+	t_tokenType	sequence[4] = {WORD, COLON, WORD, COMA};
+	int	nbr_eol = 1; //first EOL at end of first line
+	while (_progress < PARSED && _list_it != _token_list.end()) {
+			if (_list_it->tkType == EOL) { 
+				nbr_eol++;
+				if (nbr_eol == 2)
+					_progress = PARSED;
+				seq_pos = 0;
+			}
+			else if (_list_it->tkType == sequence[seq_pos]) {
+				nbr_eol = 0;
+				if (_list_it->tkType == WORD)
+					seq_pos++;
+				else
+					seq_pos = 2;
+			}
+			else {
+				_progress = DONE;
+				_complete = true;
+				_status_code = BAD_REQUEST;
+			}
+			++_list_it;
+	}
+	return ;
+}
+
+void	Request::extractFirstLineInfo() {
+	//Assign WORD token value to the correct attribute in Request
+	//depending on the current progression
+	switch (_progress) {
+		case (START):
+			_method = methodFromString((*_list_it).lexeme);
+			_progress = METHOD;
+			break ;
+		case (METHOD):
+			_request_uri = (*_list_it).lexeme;
+			_progress = URI;
+			break ;
+		case (URI):
+			_http_version = (*_list_it).lexeme;
+			_progress = VERSION;
+			break ;
+		default:
+			_complete = true;
+			_progress = DONE;
+			_status_code = BAD_REQUEST;
+	}
+	return ;
 }
 
 bool	Request::isFirstLineValid() {
@@ -140,13 +216,13 @@ bool	Request::isFirstLineValid() {
 		return (false);
 	}
 	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
-		_status_code = HTTP_VERSION_NOT_SUPPORTED;
+		_status_code = BAD_REQUEST;
 		return (false);
 	}
 	return (true);
 }
 
-bool	Request::handleBody() {
+bool	Request::setupBodyHandler() {
 	if (_method == GET) { //Check for GET request
 		_progress = DONE;
 		_complete = true;
@@ -177,48 +253,63 @@ bool	Request::defineBodyExtractionHandler() {
 	}
 	else {
 		_progress = DONE;
-		_complete = true;
-		_status_code = NOT_IMPLEMENTED;
+//		_complete = true;
+//		_status_code = NOT_IMPLEMENTED;
 		return (false);
 	}
 	_progress = BODY_HANDLING;
 	return (true);
 }
 
-bool	Request::bodyHandlerTransfertEncoding() {
+bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 	if (_content_length == 0 
 		|| _content_length == std::numeric_limits<unsigned long>::max()) {
 		std::string	dft = extractInput('\n');
+		if (dft.empty())
+			return (_complete);
 		dft.erase(dft.find('\r'));
 		std::stringstream	ss;
 		ss << std::hex << dft;
 		ss >> _content_length; 
 		if (_content_length)
 			_content_length += 2;
-	}
-	if (_content_length == 0) {
-		_progress = DONE;
-		_complete = true;
-		_status_code = OK;
-		_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+		else {
+			_progress = DONE;
+			_complete = true;
+			_status_code = OK;
+			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+		}
 	}
 	else {
+		//check for max_body size
 		size_t	before_len = _body.size();
-		_body += extractInput(_content_length);
-		_content_length -= (_body.size() - before_len);
+		if (before_len + _content_length > max_body) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = REQUEST_ENTITY_TOO_LARGE;
+		}
+		else {
+			_body += extractInput(_content_length);
+			_content_length -= (_body.size() - before_len);
+		}
 	}
 	return (_complete);
 }
 
-bool	Request::bodyHandlerContentLength() {
-	size_t	before_len = _body.size();
-	_body += extractInput(_content_length);
-	_content_length -= (_body.size() - before_len);
-	if (_content_length == 0) {
+bool	Request::bodyHandlerContentLength(unsigned int max_body) {
+	//check for max_body size
+	if (max_body < _content_length) {
 		_progress = DONE;
 		_complete = true;
-		_status_code = OK;
-		_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+		_status_code = REQUEST_ENTITY_TOO_LARGE;
+	}
+	else {
+		if (_content_length == 0) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = OK;
+			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+		}
 	}
 	return (_complete);
 }
@@ -239,44 +330,6 @@ bool	Request::bodyHandlerMultipart() {
 		_status_code = OK;
 	}
 	return (_complete);
-}
-
-bool	Request::parseHeader() {
-	if (_list_it == _token_list.end() || _list_it->tkType == EOC)
-		return (true);
-	int	nbr_eol = 0;
-	while (_progress != PARSER_ERROR && nbr_eol != 2 && (_list_it != _token_list.end() && _list_it->tkType != EOC)) {
-		switch (_list_it->tkType) {
-			case (WORD):
-				nbr_eol = 0;
-				if ((++_list_it)->tkType == COLON && (++_list_it)->tkType == WORD) {
-					while (_list_it->tkType == WORD) {
-						_list_it++;
-						_nbr_headers++;
-						if (_list_it->tkType == COMA)
-							_list_it++;
-						else
-							break ;
-					}
-				}
-				break ;
-			case (EOL):
-				nbr_eol++;
-				_list_it++;
-				break ;
-			case (EOC):
-				break ;
-			default:
-				_progress = PARSER_ERROR;
-				_complete = true;
-				_status_code = BAD_REQUEST;
-		}
-	}
-	if (nbr_eol == 2)
-		_progress = PARSED;
-	if (_progress != PARSED)
-		return (false);
-	return (true);
 }
 
 bool	Request::extractHeadersInformations() {
@@ -329,8 +382,9 @@ bool	Request::areHeadersValid() const {
 			}
 	}
 	else if (_http_version == "HTTP/1.1") {
-		const char*		uniqueHeadersHttp_1[3] = { 
-			"HOST", "CONTENT_LENGTH", NULL};
+		const char*		uniqueHeadersHttp_1[2] = { 
+			"CONTENT_LENGTH", NULL
+			};
 			while (it != _headers.end()) {
 				int nbr_headers = _headers.count(it->first);
 				if (isUniqueHeader(it->first, uniqueHeadersHttp_1) &&  nbr_headers > 1)
@@ -358,8 +412,8 @@ bool	Request::isUniqueHeader(const std::string& header_key, const char** unique_
 
 bool	Request::areMandatoryHeadersPresent() const {
 	if (_http_version == "HTTP/1.0") {
-		const char*		mandatoryHeadersHttp_0[2] = {
-			"CONTENT_LENGTH", NULL
+		const char*		mandatoryHeadersHttp_0[1] = {
+			NULL
 		};
 		int i = 0;
 		while (mandatoryHeadersHttp_0[i]) {
@@ -370,7 +424,7 @@ bool	Request::areMandatoryHeadersPresent() const {
 	}
 	else if (_http_version == "HTTP/1.1") {
 		const char*		mandatoryHeadersHttp_1[2] = {
-			"HOST", NULL
+		"HOST", NULL
 		};
 		int i = 0;
 		while (mandatoryHeadersHttp_1[i]) {
@@ -443,6 +497,14 @@ t_HttpCode		Request::getStatusCode() const {
 	return(_status_code);
 }
 
+const int&				Request::getState() const {
+	return (_progress);
+}
+
+size_t				Request::getContentLength() const {
+	return (_content_length);
+}
+
 std::vector<std::string>	Request::getHeaderValues(std::string header_name) const {
 	header_name = normalizeHeadersKey(header_name);
 	std::pair<
@@ -467,40 +529,7 @@ const std::multimap<std::string, std::string>&	Request::getHeaders() const {
 }
 
 /*Setters*/
-bool	Request::setMethod() {
-	if ((*_list_it).tkType == WORD) {
-		_method = methodFromString((*_list_it).lexeme);
-		_list_it++;
-		_progress = METHOD;
-		return (true);
-	}
-	_progress = PARSER_ERROR;
-	return (false);
-}
-
-bool	Request::setRequestUri() {
-	if ((*_list_it).tkType == WORD) {
-		_request_uri = (*_list_it).lexeme;
-		_list_it++;
-		_progress = URI;
-		return (true);
-	}
-	_progress = PARSER_ERROR;
-	return (false);
-}
-
-bool	Request::setHttpVersion() {
-	if ((*_list_it).tkType == WORD) {
-			_http_version = (*_list_it).lexeme;
-			_list_it++;
-			_progress = VERSION;
-		return (true);
-	}
-	_progress = PARSER_ERROR;
-	return (false);
-}
-
-bool	Request::addInput(std::string input) {
+bool	Request::addInput(const std::string& input) {
 	HTTPTokenizer::addInput(input);
 	return (true);
 }

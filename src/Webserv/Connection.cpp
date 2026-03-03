@@ -2,75 +2,78 @@
 
 #include <iostream>
 
+#define BUFFER_SIZE	250
+
+std::string	Connection::receive()
+{
+	int		bytes_read; 
+	char	buf[BUFFER_SIZE];
+	std::string	s;
+
+	bytes_read = recv(_fd, &buf, BUFFER_SIZE, 0);
+	if (!bytes_read)
+	{
+		conn_closed = true;
+		return ("");
+	}
+	if (bytes_read < 0)
+	{
+		return ("");
+	}
+
+	s.append(buf, bytes_read);
+	return (s);
+}
+
 void	Connection::sendResponse()
 {
 	const char *data;
-	size_t		data_size = 0;
+	size_t		to_send = 0;
 
-	data = response.getDataToSend(data_size);
-/*
-	if (!data || !data_size)
-	{
-		if (response.isDone())
-		{
-			if (response.getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
-			{
-				conn_closed = true;
-		//		response.cleanResponse();
-				return;
-			}
-			response.cleanResponse();
+	data = request_handler._response.getDataToSend(to_send);
 
-			// full response sent --> stop watching EPOLLOUT
-			struct epoll_event	ev;
-			ev.events = EPOLLIN | EPOLLRDHUP; // keep listening for reads
-			ev.data.fd = _fd;
+	if (to_send > MAX_CHUNK_SIZE)
+		to_send = MAX_CHUNK_SIZE;
 
-			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _fd, &ev) < 0) {
-				perror("epoll_ctl MOD");
-				conn_closed = true;
-			}
-
-			// reset response state
-			// SHOULD CHECK IF NO BUFFER IS LEFT FULL SOMEWHERE ? SEE WITH AURORE
-			response.setState(Response::DEFAULT);
-			response.setHeaderSent(0);
-		}
-		else
-		{
-			std::cerr << "[Error] No data to send but response not done" << std::endl;
-			conn_closed = true;
-		}
-		return ;
-	}
-*/
-	ssize_t bytesSent = send(_fd, data, data_size, MSG_NOSIGNAL);
+	ssize_t bytesSent = send(_fd, data, to_send, MSG_NOSIGNAL);
 
 	if (bytesSent > 0)
-		response.updateBytesSend(bytesSent);
+		request_handler._response.updateBytesSend(bytesSent);
 	else if (bytesSent < 0)
 		return;
+}
+
+void	Connection::sendCgiContent(int& bytes_sent)
+{
+	std::string content = request_handler.getRequest().getBody();
+	if (content.size() <= request_handler._response._offset)
+		return ;
+	bytes_sent = write(cgi_fd[1], content.c_str() + request_handler._response._offset, content.size() - request_handler._response._offset);
+	if (bytes_sent <= 0)
+		return ;
+	request_handler._response._offset += bytes_sent;
+	return ;
 }
 
 bool	Connection::hasTimedOut(void)
 {
 	std::time_t	now = std::time(NULL);
 
-	if (std::difftime(now, _last_conn) > this->virtual_server.getKeepaliveTimeout())
+	if (std::difftime(now, _last_conn) > request_handler.getVirtualServer()->getKeepaliveTimeout())
 		return (true);
-	if (std::difftime(now, _first_conn) > this->virtual_server.getKeepaliveTime())
+	if (std::difftime(now, _first_conn) > request_handler.getVirtualServer()->getKeepaliveTime())
 		return (true);
 	return (false);
 }
 
 
 // Getters Setters
-void	Connection::setEvent(uint32_t event)
+void	Connection::setEvent(struct epoll_event event)
 {
 	_event = event;
 }
 
-uint32_t	Connection::getEvent(void) const
+struct epoll_event	Connection::getEvent(void) const
 {
 	return (_event);
 }
@@ -102,8 +105,8 @@ Connection::Connection(int fd, const int& epoll_fd, std::time_t time)
 	, _first_conn(time)
 	, _last_conn(time)
 	, conn_closed(false)
-	, virtual_server()
-	, request()
+	//, virtual_server()
+	, request_handler()
 	, child_pid(0)
 	, cgi_timeout(0)
 {
@@ -117,7 +120,7 @@ Connection::Connection( const Connection& src )
 	, _first_conn(src._first_conn)
 	, _last_conn(src._last_conn)
 	, conn_closed(src.conn_closed)
-	, virtual_server(src.virtual_server)
+	//, virtual_server(src.virtual_server)
 	, child_pid(src.child_pid)
 	, cgi_timeout(src.cgi_timeout)
 

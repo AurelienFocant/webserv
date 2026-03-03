@@ -29,8 +29,9 @@ class	Request	: private HTTPTokenizer {
 
 	/*Publics Methods*/
 		bool			parseRequest();
+		bool			handleBody(unsigned int max_body);
 		bool			cleanRequest();
-		bool			addInput(std::string input) ;
+		bool			addInput(const std::string& input) ;
 
 	/*Setters - Getters*/
 		t_method		getMethod() const ;
@@ -39,6 +40,8 @@ class	Request	: private HTTPTokenizer {
 		std::string		getBody() const ;
 		bool			isCompleted() const ;
 		t_HttpCode		getStatusCode() const ;
+		const int&		getState() const ;
+		size_t			getContentLength() const ;
 
 		std::vector<std::string>	getHeaderValues(std::string header_name) const ;
 		const std::multimap<std::string, std::string>&	getHeaders() const ;
@@ -50,7 +53,7 @@ class	Request	: private HTTPTokenizer {
 		int										_progress;
 		bool									_complete;
 		t_HttpCode								_status_code;
-		bool									(Request::*_body_handler)( void );
+		bool									(Request::*_body_handler)(unsigned int max_body);
 
 		//Request informations
 		t_method								_method;
@@ -75,12 +78,10 @@ class	Request	: private HTTPTokenizer {
 
 	/*Private Methods*/
 //		t_method	idMethod(std::string& method) ;
-		bool	setMethod() ;
-		bool	setRequestUri() ;
-		bool	setHttpVersion() ;
-		bool	parseFirstLine() ;
-		bool	parseHeader() ;
-		bool	handleBody() ;
+		void	parseFirstLine() ;
+		void	extractFirstLineInfo() ;
+		void	parseHeader() ;
+		bool	setupBodyHandler() ;
 
 		bool	isFirstLineValid() ; 
 		bool	extractHeadersInformations() ;
@@ -89,8 +90,8 @@ class	Request	: private HTTPTokenizer {
 		bool	isUniqueHeader(const std::string& header_key, const char** unique_list) const;
 
 		bool	defineBodyExtractionHandler() ;
-		bool	bodyHandlerTransfertEncoding() ;
-		bool	bodyHandlerContentLength() ;
+		bool	bodyHandlerTransfertEncoding(unsigned int max_body) ;
+		bool	bodyHandlerContentLength(unsigned int max_body) ;
 		bool	bodyHandlerMultipart() ;
 
 		std::string	normalizeHeadersKey(std::string argument) const ;

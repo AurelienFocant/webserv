@@ -15,6 +15,7 @@
 
 namespace	cgi {
 		bool	execute(const RequestHandler& handler, Connection& conn, char** env) ;
+		bool	execute2(const RequestHandler& handler, Connection& conn, char** env) ;
 		bool	launchCgi(Connection& conn, char** argv, char** env) ;
 		char*	findInterpreter(const t_extension& extension) ;
 		char	**buildCgiEnv(const RequestHandler& handler) ;

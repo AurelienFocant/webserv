@@ -26,8 +26,12 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
+#include "RequestHandler.hpp"
 #include "VirtualServer.hpp"
 
+#define	MAX_CHUNK_SIZE 8192
+
+class RequestHandler;
 class Request;
 class Response;
 class Webserv;
@@ -38,9 +42,9 @@ class Connection
 	//Copy constructor private for testing
 		Connection	( const Connection& src );
 
-		int			_fd;
-		uint32_t	_event;
-		const int	_epoll_fd;
+		int					_fd;
+		const int			_epoll_fd;
+		struct epoll_event	_event;
 
 		const	std::time_t	_first_conn;
 				std::time_t	_last_conn;
@@ -48,22 +52,19 @@ class Connection
 
 	public:
 		bool			conn_closed;
-		VirtualServer	virtual_server;
-
-		Request		request;
-		Response	response;
+		//VirtualServer	virtual_server; // Remove and keep only the one in Request Handler? 
+		RequestHandler	request_handler;
 
 		bool	hasTimedOut(void);
+		std::string	receive();
 		void	sendResponse();
+		void	sendCgiContent(int& bytes_send);
 		pid_t		child_pid;
 		int			cgi_fd[2];
 		std::time_t	cgi_timeout;
 
-
-
-
-		void		setEvent(uint32_t event);
-		uint32_t	getEvent(void) const;
+		void		setEvent(struct epoll_event event);
+		struct epoll_event	getEvent(void) const;
 		int			getFd(void) const;
 		const int&	getEpollFd(void) const {return (_epoll_fd);};
 

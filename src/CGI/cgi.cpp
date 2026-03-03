@@ -2,7 +2,7 @@
 
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) ;
 
-bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
+bool	cgi::execute2(const RequestHandler& handler, Connection& conn, char** env)
 {
 	 //size must depend of number of argument and if an interpreter is needed ?
 	char* argv[3];
@@ -24,6 +24,55 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 		//some errors happened, setup response code accordingly
 		return (false);
 	}
+
+	delete[](env);
+
+	if (fcntl(conn.cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
+		return (false);
+	}
+	if (fcntl(conn.cgi_fd[0], F_SETFL, O_NONBLOCK) < 0) {
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
+		return (false);
+	}
+	return (true);
+}
+
+bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
+{
+	char* argv[3];
+
+	if (!handler.getCGIExec().empty())
+	{
+		argv[0] = strdup(handler.getCGIExec().c_str());
+		argv[1] = strdup(handler.getResolvedPath().c_str());
+		argv[2] = NULL;
+	}
+	else
+	{
+		argv[0] = strdup(handler.getResolvedPath().c_str());
+		argv[1] = strdup(handler.getResolvedPath().c_str());
+		argv[2] = NULL;
+
+	}
+
+	if (!argv[0] || !argv[1])
+	{
+		// handler.setStatusCode(500);
+		return (false);
+	}
+
+	if (!launchCgi(conn, argv, env)) {
+		delete[](env);
+		//some errors happened, setup response code accordingly
+		return (false);
+	}
+	free(argv[0]);
+	argv[0] = NULL;
+	free(argv[1]);
+	argv[1] = NULL;
 
 	delete[](env);
 
@@ -107,7 +156,7 @@ char*	cgi::convertStringToChar(const std::string& string)
 
 bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 {
-//Pipe creation for communication with the child
+	//Pipe creation for communication with the child
 	int	pipe_in[2];
 	int	pipe_out[2];
 	if (pipe(pipe_in) < 0) {
@@ -119,13 +168,13 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 		return (false);
 	}
 
-//Creation of the subprocess
+	//Creation of the subprocess
 	pid_t	pid = fork();
 	if (pid < 0)
 		return (false);
 	else if (pid == 0) {
-	// Child process
-	//Setup the pipe to write from the child
+		// Child process
+		//Setup the pipe to write from the child
 		dup2(pipe_in[0], STDIN_FILENO);
 		close(pipe_in[1]);
 		dup2(pipe_out[1], STDOUT_FILENO);
@@ -133,26 +182,31 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 
 		close(pipe_in[0]);
 		close(pipe_out[1]);
-		 
+
 		execve(argv[0], argv, env);
 
-	//In case of error in the child, clean everything and exit
+		//In case of error in the child, clean everything and exit
 		close(pipe_in[0]);
 		close(pipe_out[1]);
+
 		delete[](env);
+		free(argv[0]);
+		argv[0] = NULL;
+		free(argv[1]);
+		argv[1] = NULL;
 
+		std::cerr << errno << std::endl;
 		perror("EXECVE FAILED");
-
 		exit(EXIT_FAILURE);
 	}
 
-// Parent process
-//Setup the pipe to listen in the parent
+	// Parent process
+	//Setup the pipe to listen in the parent
 	close(pipe_in[0]);
 	close(pipe_out[1]);
 
-//Pass in pipe writing head, pipe_in[1], and out_pipe reading head, pipe_out[0], to connection.
-//Also pass child pid for further child management
+	//Pass in pipe writing head, pipe_in[1], and out_pipe reading head, pipe_out[0], to connection.
+	//Also pass child pid for further child management
 	conn.cgi_fd[0] = pipe_out[0];
 	conn.cgi_fd[1] = pipe_in[1];
 	conn.child_pid = pid;
