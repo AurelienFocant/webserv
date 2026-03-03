@@ -53,7 +53,7 @@ void	RequestHandler::handleRequest()
 	if (_request.getStatusCode() != OK)
 		_response.setStatusCode(_request.getStatusCode());
 	else
-		extractPath() && resolvePath() && processMethods();
+		resolvePath() && processMethods();
 	if (_response.isCGI && _response.getStatusCode() < 300)
 		return;
 	resp::prepareResponse(_response, _request, _server->getErrorPages());
@@ -82,28 +82,85 @@ bool	RequestHandler::extractPath()
 	return true;
 }
 
+void	RequestHandler::findLocation()
+{
+	std::string	ext;
+	size_t		longest_match = 0;
+
+	if (_request_path.empty())
+		extractPath();
+
+	for (std::map<std::string, Location>::const_iterator it = _server->getLocations().begin(); it != _server->getLocations().end(); it++)
+	{
+		const std::string&	route_path = it->first;
+		const Location*		location = &(it->second);
+
+
+		//Check if the requested path match an extension or begin with a Location name
+		if (route_path[route_path.size() -1] == '$')
+		{
+			ext = route_path.substr(0, route_path.size() -1);
+			size_t start = _request_path.find(ext);
+			if (start != std::string::npos)
+			{
+				size_t ext_end = start + ext.size();
+				if (ext_end == _request_path.size() || _request_path[ext_end - 1] == '/' || _request_path[ext_end] == '/')
+				{
+					if (_matched_extension == NO_EXT)
+						_matched_extension = extensionFromString(ext);
+					_matched_location = location;
+					return ;
+				}
+			}
+		}
+		else if (_request_path.find(route_path, 0) == 0)
+		{
+			size_t route_len = route_path.size();
+
+			// Test if it's a real match, not just a partial prefix
+			if (_request_path.size() == route_len || _request_path[route_len - 1] == '/' || _request_path[route_len] == '/')
+			{
+				//Keep the longest match
+				if (route_len > longest_match)
+				{
+					longest_match = route_path.size();
+					_matched_location = location;
+				}
+			}
+		}
+	}
+
+/* 	if (!_matched_location)
+		_matched_location = &(_server->getLocationAt("MAIN")); */
+
+	//std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
+	//std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
+}
+
 bool	RequestHandler::resolvePath()
 {
+	//findLocation();
+
 	if (_matched_location)
 	{
-		if (_matched_location->getCGI())
+		if (detectCGI())
 		{
 			// need to check if all those exist !
-			_resolved_path = _matched_location->getRoot() + _request_path;
-			_cgi_exec = _matched_location->getRoot() + _matched_location->getCGIExec();
+			//if cgi else le reste -> si pas d'erreur tous passent par le meme validatePath a la fin
+			_resolved_path = _matched_location->getRoot() + _script_name;
+			//_cgi_exec = _matched_location->getRoot() + _matched_location->getCGIExec();
+			_cgi_exec = _matched_location->getCGIExec();
+			if (!validateCGIScript())
+				return false;
 			_response.isCGI = true;
 			return true;
 		}
 
-		//Detect virtual location
-		if (_matched_location->getVirtual())
-			return true;
+		if (!normalizePath())
+			return false;
 
 		//Config Redirections
 		if (handleConfigRedirect())
-			return false;
-
-		if (!normalizePath())
 			return false;
 
 		if (!_matched_location->getAlias().empty())
@@ -159,9 +216,6 @@ bool	RequestHandler::handleConfigRedirect()
 
 bool	RequestHandler::handleTrailingSlash()
 {
-	if (_matched_location && _matched_location->getVirtual())
-		return true;
-
 	if (_request_path[_request_path.size() - 1] == '/')
 		return false;
 
@@ -185,62 +239,12 @@ bool	RequestHandler::hasRedirect()
 		|| status == TEMPORARY_REDIRECT;
 }
 
-void	RequestHandler::findLocation()
-{
-	std::string	ext;
-	size_t		longest_match = 0;
-
-	for (std::map<std::string, Location>::const_iterator it = _server->getLocations().begin(); it != _server->getLocations().end(); it++)
-	{
-		const std::string&	route_path = it->first;
-		const Location*		location = &(it->second);
-
-
-		//Check if the requested path match an extension or begin with a Location name
-		if (route_path[route_path.size() -1] == '$')
-		{
-			ext = route_path.substr(0, route_path.size() -1);
-			size_t start = _request_path.find(ext);
-			if (start != std::string::npos)
-			{
-				size_t ext_end = start + ext.size();
-				if (ext_end == _request_path.size() || _request_path[ext_end - 1] == '/' || _request_path[ext_end] == '/')
-				{
-					_matched_location = location;
-					// if (_matched_extension == NO_EXT)
-					// 	_matched_extension = extensionFromString(ext);
-				}
-			}
-		}
-		else if (_request_path.find(route_path, 0) == 0)
-		{
-			size_t route_len = route_path.size();
-
-			// Test if it's a real match, not just a partial prefix
-			if (_request_path.size() == route_len || _request_path[route_len - 1] == '/' || _request_path[route_len] == '/')
-			{
-				//Keep the longest match
-				if (route_len > longest_match)
-				{
-					longest_match = route_path.size();
-					_matched_location = location;
-				}
-			}
-		}
-	}
-
-	// std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
-	// if (_matched_location)
-	// 	std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
-	// else
-	// 	std::cout << "[DEBUG] No location matched: " << std::endl;
-}
-
 bool	RequestHandler::detectCGI()
 {
-	if (!_matched_location->getCGI())
+	if (!_matched_location->getCGI() && _matched_location->getCGIExec().empty())
 		return false;
 
+	// what if prefix cgi location but no .ext$ location??
 	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
 		return false;
 
@@ -264,7 +268,8 @@ bool	RequestHandler::detectCGI()
 
 bool	RequestHandler::validateCGIScript()
 {
-	std::string cgi_bin_path = 	_matched_location->getRoot() + _matched_location->getCGIExec();
+	return validatePath();
+/* 	std::string cgi_bin_path = 	_matched_location->getRoot() + _matched_location->getCGIExec();
 	DIR* dir_ptr = opendir(cgi_bin_path.c_str());
 	if (!dir_ptr)
 	{
@@ -292,7 +297,7 @@ bool	RequestHandler::validateCGIScript()
 	}
 	closedir(dir_ptr);
 	_response.setStatusCode(FORBIDDEN);
-	return false;
+	return false; */
 }
 
 bool	RequestHandler::decodePath(const std::string& encoded, std::string& decoded)
@@ -416,9 +421,6 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
-	if (_matched_location && _matched_location->getVirtual())
-		return true;
-
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
 		if (errno == ENOENT)
@@ -487,12 +489,6 @@ bool	RequestHandler::processMethods()
 
 bool	RequestHandler::processGetMethod()
 {
-	if (_matched_location && _matched_location->getVirtual())
-	{
-		//do some action
-		return true;
-	}
-
 	//STATIC
 	if (_is_directory)
 	{
@@ -764,7 +760,6 @@ void	RequestHandler::setRoot(const std::string& root)
 {
 	_root = root;
 }
-
 
 void	RequestHandler::clean()
 {
