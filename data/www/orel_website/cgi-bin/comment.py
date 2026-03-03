@@ -4,6 +4,11 @@ import os
 import sys
 import urllib.parse
 import html
+from datetime import datetime
+
+
+ROOT = "data/www/orel_website/"
+COMMENTS = ROOT + "comments/"
 
 
 def main():
@@ -17,6 +22,14 @@ def main():
 
     comment = data.get("comment", [""])[0]
     comment = html.escape(comment)
+
+    for file in os.listdir(COMMENTS):
+        print(file, file=sys.stderr)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"file_{timestamp}"
+    with open(COMMENTS + filename, "w+") as f:
+        f.write(comment)
 
     # HTTP headers
     # print("Content-Type: text/html")
@@ -32,7 +45,7 @@ def main():
     else:
         print("<h1>Error</h1>")
         print("<p>No comment provided</p>")
-    print('<a href="/">Back</a>')
+    print('<a href="/html/comment.html">Back</a>')
     print("</body></html>")
 
 

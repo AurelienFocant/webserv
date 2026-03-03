@@ -284,14 +284,16 @@ void ConfigBuilder::_handleCGI(const DirectiveNode& d)
 		_error(d.line, "'cgi' and 'cgi_exec' directives are mutually exclusive");
 
 	if (arg == "off") {
-		_getCurrentCtxt().setCGI(false); return;
+		_getCurrentCtxt().setCGI(false); 
+		_has_cgi = 1;
+		return;
 	}
 	if (arg == "on") {
-		_getCurrentCtxt().setCGI(true); return;
+		_getCurrentCtxt().setCGI(true);
+		_has_cgi = 1;
+		return;
 	}
 	_error(d.line, "only on of off values after 'cgi' directive");
-
-	_has_cgi = 1;
 }
 
 void ConfigBuilder::_handleVirtualLocation(const DirectiveNode& d)
