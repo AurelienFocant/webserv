@@ -306,6 +306,9 @@ bool	Request::bodyHandlerContentLength(unsigned int max_body) {
 		_status_code = REQUEST_ENTITY_TOO_LARGE;
 	}
 	else {
+		size_t	before_len = _body.size();
+		_body += extractInput(_content_length);
+		_content_length -= (_body.size() - before_len);
 		if (_content_length == 0) {
 			_progress = DONE;
 			_complete = true;

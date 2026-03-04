@@ -18,15 +18,15 @@ typedef	enum s_method
 typedef	enum s_progress
 {	//Enum for request traitment progression -> UNKNOWN_STATE must be the last one
 			PARSER_ERROR = -1,
-			START = 0,
-			METHOD,
-			URI,
-			VERSION,
-			FIRST_LINE,
-			PARSED,
-			BODY_HANDLING,
-			DONE,
-			UNKNOWN_STATE
+			START = 0,		// 0
+			METHOD, 		// 1
+			URI,			// 2
+			VERSION,		// 3
+			FIRST_LINE,		// 4
+			PARSED,			// 5
+			BODY_HANDLING,	// 6
+			DONE,			// 7
+			UNKNOWN_STATE	// 8
 }		t_progress;
 
 typedef	enum s_extension

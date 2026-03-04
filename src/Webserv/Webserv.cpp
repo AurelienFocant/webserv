@@ -407,7 +407,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
 
-		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLRDHUP, EPOLL_CTL_ADD)) {
+		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 			close(conn.cgi_fd[0]);
 			close(conn.cgi_fd[1]);
 			return (false);
@@ -442,14 +442,14 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		//	cgi::EndOfChild(conn);
 		}
 		conn.request_handler.requestIsComplete();
-//		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+		conn.request_handler._response.setState(Response::READY);
+		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 	}
 	else {
 		conn.request_handler._response.addCgiBody(buffer);
 	}
 	return (true);
 }
-
 
 // Getters
 std::vector<VirtualServer>&	Webserv::getServers(void)
