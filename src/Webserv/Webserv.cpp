@@ -446,16 +446,18 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 			//do stuff
 		}
 
-		size_t end = conn.request_handler._response.getBody().find("\n\n");
+		// Extract headers
+		Response &response = conn.request_handler._response;
+		size_t end = response.getBody().find("\n\n");
 		if (end == std::string::npos)
 		{
-			conn.request_handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+			response.setStatusCode(INTERNAL_SERVER_ERROR);
 			return false;
 		}
-		std::string headers_str = conn.request_handler._response.getBody().substr(0, end);
+		std::string headers_str = response.getBody().substr(0, end);
 		std::string body;
-		if (end + 2 <= conn.request_handler._response.getBody().size())
-			body = conn.request_handler._response.getBody().substr(end + 2); 
+		if (end + 2 <= response.getBody().size())
+			body = response.getBody().substr(end + 2); 
 
 		std::cout << "[DEBUG] Cgi headers: " << headers_str << std::endl;
 		std::cout << "[DEBUG] Cgi body: " << body << std::endl;
@@ -473,11 +475,11 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 			std::string key = headers_str.substr(0, colon);
 			std::string value = headers_str.substr(colon + 2);
 
-			conn.request_handler._response.setHeader(key, value);
+			response.setHeader(key, value);
 		}
-		conn.request_handler._response.setBody(body);
+		response.setBody(body);
 
-		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+		resp::prepareResponse(response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 	}
 	return (true);
 }
