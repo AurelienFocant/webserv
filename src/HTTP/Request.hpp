@@ -89,6 +89,8 @@ class	Request	: private HTTPTokenizer {
 		bool	areHeadersValid() const ;
 		bool	areMandatoryHeadersPresent() const ;
 		bool	isUniqueHeader(const std::string& header_key, const char** unique_list) const;
+		bool	detectImportantValue(std::string& argument, std::string value) ;
+		void	safeInsertion(const std::string& key, const std::string& value) ;
 
 		bool	defineBodyExtractionHandler() ;
 		bool	bodyHandlerTransfertEncoding(unsigned int max_body) ;
@@ -96,8 +98,6 @@ class	Request	: private HTTPTokenizer {
 		bool	bodyHandlerMultipart() ;
 
 		std::string	normalizeHeadersKey(std::string argument) const ;
-		void	safeInsertion(const std::string& key, const std::string& value) ;
-		void	detectImportantValue(std::string& argument, std::string value) ;
 
 };
 
