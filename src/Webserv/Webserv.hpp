@@ -34,6 +34,7 @@ class Webserv
 		bool	_checkForRdHup(Connection & conn);
 		void	_closeConnection(Connection & conn);
 		void	_closeStaleConnections(void);
+		void	_closeStaleCgi(void);
 		bool	_addFdToEpoll(int client_fd, int events, int flags);
 
 		bool	_startCGIresponse(RequestHandler & reqHandl, Connection & conn);

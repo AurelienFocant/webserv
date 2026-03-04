@@ -114,6 +114,28 @@ void	Webserv::_closeStaleConnections(void)
 	}
 }
 
+void	Webserv::_closeStaleCgi(void)
+{
+	std::map<int, t_info>::iterator	it;
+
+	for (it = _connections.begin(); it != _connections.end(); it++) {
+		Connection& conn = it->second.connection;
+
+		if (_isListenSocket(conn))
+			continue ;
+		if (conn.hasCgiTimedOut())
+			if (!waitpid(conn.child_pid, NULL, WNOHANG)) {
+				if (!kill(conn.child_pid, SIGKILL))
+					perror("Kill child:");
+				conn.request_handler.requestIsComplete();
+				conn.request_handler._response.setState(Response::READY);
+				conn.request_handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+				resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+			}
+	}
+	return ;
+}
+
 const VirtualServer&	Webserv::_resolveVirtualServer(const Connection& conn)
 {
 	sockaddr_in addr;
@@ -264,6 +286,7 @@ void	Webserv::run()
 		}
 
 		//_closeStaleConnections();
+		//_closeStaleCgi();
 		//->add check enfant timeout
 	}
 }
@@ -437,9 +460,9 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 
 		// Build Response from CGI
 		int status;
-		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
-			//do stuff
-		//	cgi::EndOfChild(conn);
+		if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
+			if (!kill(conn.child_pid, SIGKILL))
+				perror("Kill child:");
 		}
 		conn.request_handler.requestIsComplete();
 		conn.request_handler._response.setState(Response::READY);
