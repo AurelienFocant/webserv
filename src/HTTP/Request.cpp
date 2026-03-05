@@ -269,10 +269,23 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 		std::string	dft = extractInput('\n');
 		if (dft.empty())
 			return (_complete);
-		dft.erase(dft.find('\r'));
+		size_t	pos = dft.find('\r');
+		if (pos == std::string::npos) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
+		dft.erase(pos);
 		std::stringstream	ss;
 		ss << std::hex << dft;
 		ss >> _content_length; 
+		if (ss.fail()) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
 		if (_content_length)
 			_content_length += 2;
 		else {
