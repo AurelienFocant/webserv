@@ -171,7 +171,6 @@ bool	RequestHandler::resolvePath()
 			_resolved_path = _root + _request_path;
 		}
 	}
-	// std::cout << "[DEBUG] Full Path: " << _resolved_path << std::endl;
 	return validatePath();
 }
 
@@ -363,6 +362,12 @@ bool	RequestHandler::validatePath()
 		else
 			_response.setStatusCode(INTERNAL_SERVER_ERROR);
 		return false;
+	}
+
+	if (_response.isCGI && !fileSystem::isExecutable(_resolved_path))
+	{	
+		perror("[ERROR] Script is not executable");
+		_response.setStatusCode(FORBIDDEN);
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);
