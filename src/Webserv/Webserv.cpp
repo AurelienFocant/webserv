@@ -445,7 +445,41 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
 			//do stuff
 		}
-		resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+
+		// Extract headers
+		Response &response = conn.request_handler._response;
+		size_t end = response.getBody().find("\n\n");
+		if (end == std::string::npos)
+		{
+			response.setStatusCode(INTERNAL_SERVER_ERROR);
+			return false;
+		}
+		std::string headers_str = response.getBody().substr(0, end);
+		std::string body;
+		if (end + 2 <= response.getBody().size())
+			body = response.getBody().substr(end + 2); 
+
+		std::cout << "[DEBUG] Cgi headers: " << headers_str << std::endl;
+		std::cout << "[DEBUG] Cgi body: " << body << std::endl;
+
+		std::stringstream ss;
+		ss << headers_str;
+		std::string line;	
+		while (std::getline(ss, line))
+		{
+			if (line.empty())
+				continue;
+			size_t colon = line.find(":");
+			if (colon == std::string::npos)
+				continue;
+			std::string key = headers_str.substr(0, colon);
+			std::string value = headers_str.substr(colon + 2);
+
+			response.setHeader(key, value);
+		}
+		response.setBody(body);
+
+		resp::prepareResponse(response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 	}
 	return (true);
 }

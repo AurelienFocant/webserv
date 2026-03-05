@@ -101,11 +101,13 @@ bool	Request::parseRequest() {
 			return (_complete);
 		}
 
-		extractHeadersInformations();
-		if (!areHeadersValid() || !areMandatoryHeadersPresent()) {
+		if (!extractHeadersInformations()
+			|| !areHeadersValid() 
+			|| !areMandatoryHeadersPresent()) {
 			_progress = DONE;
 			_complete = true;
-			_status_code = BAD_REQUEST;
+			if (_status_code == INIT_STATE)
+				_status_code = BAD_REQUEST;
 			return (_complete);
 		}
 		setupBodyHandler();
@@ -348,7 +350,8 @@ bool	Request::extractHeadersInformations() {
 				break ;
 			default: //COLON, COMA
 				it++;
-				detectImportantValue(options_name, it->lexeme);
+				if (!detectImportantValue(options_name, it->lexeme))
+					return (false);
 				safeInsertion(options_name, it->lexeme);
 		}
 		it++;
@@ -449,9 +452,9 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 	return (argument);
 }
 
-void	Request::detectImportantValue(std::string& argument, std::string value) {
+bool	Request::detectImportantValue(std::string& argument, std::string value) {
 	const char*	important_argument[3] = {
-		"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
+		"CONTENT_LENGTH", "TRANSFER_ENCODING", NULL
 		};
 
 	int	i = 0;
@@ -464,15 +467,22 @@ void	Request::detectImportantValue(std::string& argument, std::string value) {
 			_content_length = std::atol(value.c_str()); 
 			break ;
 		case (1):
-			if (value != "chunk")
-				_status_code = BAD_REQUEST; //FIND CORRECT ERROR
-			else
+			if (value.empty()) {
+				_status_code = BAD_REQUEST;
+				return (false);
+			}
+			else if (value != "chunked") {
+				_status_code = NOT_IMPLEMENTED; //FIND CORRECT ERROR
+				return (false);
+			}
+			else {
 				_content_encoding = true;
-			break ;
+				break ;
+			}
 		default:
 			break ; 
 	}
-	return ;
+	return (true);
 }
 
 /*Getter*/
