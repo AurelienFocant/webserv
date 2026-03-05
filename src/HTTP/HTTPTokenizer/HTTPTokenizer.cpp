@@ -154,14 +154,18 @@ std::string	HTTPTokenizer::getInput() const {
 
 std::string	HTTPTokenizer::extractInput(size_t len) {
 	std::string	tmp = _input.substr(0, len);
-	_input.erase(0, len);
+	if (!tmp.empty())
+		_input.erase(0, len);
 	return (tmp);
 }
 
 std::string	HTTPTokenizer::extractInput(char character) {
 	size_t	pos	= _input.find(character);
-	std::string	tmp = _input.substr(0, pos);
-	_input.erase(0, pos + 1);
+	std::string	tmp;
+	if (pos != std::string::npos) {
+		tmp = _input.substr(0, pos);
+		_input.erase(0, pos + 1);
+	}
 	return (tmp);
 }
 
