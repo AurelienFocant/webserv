@@ -409,6 +409,8 @@ bool	RequestHandler::processMethods()
 	{
 		case GET:
 			return processGetMethod();
+		case HEAD:
+			return processHeadMethod();
 		case POST:
 			return processPostMethod();
 		case DELETE:
@@ -451,6 +453,18 @@ bool	RequestHandler::processGetMethod()
 		return false;
 
 	return true;
+}
+
+bool RequestHandler::processHeadMethod()
+{
+	if (_is_directory)
+	{
+		if (!resolveIndex())
+		{
+			return (false);
+		}
+	}
+	return (true);
 }
 
 bool	RequestHandler::_hasContentTypeHeader(void)

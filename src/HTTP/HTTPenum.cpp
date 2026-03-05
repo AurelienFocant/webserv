@@ -5,6 +5,7 @@ std::string methodToString(t_method code)
 	switch (code) {
 		case NOT_SET:						return "Not set";
 		case GET:							return "GET";
+		case HEAD:							return "HEAD";
 		case POST:							return "POST";
 		case DELETE:						return "DELETE";
 		default:							return "Unknown";
@@ -15,6 +16,7 @@ t_method	methodFromString(const std::string& s)
 {
 	if (s == "NOT_SET")						return NOT_SET;
 	else if (s == "GET")					return GET;
+	else if (s == "HEAD")					return HEAD;
 	else if (s == "POST")					return POST;
 	else if (s == "DELETE")					return DELETE;
 	else									return UNKNOWN;
