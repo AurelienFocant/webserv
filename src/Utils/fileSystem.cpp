@@ -31,7 +31,6 @@ namespace fileSystem {
 	bool isWritable(const std::string& path)
 	{
 		return (access(path.c_str(), W_OK) == 0);
-
 	}
 
 	bool isExecutable(const std::string& path)

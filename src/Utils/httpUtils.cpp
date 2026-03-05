@@ -35,29 +35,3 @@ namespace httpUtils
 	}
 
 }
-
-/* // Not TOCTOU -> open mieux adapte aux permissions
-bool isReadable(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return false;
-	return (statBuf.st_mode & S_IRUSR) == S_IRUSR;
-}
-
-bool isWritable(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return false;
-	return (statBuf.st_mode & S_IWUSR) == S_IWUSR;
-}
-
-bool isExecutable(const std::string& path)
-{
-	struct stat statBuf;
-	if (stat(path.c_str(), &statBuf) != 0)
-		return false;
-	return (statBuf.st_mode & S_IXUSR) == S_IXUSR;
-} */
-
