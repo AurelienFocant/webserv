@@ -454,7 +454,7 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 
 bool	Request::detectImportantValue(std::string& argument, std::string value) {
 	const char*	important_argument[3] = {
-		"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
+		"CONTENT_LENGTH", "TRANSFER_ENCODING", NULL
 		};
 
 	int	i = 0;
@@ -473,11 +473,11 @@ bool	Request::detectImportantValue(std::string& argument, std::string value) {
 			}
 			else if (value != "chunked") {
 				_status_code = NOT_IMPLEMENTED; //FIND CORRECT ERROR
-				break ;
+				return (false);
 			}
 			else {
 				_content_encoding = true;
-				return (false);
+				break ;
 			}
 		default:
 			break ; 
