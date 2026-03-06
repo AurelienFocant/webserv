@@ -129,7 +129,7 @@ void	Webserv::_closeStaleCgi(void)
 					perror("Kill child:");
 				conn.request_handler.requestIsComplete();
 				conn.request_handler._response.setState(Response::READY);
-				conn.request_handler._response.setStatusCode(INTERNAL_SERVER_ERROR);
+				conn.request_handler._response.setStatusCode(GATEWAY_TIMEOUT);
 				resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 			}
 	}
@@ -286,7 +286,7 @@ void	Webserv::run()
 		}
 
 		//_closeStaleConnections();
-		//_closeStaleCgi();
+		_closeStaleCgi();
 		//->add check enfant timeout
 	}
 }
