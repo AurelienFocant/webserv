@@ -361,11 +361,17 @@ bool	Request::extractHeadersInformations() {
 			case (EOL):
 				options_name.clear();
 				break ;
-			default: //COLON, COMA
+			case (COLON):
+				//fall tru
+			case (COMA):
 				it++;
 				if (!detectImportantValue(options_name, it->lexeme))
 					return (false);
 				safeInsertion(options_name, it->lexeme);
+				break ;
+			default: 
+				_status_code = INTERNAL_SERVER_ERROR;
+				return (false);
 		}
 		it++;
 	}
