@@ -28,7 +28,6 @@ namespace resp
 		response.setHttpVersion(request.getHttpVersion());
 		response.setHeader("Date", httpUtils::getTime());
 		//response.setHeader("Server", "webservMeBaby;")
-		//content-length? set in Response when the body_size is known in every case
 
 		std::vector<std::string> header_values = request.getHeaderValues("connection");
 		std::string connection;
@@ -71,6 +70,9 @@ namespace resp
 
 	bool	loadErrorPage(int status_code, const std::map<int, std::string>& error_pages, std::string& body)
 	{
+		if (status_code == METHOD_NOT_ALLOWED)
+			return true ;
+
 		std::map<int, std::string>::const_iterator it = error_pages.find(status_code);
 		if (it == error_pages.end())
 			return false;

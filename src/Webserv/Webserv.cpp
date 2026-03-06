@@ -324,7 +324,6 @@ bool	Webserv::clientInHandler(Connection & conn)
 		if (!request_str.size()) {
 			return (false);
 		}
-		//std::cout << "->Request_str: |" << request_str << "|end|" << std::endl;
 
 		conn.request_handler.processRequest(request_str);
 
