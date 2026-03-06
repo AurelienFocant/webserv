@@ -55,7 +55,7 @@ bool	Request::cleanRequest() {
 	//Request informations
 	_method = NOT_SET;
 	_request_uri.clear();
-	_http_version.clear();
+	_http_version = "HTTP/1.0";
 	_body.clear();
 
 	//request usefull header informations
