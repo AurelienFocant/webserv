@@ -54,6 +54,7 @@ class	Response
 	void				setState(int state);
 	void				setStatusCode(int status_code);
 	void				setHttpVersion(const std::string& version);
+	void				setMethod(t_method method);
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBody(const std::string& content);
 
@@ -75,6 +76,7 @@ class	Response
 	int									_state;
 	int									_status_code;
 	bool								_isCGI;
+	t_method							_method;
 	std::string							_http_version;
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;

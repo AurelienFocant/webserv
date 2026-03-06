@@ -421,7 +421,7 @@ bool	RequestHandler::processMethods()
 		case DELETE:
 			return processDeleteMethod();
 		default: 
-			_response.setStatusCode(METHOD_NOT_ALLOWED); // ? 
+			_response.setStatusCode(METHOD_NOT_ALLOWED); 
 			return false;
 	}
 	return (true);
@@ -445,15 +445,6 @@ bool	RequestHandler::processGetMethod()
 		}
 	}
 
-	// ADD CGI
-
-	/* 	int	fd = fileSystem::openReadFile(_resolved_path);
-		if (fd < 0)
-		{
-		_response.setStatusCode(httpUtils::errnoToHttpStatus(errno));
-		return false;
-		} */
-
 	if (!resp::loadBody(_response, _resolved_path))
 		return false;
 
@@ -462,13 +453,7 @@ bool	RequestHandler::processGetMethod()
 
 bool RequestHandler::processHeadMethod()
 {
-	if (_is_directory)
-	{
-		if (!resolveIndex())
-		{
-			return (false);
-		}
-	}
+	_response.setMethod(HEAD);
 	return (true);
 }
 

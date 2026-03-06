@@ -5,6 +5,7 @@ Response::Response()
 , _offset(0)
 , _state(DEFAULT)
 , _status_code(OK)
+, _method(NOT_SET)
 {}
 
 Response::~Response() {}
@@ -14,10 +15,15 @@ void	Response::formatResponse()
 	if (_state != READY)
 		return;
 
-	_headers["Content-Length"] = httpUtils::intToString(_body.size());
+	if (_method != HEAD)
+		_headers["Content-Length"] = httpUtils::intToString(_body.size());
 
 	_data = buildHttpResponse();
-	_data += _body;
+
+	std::string res = buildHttpResponse();
+
+	if (_method != HEAD)
+		_data += _body;
 
 	_state = SENDING;
 }
@@ -98,7 +104,7 @@ void	Response::setStatusCode(int status_code)
 	_status_code = status_code;
 }
 
-void Response::setHttpVersion(const std::string& version)
+void	Response::setHttpVersion(const std::string& version)
 {
 	_http_version = version;
 }
@@ -106,6 +112,11 @@ void Response::setHttpVersion(const std::string& version)
 std::string	Response::getHttpVersion() const
 {
 	return _http_version;
+}
+
+void	Response::setMethod(t_method method)
+{
+	_method = method;
 }
 
 std::string	Response::getHeader(const std::string& key) const
