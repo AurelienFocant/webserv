@@ -95,7 +95,6 @@ void	RequestHandler::findLocation()
 		const std::string&	route_path = it->first;
 		const Location*		location = &(it->second);
 
-
 		//Check if the requested path match an extension or begin with a Location name
 		if (route_path[route_path.size() -1] == '$')
 		{
@@ -129,11 +128,8 @@ void	RequestHandler::findLocation()
 			}
 		}
 	}
-
 	if (!_matched_location)
 		_matched_location = &(_server->getLocationAt("MAIN"));
-	//std::cout << "[DEBUG] Matched extension: " << extensionToString(_matched_extension) << std::endl;
-	//std::cout << "[DEBUG] Matched location: " << _matched_location->getName() << std::endl;
 }
 
 bool	RequestHandler::resolvePath()
@@ -287,7 +283,6 @@ bool	RequestHandler::normalizePath()
 		_response.setStatusCode(403);
 		return false;
 	}
-	// std::cout << "[DEBUG] Decoded path: " << decoded_path << std::endl;
 
 	std::string temp_path = decoded_path.substr(cage_root.size());
 
@@ -382,13 +377,8 @@ bool	RequestHandler::validatePath()
 
 bool	RequestHandler::isAllowedMethod()
 {
-	// ! autorisation par default?
-	if (!_matched_location)
-		return true;
-
 	std::set<std::string> allowed = _matched_location->getAllowedMethods();
 
-	// if no allowd_methods directive in this location in config true by default?
 	if (allowed.empty())
 		return true;
 
@@ -454,6 +444,7 @@ bool	RequestHandler::processGetMethod()
 bool RequestHandler::processHeadMethod()
 {
 	_response.setMethod(HEAD);
+	processGetMethod();
 	return (false);
 }
 
