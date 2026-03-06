@@ -454,7 +454,7 @@ bool	RequestHandler::processGetMethod()
 bool RequestHandler::processHeadMethod()
 {
 	_response.setMethod(HEAD);
-	return (true);
+	return (false);
 }
 
 bool	RequestHandler::_hasContentTypeHeader(void)

@@ -15,8 +15,7 @@ void	Response::formatResponse()
 	if (_state != READY)
 		return;
 
-	if (_method != HEAD)
-		_headers["Content-Length"] = httpUtils::intToString(_body.size());
+	_headers["Content-Length"] = httpUtils::intToString(_body.size());
 
 	_data = buildHttpResponse();
 
