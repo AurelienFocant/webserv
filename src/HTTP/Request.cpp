@@ -289,10 +289,22 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 		if (_content_length)
 			_content_length += 2;
 		else {
-			_progress = DONE;
-			_complete = true;
-			_status_code = OK;
-			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+			dft = extractInput('\n');
+			if (dft.empty())
+				return (_complete);
+			pos = dft.find('\r');
+			if (pos != 0) {
+				_progress = DONE;
+				_complete = true;
+				_status_code = BAD_REQUEST;
+				return (_complete);
+			}
+			else {
+				_progress = DONE;
+				_complete = true;
+				_status_code = OK;
+				_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+			}
 		}
 	}
 	else {
