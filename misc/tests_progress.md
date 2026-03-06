@@ -15,7 +15,7 @@ content returned: BLBLBLBLBLBL
 5. Test GET http://localhost:7070/directory/youpi.bad_extension -> 200 OK + serve index
 content returned: BLBLBLBLBLBL INDEX
 
-6. Test GET http://localhost:7070/directory/youpi.bla  -> 200 OK (prioritize prefix location for _matched_location)
+6. Test GET http://localhost:7070/directory/youpi.bla  -> 200 OK (prioritize prefix > ext location for _matched_location)
 content returned: 
 
 7. Test GET Expected 404 on http://localhost:7070/directory/oulalala -> 404 NOT FOUND + error page
