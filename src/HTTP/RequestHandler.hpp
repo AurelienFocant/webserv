@@ -69,6 +69,7 @@ class RequestHandler
 	bool			isAllowedMethod();
 	bool			processMethods();
 	bool			processGetMethod();
+	bool			processHeadMethod();
 	bool			processPostMethod();
 	bool			processDeleteMethod();
 	bool			_hasContentTypeHeader();

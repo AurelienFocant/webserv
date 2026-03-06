@@ -30,6 +30,7 @@ ConfigContext::ConfigContext(ContextType t)
 	_indexes.push_back("index.html");
 
 	_allowed_methods.insert("GET");
+	_allowed_methods.insert("HEAD");
 }
 
 ConfigContext::ConfigContext(const ConfigContext &src)

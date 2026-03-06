@@ -67,6 +67,8 @@ function deleteFile(filename) {
 loadFiles();
 
 const form = document.getElementById("uploadForm");
+class FileTooLargeError extends Error {}
+class UploadFailedError extends Error {}
 
 form.addEventListener("submit", function (e) {
     e.preventDefault(); // stop normal form submission
@@ -78,15 +80,23 @@ form.addEventListener("submit", function (e) {
         body: formData
     })
     .then(res => {
+		console.log(res.status)
         if (res.status === 201) {
-            window.location.reload();
-        } else {
-            throw new Error("Upload failed");
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert("Error uploading file");
-    });
+            // window.location.reload();
+		} else if (res.status === 413) {
+			throw new FileTooLargeError("FileTooLargeError");
+		} else {
+			throw new UploadFailedError("Upload failed");
+		}
+	})
+		.catch(err => {
+			if (err instanceof FileTooLargeError) {
+				alert("File too large");
+			} else if (err instanceof UploadFailedError) {
+				alert("Error uploading file");
+			} else {
+				alert("Upload interrupted. File might be too large");
+				console.error(err);
+			}
+		});
 });
-

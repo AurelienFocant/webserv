@@ -10,6 +10,7 @@ typedef	enum s_method
 {		//Enum for HTTP METHOD -> UNKNOWN must be the last one
 	NOT_SET = -1,
 	GET = 0,
+	HEAD,
 	POST,
 	DELETE,
 	UNKNOWN

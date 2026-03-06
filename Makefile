@@ -11,9 +11,8 @@ MAKEFLAGS						:=	--no-print-directory
 SHELL							:=	/bin/bash
 
 #-----------------------------DEBUG---------------------------#
-DEBUG_EXEC						:=	debugMyServerPlease
-debug:							$(DEBUG_EXEC)
-	$(DB) $(DEBUG_EXEC)
+debug:							$(NAME)
+	$(DB) $(NAME)
 
 OS = $(shell uname)
 ifeq ($(OS),Darwin)
@@ -48,17 +47,11 @@ SRC_FILES						:=	$(shell find $(SRC_DIR) -type f -name "*.cpp")
 
 #-------------------------OBJECT FILES------------------------#
 OBJ_DIR							:=	.build
-DEBUG_DIR						:=	$(OBJ_DIR)/debug_obj
 OBJ_SUBDIRS						:=	$(SRC_SUBDIRS:$(SRC_DIR)%=$(OBJ_DIR)%)
 OBJ_FILES						:=	$(SRC_FILES:$(SRC_DIR)%.cpp=$(OBJ_DIR)%.o)
-DEBUG_OBJ						:=	$(SRC_FILES:$(SRC_DIR)%.cpp=$(DEBUG_DIR)%.o)
 
 
 $(OBJ_DIR)/%.o:		$(SRC_DIR)/%.cpp | compiling
-	@mkdir -p $(@D)
-	$(COMPILER) $(DEBUGFLAGS) $(CPPFLAGS) -c $< -o $@
-
-$(DEBUG_DIR)/%.o:	$(SRC_DIR)/%.cpp | compiling
 	@mkdir -p $(@D)
 	$(COMPILER) $(DEBUGFLAGS) $(CPPFLAGS) -c $< -o $@
 
@@ -78,17 +71,10 @@ CPPFLAGS						+=	$(addprefix -I, $(SRC_SUBDIRS))
 
 
 #----------------------------LINKING--------------------------#
-$(NAME):		$(LIBFT) $(MINILIBX) $(OBJ_FILES) | linking
+$(NAME):		$(OBJ_FILES)
+	@printf "\n------------------LINKING------------------\n"
 	$(CC) $(OPTIFLAGS) $(OBJ_FILES) $(LIBFLAGS) -o $@
 	@printf "\n"
-
-$(DEBUG_EXEC):	$(LIBFT) $(MINILIBX) $(DEBUG_OBJ) | linking
-	$(LINKER) $(DEBUGFLAGS) $(DEBUG_OBJ) $(LIBFLAGS) -o $@
-	@printf "\n"
-
-.INTERMEDIATE: linking
-linking:
-	@printf "\n------------------LINKING------------------\n"
 
 #----------------------------CLEANING-------------------------#
 clean:
@@ -96,7 +82,6 @@ clean:
 
 fclean:		clean
 	@rm -rf	$(NAME)
-	@rm -rf	$(DEBUG_EXEC)
 	@printf	"$(NAME) fully cleaned\n"
 
 re:		fclean

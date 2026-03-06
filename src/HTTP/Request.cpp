@@ -225,7 +225,7 @@ bool	Request::isFirstLineValid() {
 }
 
 bool	Request::setupBodyHandler() {
-	if (_method == GET) { //Check for GET request
+	if (_method == GET || _method == HEAD) { //Check for GET request
 		_progress = DONE;
 		_complete = true;
 		_status_code = OK;
