@@ -263,7 +263,7 @@ void	Webserv::run()
 			currConn.setLastConnTime(std::time(NULL));
 		}
 
-		//_closeStaleConnections();
+		_closeStaleConnections();
 		//->add check enfant timeout
 	}
 }
