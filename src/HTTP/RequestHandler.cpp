@@ -107,8 +107,8 @@ void	RequestHandler::findLocation()
 				{
 					if (_matched_extension == NO_EXT)
 						_matched_extension = extensionFromString(ext);
-					_matched_location = location;
-					return ;
+					if (!_matched_location)
+						_matched_location = location;
 				}
 			}
 		}
@@ -430,7 +430,7 @@ bool	RequestHandler::processGetMethod()
 				return true;
 			}
 			else
-				_response.setStatusCode(FORBIDDEN); //Directory listing forbidden
+				_response.setStatusCode(NOT_FOUND);
 			return false;
 		}
 	}
