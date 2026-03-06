@@ -32,8 +32,8 @@ def main():
         f.write(comment)
 
     # HTTP headers
-    # print("Content-Type: text/html")
-    # print()
+    print("Content-Type: text/html")
+    print()
 
     print("<!DOCTYPE html>")
     print("<html>")
@@ -46,6 +46,7 @@ def main():
         print("<h1>Error</h1>")
         print("<p>No comment provided</p>")
     print('<a href="/html/comment.html">Back</a>')
+    print('<a href="/" class="home-link">WebServ</a>')
     print("</body></html>")
 
 

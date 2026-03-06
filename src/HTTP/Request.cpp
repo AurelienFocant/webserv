@@ -269,10 +269,23 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 		std::string	dft = extractInput('\n');
 		if (dft.empty())
 			return (_complete);
-		dft.erase(dft.find('\r'));
+		size_t	pos = dft.find('\r');
+		if (pos == std::string::npos) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
+		dft.erase(pos);
 		std::stringstream	ss;
 		ss << std::hex << dft;
 		ss >> _content_length; 
+		if (ss.fail()) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
 		if (_content_length)
 			_content_length += 2;
 		else {
@@ -348,11 +361,17 @@ bool	Request::extractHeadersInformations() {
 			case (EOL):
 				options_name.clear();
 				break ;
-			default: //COLON, COMA
+			case (COLON):
+				//fall tru
+			case (COMA):
 				it++;
 				if (!detectImportantValue(options_name, it->lexeme))
 					return (false);
 				safeInsertion(options_name, it->lexeme);
+				break ;
+			default: 
+				_status_code = INTERNAL_SERVER_ERROR;
+				return (false);
 		}
 		it++;
 	}
@@ -454,7 +473,7 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 
 bool	Request::detectImportantValue(std::string& argument, std::string value) {
 	const char*	important_argument[3] = {
-		"CONTENT_LENGTH", "TRANSFERT_ENCODING", NULL
+		"CONTENT_LENGTH", "TRANSFER_ENCODING", NULL
 		};
 
 	int	i = 0;
@@ -473,11 +492,11 @@ bool	Request::detectImportantValue(std::string& argument, std::string value) {
 			}
 			else if (value != "chunked") {
 				_status_code = NOT_IMPLEMENTED; //FIND CORRECT ERROR
-				break ;
+				return (false);
 			}
 			else {
 				_content_encoding = true;
-				return (false);
+				break ;
 			}
 		default:
 			break ; 
