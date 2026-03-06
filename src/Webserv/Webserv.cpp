@@ -412,6 +412,7 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 	//			info.handler = &Webserv::cgiIn;
 	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
 	conn.request_handler._response.setState(Response::PROCESSING_CGI);
+	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }
 
@@ -503,6 +504,7 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 	}
 	else {
 		conn.request_handler._response.addCgiBody(buffer);
+		conn.cgi_timeout = std::time(NULL);
 	}
 	return (true);
 }
