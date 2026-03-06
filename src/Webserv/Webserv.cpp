@@ -114,6 +114,28 @@ void	Webserv::_closeStaleConnections(void)
 	}
 }
 
+void	Webserv::_closeStaleCgi(void)
+{
+	std::map<int, t_info>::iterator	it;
+
+	for (it = _connections.begin(); it != _connections.end(); it++) {
+		Connection& conn = it->second.connection;
+
+		if (_isListenSocket(conn))
+			continue ;
+		if (conn.hasCgiTimedOut())
+			if (!waitpid(conn.child_pid, NULL, WNOHANG)) {
+				if (!kill(conn.child_pid, SIGKILL))
+					perror("Kill child:");
+				conn.request_handler.requestIsComplete();
+				conn.request_handler._response.setState(Response::READY);
+				conn.request_handler._response.setStatusCode(GATEWAY_TIMEOUT);
+				resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+			}
+	}
+	return ;
+}
+
 const VirtualServer&	Webserv::_resolveVirtualServer(const Connection& conn)
 {
 	sockaddr_in addr;
@@ -264,7 +286,7 @@ void	Webserv::run()
 		}
 
 		_closeStaleConnections();
-		//->add check enfant timeout
+		_closeStaleCgi();
 	}
 }
 
@@ -390,6 +412,7 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 	//			info.handler = &Webserv::cgiIn;
 	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
 	conn.request_handler._response.setState(Response::PROCESSING_CGI);
+	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }
 
@@ -407,7 +430,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
 
-		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLRDHUP, EPOLL_CTL_ADD)) {
+		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 			close(conn.cgi_fd[0]);
 			close(conn.cgi_fd[1]);
 			return (false);
@@ -418,33 +441,31 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		_connections.insert(std::make_pair(conn.cgi_fd[0], info));
 		conn.request_handler._response._offset = 0;
 	}
+	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }
 
 bool	Webserv::cgiOutHandler(Connection& conn)
 {
 	char buffer[4096];
-	ssize_t bytes;
 
-	std::string	cgi_response;
-	while ((bytes = read(conn.cgi_fd[0], buffer, sizeof(buffer))) > 0) //-->check for partial read
-	{
-		cgi_response.append(buffer, bytes);
-	}
-	conn.request_handler._response.setCgiBody(cgi_response);
-	if (bytes < 0)
+	ssize_t	bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer)); //-->check for partial read
+	if (bytes_read < 0) {
 		return (false);
-
-	if (bytes == 0) {
+	}
+	else if (bytes_read == 0) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
 		_connections.erase(conn.cgi_fd[0]);
 		close(conn.cgi_fd[0]);
 
 		// Build Response from CGI
 		int status;
-		if (waitpid(conn.child_pid, &status, WNOHANG) > 0) {
-			//do stuff
+		if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
+			if (!kill(conn.child_pid, SIGKILL))
+				perror("Kill child:");
 		}
+		conn.request_handler.requestIsComplete();
+		conn.request_handler._response.setState(Response::READY);
 
 		// Extract headers
 		Response &response = conn.request_handler._response;
@@ -481,9 +502,12 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 
 		resp::prepareResponse(response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 	}
+	else {
+		conn.request_handler._response.addCgiBody(buffer);
+		conn.cgi_timeout = std::time(NULL);
+	}
 	return (true);
 }
-
 
 // Getters
 std::vector<VirtualServer>&	Webserv::getServers(void)

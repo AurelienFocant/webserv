@@ -572,6 +572,11 @@ bool	RequestHandler::_saveDataToFile(std::string filename)
 	return (true);
 }
 
+void	RequestHandler::requestIsComplete() {
+	_request.setComplete(true);
+	return ;
+}
+
 bool	RequestHandler::processPostMethod()
 {
 	if (!_hasContentTypeHeader()) {

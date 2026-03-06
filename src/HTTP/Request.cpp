@@ -55,7 +55,7 @@ bool	Request::cleanRequest() {
 	//Request informations
 	_method = NOT_SET;
 	_request_uri.clear();
-	_http_version.clear();
+	_http_version = "HTTP/1.0";
 	_body.clear();
 
 	//request usefull header informations
@@ -289,10 +289,22 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 		if (_content_length)
 			_content_length += 2;
 		else {
-			_progress = DONE;
-			_complete = true;
-			_status_code = OK;
-			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+			dft = extractInput('\n');
+			if (dft.empty())
+				return (_complete);
+			pos = dft.find('\r');
+			if (pos != 0) {
+				_progress = DONE;
+				_complete = true;
+				_status_code = BAD_REQUEST;
+				return (_complete);
+			}
+			else {
+				_progress = DONE;
+				_complete = true;
+				_status_code = OK;
+				_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+			}
 		}
 	}
 	else {
@@ -361,11 +373,17 @@ bool	Request::extractHeadersInformations() {
 			case (EOL):
 				options_name.clear();
 				break ;
-			default: //COLON, COMA
+			case (COLON):
+				//fall tru
+			case (COMA):
 				it++;
 				if (!detectImportantValue(options_name, it->lexeme))
 					return (false);
 				safeInsertion(options_name, it->lexeme);
+				break ;
+			default: 
+				_status_code = INTERNAL_SERVER_ERROR;
+				return (false);
 		}
 		it++;
 	}
@@ -555,6 +573,12 @@ const std::multimap<std::string, std::string>&	Request::getHeaders() const {
 }
 
 /*Setters*/
+
+void	Request::setComplete(bool status) {
+	_complete = status;
+	return ;
+}
+
 bool	Request::addInput(const std::string& input) {
 	HTTPTokenizer::addInput(input);
 	return (true);

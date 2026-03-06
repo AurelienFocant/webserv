@@ -68,6 +68,16 @@ bool	Connection::hasTimedOut(void)
 	return (false);
 }
 
+bool	Connection::hasCgiTimedOut(void)
+{
+	const VirtualServer* server = request_handler.getVirtualServer();
+	if (!server)
+		return (false);
+	std::time_t	now = std::time(NULL);
+	if (std::difftime(now, cgi_timeout) > request_handler.getVirtualServer()->getCGITimeout())
+		return (true);
+	return (false);
+}
 
 // Getters Setters
 void	Connection::setEvent(struct epoll_event event)

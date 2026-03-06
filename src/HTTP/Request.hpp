@@ -34,6 +34,7 @@ class	Request	: private HTTPTokenizer {
 		bool			addInput(const std::string& input) ;
 
 	/*Setters - Getters*/
+		void			setComplete(bool status);
 		t_method		getMethod() const ;
 		std::string		getRequestUri() const ;
 		std::string		getHttpVersion() const ;
