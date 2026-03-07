@@ -12,7 +12,6 @@
 /* ************************************************************************** */
 
 #include "Request.hpp"
-#include <cstdio> //for debug -> to remove
 
 const std::string	Request::authorized_method = "GET POST";
 const std::string	Request::unimplemented_method =
