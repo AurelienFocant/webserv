@@ -108,13 +108,9 @@ void	RequestHandler::findLocation()
 					if (_matched_extension == NO_EXT)
 					{
 						_matched_extension = extensionFromString(ext);
-						if (!_cgi_exec.empty())
-						{
-							if (*_matched_location->getRoot().end() != '/')
-							_cgi_exec = *_matched_location->getRoot().end() != '/'
-							? _matched_location->getRoot() + '/' + _matched_location->getCGIExec()
-							: _matched_location->getRoot() + _matched_location->getCGIExec();
-						}
+						if (!location->getCGIExec().empty())
+							_cgi_exec = location->getCGIExec();
+						//else if (idem pour cgi_on)
 					}
 					if (!_matched_location)
 						_matched_location = location;
@@ -145,15 +141,28 @@ bool	RequestHandler::resolvePath()
 {
 	if (detectCGI())
 	{
-		_resolved_path = _matched_location->getRoot() + _script_name;
-/* 		if (!_cgi_exec.empty())
+		if (!_matched_location->getAlias().empty())
+		{
+			std::string	location_path	= _matched_location->getName();
+			std::string	remaining_path	= _request_path.substr(location_path.size());
+			_resolved_path = _matched_location->getAlias() + remaining_path;
+		}
+		else
+		{
+			if (!_matched_location->getRoot().empty())	
+			_root = _matched_location->getRoot();
+			_resolved_path = _root + _script_name;
+		}
+
+		if (!_cgi_exec.empty())
 		{
 			if (*_matched_location->getRoot().end() != '/')
 			_cgi_exec = *_matched_location->getRoot().end() != '/'
-			? _matched_location->getRoot() + '/' + _matched_location->getCGIExec()
-			: _matched_location->getRoot() + _matched_location->getCGIExec();
-		} */
+			? _matched_location->getRoot() + '/' + _cgi_exec
+			: _matched_location->getRoot() + _cgi_exec;
+		}
 		_response.isCGI = true;
+
 		if (!normalizePath())
 			return false;
 	}
@@ -220,7 +229,9 @@ bool	RequestHandler::hasRedirect()
 
 bool	RequestHandler::detectCGI()
 {
-	if (!_matched_location->getCGI() && _matched_location->getCGIExec().empty())
+	if (!_matched_location->getCGI() && _cgi_exec.empty()) //! getCGI
+		return false;
+	if (_request.getMethod() == GET || _request.getMethod() == HEAD)
 		return false;
 
 	// what if prefix cgi location but no .ext$ location??
