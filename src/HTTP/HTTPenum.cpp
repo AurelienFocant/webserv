@@ -58,6 +58,7 @@ std::string extensionToString(t_extension code)
         case NO_EXT:                        return "";
         case PY:                            return ".py";
         case SH:                            return ".sh";
+        case BLA:                           return ".bla";
         default:                            return "unknown";
     }
 }
@@ -66,6 +67,7 @@ t_extension extensionFromString(const std::string& s)
 {
     if (s == ".py")           return PY;
     else if (s == ".sh")      return SH;
+    else if (s == ".bla")      return BLA;
     else                        return UNKNOWN_EXT;
 }
 

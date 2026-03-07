@@ -35,6 +35,7 @@ typedef	enum s_extension
 	NO_EXT = -1,
 	PY = 0,
 	SH = 1,
+    BLA = 2,
 	UNKNOWN_EXT
 }		t_extension;
 

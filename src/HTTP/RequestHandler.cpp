@@ -106,7 +106,16 @@ void	RequestHandler::findLocation()
 				if (ext_end == _request_path.size() || _request_path[ext_end - 1] == '/' || _request_path[ext_end] == '/')
 				{
 					if (_matched_extension == NO_EXT)
+					{
 						_matched_extension = extensionFromString(ext);
+						if (!_cgi_exec.empty())
+						{
+							if (*_matched_location->getRoot().end() != '/')
+							_cgi_exec = *_matched_location->getRoot().end() != '/'
+							? _matched_location->getRoot() + '/' + _matched_location->getCGIExec()
+							: _matched_location->getRoot() + _matched_location->getCGIExec();
+						}
+					}
 					if (!_matched_location)
 						_matched_location = location;
 				}
@@ -137,13 +146,13 @@ bool	RequestHandler::resolvePath()
 	if (detectCGI())
 	{
 		_resolved_path = _matched_location->getRoot() + _script_name;
-		if (!_cgi_exec.empty())
+/* 		if (!_cgi_exec.empty())
 		{
 			if (*_matched_location->getRoot().end() != '/')
 			_cgi_exec = *_matched_location->getRoot().end() != '/'
 			? _matched_location->getRoot() + '/' + _matched_location->getCGIExec()
 			: _matched_location->getRoot() + _matched_location->getCGIExec();
-		}
+		} */
 		_response.isCGI = true;
 		if (!normalizePath())
 			return false;
