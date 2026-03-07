@@ -2,14 +2,14 @@ Before starting please verify that the server is launched
 press enter to continue
 
 
-1. Test GET http://localhost:7070/ -> 200 OK
+1. Test GET http://localhost:7070/ -> 200 OK + serve index
 content returned: BLBLBLBLBLBL
 
 2. Test POST http://localhost:7070/ with a size of 0 -> 405 METHOD NOT ALLOWED
 
 3. Test HEAD http://localhost:7070/ -> 405 METHOD NOT ALLOWED
 
-4. Test GET http://localhost:7070/directory -> 301 MOVED PERMANEMTLY -> 200 OK
+4. Test GET http://localhost:7070/directory -> 301 MOVED PERMANEMTLY -> 200 OK + serve index
 content returned: BLBLBLBLBLBL
 
 5. Test GET http://localhost:7070/directory/youpi.bad_extension -> 200 OK + serve index
@@ -70,5 +70,11 @@ content returned: <!DOCTYPE html>
 12. Test GET Expected 404 on http://localhost:7070/directory/Yeah -> -> 404 NOT FOUND + error page (corrected 403 to 404)
 content returned:
 
-13. Test POST http://localhost:7070/directory/youpi.bla with a size of 100000000 -> Hanging somewhere :(
+13. Test GET http://localhost:7070/directory/Yeah/not_happy.bad_extension ->200 OK + serve second index
+content returned: NOOOOO
+
+
+14. Test POST http://localhost:7070/directory/youpi.bla with a size of 100000000 -> Hanging somewhere :(
+14. Test POST http://localhost:7070/directory/youpi.bla with a size of 100000000 -> now we return 413 Request Entity Too Large and it's wrong 
+FATAL ERROR ON LAST TEST: bad status code
 
