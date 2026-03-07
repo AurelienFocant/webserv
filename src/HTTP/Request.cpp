@@ -108,10 +108,7 @@ bool	Request::parseRequest() {
 			_progress = DONE;
 			_complete = true;
 			if (_status_code == INIT_STATE)
-			{
 				_status_code = BAD_REQUEST;
-				printf("STAT-1: %d\n", _status_code);
-			}
 			return (_complete);
 		}
 		setupBodyHandler();
@@ -149,7 +146,6 @@ void	Request::parseFirstLine() {
 				_complete = true;
 				_progress = DONE;
 				_status_code = BAD_REQUEST;
-				printf("STAT-2: %d\n", _status_code);
 				break ;
 			default:
 				_complete = true;
@@ -183,7 +179,6 @@ void	Request::parseHeader() {
 				_progress = DONE;
 				_complete = true;
 				_status_code = BAD_REQUEST;
-				printf("STAT-3: %d\n", _status_code);
 			}
 			++_list_it;
 	}
@@ -210,7 +205,6 @@ void	Request::extractFirstLineInfo() {
 			_complete = true;
 			_progress = DONE;
 			_status_code = BAD_REQUEST;
-			printf("STAT-4: %d\n", _status_code);
 	}
 	return ;
 }
@@ -226,7 +220,6 @@ bool	Request::isFirstLineValid() {
 	}
 	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
 		_status_code = BAD_REQUEST;
-		printf("STAT-5: %d\n", _status_code);
 		return (false);
 	}
 	return (true);
@@ -250,7 +243,6 @@ bool	Request::setupBodyHandler() {
 	else {
 		_complete = true;
 		_status_code = BAD_REQUEST;
-		printf("STAT-6: %d\n", _status_code);
 	}
 	return (_complete);
 }
@@ -283,10 +275,18 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = BAD_REQUEST;
-			printf("STAT-7: %d\n", _status_code);
 			return (_complete);
 		}
 		dft.erase(pos);
+		//avoiding ss fail by passing an empty string
+		if (dft.empty())
+		{
+			_progress = DONE;
+			_complete = true;
+			_status_code = OK;
+			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+			return _complete;
+		}
 		std::stringstream	ss;
 		ss << std::hex << dft;
 		ss >> _content_length; 
@@ -294,7 +294,6 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = BAD_REQUEST;
-			printf("STAT-8: %d\n", _status_code);
 			return (_complete);
 		}
 		if (_content_length)
@@ -308,10 +307,9 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 				_progress = DONE;
 				_complete = true;
 				_status_code = BAD_REQUEST;
-				printf("STAT-9: %d\n", _status_code);
 				return (_complete);
 			}
-			else {
+			else { //doublon
 				_progress = DONE;
 				_complete = true;
 				_status_code = OK;
