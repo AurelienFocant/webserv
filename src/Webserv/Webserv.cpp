@@ -325,6 +325,9 @@ bool	Webserv::clientInHandler(Connection & conn)
 			return (false);
 		}
 
+		static int n = 0;
+		std::cerr << "request: " << n++ << std::endl;
+
 		conn.request_handler.processRequest(request_str);
 
 		if (conn.request_handler.getRequest().getState() > PARSED && conn.request_handler.getVirtualServer() == NULL)
