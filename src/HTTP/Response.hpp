@@ -57,7 +57,7 @@ class	Response
 	void				setMethod(t_method method);
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBody(const std::string& content);
-	void				addCgiBody(char* content);
+	void				addCgiBody(char* content, size_t bytes_read);
 
 	void				setBodySize(int size);
 
