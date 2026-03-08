@@ -37,8 +37,6 @@ void	Connection::sendResponse()
 
 	ssize_t bytesSent = send(_fd, data, to_send, MSG_NOSIGNAL);
 
-	std::cerr << "sent:\n" << data;
-
 	if (bytesSent > 0)
 		request_handler._response.updateBytesSend(bytesSent);
 	else if (bytesSent < 0)

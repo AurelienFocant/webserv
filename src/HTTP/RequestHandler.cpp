@@ -282,8 +282,6 @@ bool	RequestHandler::normalizePath()
 {
 	std::string cage_root = _matched_location->getName() == "MAIN" || _matched_extension != NO_EXT  ? "" : _matched_location->getName();
 
-	std::cout << "[DEBUG] Request path :" << _request_path << std::endl;
-
 	std::string	decoded_path;
 
 	if (!decodePath(_request_path, decoded_path))
@@ -559,14 +557,11 @@ bool	RequestHandler::_saveDataToFile(std::string filename)
 		return (false);
 
 	std::string s_buffer = body.substr(end_of_header);
-	int bytes_to_send = s_buffer.size();
 
 	int bytes_sent = 0;
 	int start = 0;
 	while ((bytes_sent = write(fd, &(s_buffer.c_str()[start]), 4000)) > 0) {
-		bytes_to_send -= bytes_sent;
 		start += bytes_sent;
-		std::cout << bytes_to_send << " left to send" << std::endl;
 	}
 	close(fd);
 	return (true);

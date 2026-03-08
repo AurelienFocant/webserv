@@ -325,9 +325,6 @@ bool	Webserv::clientInHandler(Connection & conn)
 			return (false);
 		}
 
-		static int n = 0;
-		std::cerr << "request: " << n++ << std::endl;
-
 		conn.request_handler.processRequest(request_str);
 
 		if (conn.request_handler.getRequest().getState() > PARSED && conn.request_handler.getVirtualServer() == NULL)
@@ -491,9 +488,6 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 		std::string body;
 		if (end + 2 <= response.getBody().size())
 			body = response.getBody().substr(end + 2); 
-
-		std::cout << "[DEBUG] Cgi headers: " << headers_str << std::endl;
-		std::cout << "[DEBUG] Cgi body: " << body << std::endl;
 
 		std::stringstream ss;
 		ss << headers_str;

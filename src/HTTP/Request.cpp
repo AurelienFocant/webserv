@@ -86,7 +86,6 @@ bool	Request::parseRequest() {
 		return (_complete);
 	_list_it = _token_list.begin();
 	
-	// std::cout << "Request.cpp -l63:\n" << _token_list; // debug info, clean it before release.
 
 	if (_progress < FIRST_LINE) {
 		parseFirstLine();
@@ -119,8 +118,6 @@ bool	Request::handleBody(unsigned int max_body) {
 		//add body size checking
 		if (_progress == BODY_HANDLING)
 			(this->*_body_handler)(max_body);
-
-		// std::cout << "Request.cpp -l95: " << _progress << std::endl; // debug info, clean it before release.
 
 		if (_complete)
 			cleanTokenList();
