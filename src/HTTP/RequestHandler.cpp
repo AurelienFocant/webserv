@@ -16,11 +16,11 @@
 /* ////////////REQUEST HANDLER////////////////// */
 
 RequestHandler::RequestHandler() 
-	: _request()
-	, _server(NULL)
+	: _server(NULL)
 	, _matched_location(NULL)
 	, _matched_extension(NO_EXT)
 	, _is_directory(false)
+	, _request()
 	, _response()
 {}
 
@@ -415,7 +415,7 @@ bool	RequestHandler::isAllowedMethod()
 
 	if (allowed.find(method) == allowed.end())
 	{
-		_response.setStatusCode(METHOD_NOT_ALLOWED);
+		_request.setStatusCode(METHOD_NOT_ALLOWED);
 		_response.setHeader("Allow", resp::buildAllowHeader(allowed));
 		return false;
 	}
@@ -424,8 +424,8 @@ bool	RequestHandler::isAllowedMethod()
 
 bool	RequestHandler::processMethods()
 {
-	if (!isAllowedMethod())
-		return false;
+/* 	if (!isAllowedMethod())
+		return false; */
 	if (_response.isCGI)
 		return (true);
 
