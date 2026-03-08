@@ -229,14 +229,13 @@ bool	RequestHandler::hasRedirect()
 
 bool	RequestHandler::detectCGI()
 {
-	if (!_matched_location->getCGI() && _cgi_exec.empty()) //! getCGI
+	if (!_matched_location->getCGI() && _cgi_exec.empty())
 		return false;
 
 	/* FOR TESTER */
-/* 	if (_request.getMethod() == GET || _request.getMethod() == HEAD)
-		return false; */
+	if (_request.getMethod() == GET || _request.getMethod() == HEAD)
+		return false;
 
-	// what if prefix cgi location but no .ext$ location??
 	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
 		return false;
 
@@ -385,13 +384,6 @@ bool	RequestHandler::validatePath()
 	{	
 		perror("[ERROR] Script is not executable");
 		_response.setStatusCode(FORBIDDEN);
-	}
-
-	/* FOR TESTER */
-	if (statBuf.st_size == 0)
-	{
-		_response.isCGI = false;
-		return false;
 	}
 
 	_is_directory = S_ISDIR(statBuf.st_mode);
