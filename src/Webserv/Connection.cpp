@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#define BUFFER_SIZE	250
+#define BUFFER_SIZE	4096
 
 std::string	Connection::receive()
 {

@@ -21,6 +21,19 @@
 			</form>
 		</div>
 
+		<div class="container">
+			<form id="postComment" action="/meuuuuh.py" method="get" class="comment-box">
+				<label for="comment">Say it louder for the back:</label><br>
+				<select name="animal">
+					<option value="">-- Choose an animal --</option>
+					<option value="cow">Cow</option>
+					<option value="dragon">Dragon</option>
+				</select>
+				<textarea id="comment" name="comment" placeholder="Type your comment here..." required></textarea><br>
+				<button type="submit">Send</button>
+			</form>
+		</div>
+
 		<script src="../js/postComment.js"></script>
 
 	</body>
