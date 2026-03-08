@@ -11,6 +11,13 @@ ROOT = "data/www/orel_website/"
 COMMENTS = ROOT + "comments/"
 
 
+def save_comment_to_file(comment):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"comment_{timestamp}"
+    with open(COMMENTS + filename, "w+") as f:
+        f.write(comment)
+
+
 def main():
     # Read POST body
     content_length = int(os.environ.get("CONTENT_LENGTH", 0))
@@ -23,31 +30,39 @@ def main():
     comment = data.get("comment", [""])[0]
     comment = html.escape(comment)
 
-    for file in os.listdir(COMMENTS):
-        print(file, file=sys.stderr)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"file_{timestamp}"
-    with open(COMMENTS + filename, "w+") as f:
-        f.write(comment)
+    if comment:
+        save_comment_to_file(comment)
+        cmt_html = f"""
+        <header>
+        <h1>Thanks for your comment!</h1>
+        </header>
+        <p>{comment}</p>
+        """
+    else:
+        cmt_html = """
+        <header>
+        <h1>Error</h1>
+        </header>
+        <p>No comment provided</p>
+        """
 
     # HTTP headers
     print("Content-Type: text/html")
     print()
-
-    print("<!DOCTYPE html>")
-    print("<html>")
-    print("<head><meta charset=\"UTF-8\"><title>WebServ</title></head>")
-    print("<body>")
-    if comment:
-        print("<h1>Comment Received</h1>")
-        print(f"<p>{comment}</p>")
-    else:
-        print("<h1>Error</h1>")
-        print("<p>No comment provided</p>")
-    print('<a href="/html/comment.html">Back</a>')
-    print('<a href="/" class="home-link">WebServ</a>')
-    print("</body></html>")
+    print(f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=\"UTF-8\"><title>WebServ</title>
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+{cmt_html}
+<a href="/html/comment.html" class="btn" >Back</a>
+<a href="/" class="home-link">WebServ</a>
+</body>
+</html>
+""")
 
 
 if __name__ == "__main__":

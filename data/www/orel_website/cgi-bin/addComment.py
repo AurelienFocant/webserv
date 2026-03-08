@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 # add_comment.py (CGI)
-import os, sys, re, time, secrets
+import os
+import sys
+import re
+import time
+import secrets
 from urllib.parse import parse_qs
 
 DB_ROOT = "./data/dB"
 USER_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+
 
 def cgi_read_body() -> bytes:
     try:
@@ -13,16 +18,20 @@ def cgi_read_body() -> bytes:
         n = 0
     return sys.stdin.buffer.read(n) if n > 0 else b""
 
+
 def respond(status: str, body: str) -> None:
     sys.stdout.write(f"Status: {status}\r\nContent-Type: text/plain\r\n\r\n{body}")
     sys.exit(0)
 
+
 def safe_username(u: str) -> bool:
     return bool(USER_RE.match(u))
+
 
 def next_comment_id() -> str:
     # Stable, sortable id: unixms-rand
     return f"{int(time.time() * 1000)}-{secrets.token_hex(4)}"
+
 
 def main():
     raw = cgi_read_body()
@@ -53,6 +62,7 @@ def main():
         f.write(f"{comment_id}\t{comment}\n")
 
     respond("200 OK", f"Comment added\nid={comment_id}\n")
+
 
 if __name__ == "__main__":
     main()

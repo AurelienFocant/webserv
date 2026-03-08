@@ -82,7 +82,7 @@ form.addEventListener("submit", function (e) {
     .then(res => {
 		console.log(res.status)
         if (res.status === 201) {
-            // window.location.reload();
+            window.location.reload();
 		} else if (res.status === 413) {
 			throw new FileTooLargeError("FileTooLargeError");
 		} else {
