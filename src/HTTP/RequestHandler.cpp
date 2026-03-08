@@ -108,8 +108,9 @@ void	RequestHandler::findLocation()
 					if (_matched_extension == NO_EXT)
 					{
 						_matched_extension = extensionFromString(ext);
+						_ext_str = ext;
 						if (!location->getCGIExec().empty())
-							_cgi_exec = location->getCGIExec();
+							_cgi_exec_virtual = location->getCGIExec();
 						//else if (idem pour cgi_on)
 					}
 					if (!_matched_location)
@@ -153,13 +154,12 @@ bool	RequestHandler::resolvePath()
 			_root = _matched_location->getRoot();
 			_resolved_path = _root + _script_name;
 		}
-
-		if (!_cgi_exec.empty())
+		if (!_cgi_exec_virtual.empty())
 		{
 			if (*_matched_location->getRoot().end() != '/')
 			_cgi_exec = *_matched_location->getRoot().end() != '/'
-			? _matched_location->getRoot() + '/' + _cgi_exec
-			: _matched_location->getRoot() + _cgi_exec;
+			? _matched_location->getRoot() + '/' + _cgi_exec_virtual
+			: _matched_location->getRoot() + _cgi_exec_virtual;
 		}
 		_response.isCGI = true;
 
@@ -229,31 +229,38 @@ bool	RequestHandler::hasRedirect()
 
 bool	RequestHandler::detectCGI()
 {
-	if (!_matched_location->getCGI() && _cgi_exec.empty())
+	if (!_matched_location->getCGI() && _cgi_exec_virtual.empty())
 		return false;
 
 	/* FOR TESTER */
 	if (_request.getMethod() == GET || _request.getMethod() == HEAD)
 		return false;
 
-	if (_matched_extension == NO_EXT || _matched_extension == UNKNOWN_EXT)
+	if (_matched_extension == NO_EXT)
 		return false;
 
-	std::string ext_str = extensionToString(_matched_extension);
+	std::string ext_str = (_matched_extension == UNKNOWN_EXT) ? _ext_str : extensionToString(_matched_extension);
 
 	size_t start = _request_path.find(ext_str);
 	if (start == std::string::npos)
 		return false;
 	size_t ext_end = start + ext_str.size();
 
-	_script_name = _request_path.substr(0, ext_end);
+	_script_name = (_matched_extension == UNKNOWN_EXT) ? _cgi_exec_virtual :_request_path.substr(0, ext_end);
 
 	_path_info = "";
-	if (ext_end < _request_path.size() && _request_path[ext_end] == '/')
+
+	if (_matched_extension == UNKNOWN_EXT && !_cgi_exec_virtual.empty())
+		_path_info = _request_path.substr(0, ext_end);
+	else
 	{
-		_path_info = _request_path.substr(ext_end);
-		_request_path = _request_path.substr(0, ext_end);
+		if (ext_end < _request_path.size() && _request_path[ext_end] == '/')
+		{
+			_path_info = _request_path.substr(ext_end);
+			_request_path = _request_path.substr(0, ext_end);
+		}
 	}
+
 	return true;
 }
 
@@ -723,8 +730,11 @@ void	RequestHandler::clean()
 	_root.clear();
 	_request_path.clear();
 	_resolved_path.clear();
+	_cgi_exec.clear();
+	_cgi_exec_virtual.clear();
 	_matched_location = NULL;
 	_matched_extension = NO_EXT;
+	_ext_str.clear();
 	_is_directory = false;
 	_script_name.clear();
 	_path_info.clear();

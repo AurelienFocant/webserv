@@ -124,10 +124,22 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect)
 {
 	vect.push_back("REQUEST_METHOD=" + methodToString(handler.getRequest().getMethod()));
-	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getRequestUri());
+	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getHttpVersion()); //
 	vect.push_back("QUERY_STRING=" + handler.getQuery());
-	vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
-	vect.push_back("SCRIPT_FILENAME=" + handler.getResolvedPath()); 
+
+	if (!handler.getCGIExec().empty())
+	{
+		vect.push_back("SCRIPT_NAME=" + handler.getCGIExecVirtual());
+		vect.push_back("SCRIPT_FILENAME=" + handler.getCGIExec());
+		vect.push_back("PATH_INFO=" + handler.getPathInfo());
+	}
+	else
+	{
+		vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
+		vect.push_back("SCRIPT_FILENAME=" + handler.getResolvedPath());
+		if (!handler.getPathInfo().empty())
+			vect.push_back("PATH_INFO=" + handler.getPathInfo());
+	}
 	return (true);
 }
 
@@ -183,6 +195,7 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 		close(pipe_in[0]);
 		close(pipe_out[1]);
 
+		std::cout << "STAT-EXECVE !!!!! \n";
 		execve(argv[0], argv, env);
 
 		//In case of error in the child, clean everything and exit
