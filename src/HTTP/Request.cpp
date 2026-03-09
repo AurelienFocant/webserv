@@ -25,6 +25,7 @@ Request::Request() : HTTPTokenizer()
 
 Request::Request(const Request& src)
 	: HTTPTokenizer(src)
+	, _full_input(src._full_input)
 	, _progress(src._progress)
 	, _complete(src._complete)
 	, _status_code(src._status_code)
@@ -37,7 +38,8 @@ Request::Request(const Request& src)
 	, _nbr_headers(src._nbr_headers)
 	, _content_encoding(src._content_encoding)
 	, _content_type(src._content_type)
-	, _content_length(src._content_length) {
+	, _content_length(src._content_length)
+	{
 }
 
 Request::Request(std::string const& request) : HTTPTokenizer(request)
@@ -47,6 +49,9 @@ Request::Request(std::string const& request) : HTTPTokenizer(request)
 }
 
 bool	Request::cleanRequest() {
+	//debug
+	_full_input.clear();
+
 	//Request State
 	_progress = START;
 	_complete = false;
@@ -586,6 +591,7 @@ void	Request::setComplete(bool status) {
 }
 
 bool	Request::addInput(const std::string& input) {
+	_full_input += input;
 	HTTPTokenizer::addInput(input);
 	return (true);
 }

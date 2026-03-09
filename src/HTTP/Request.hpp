@@ -50,6 +50,8 @@ class	Request	: private HTTPTokenizer {
 	private:
 		Request(const Request& copy_from);
 	/*Private Attributes*/
+		//debug
+		std::string								_full_input;
 		//Request State
 		int										_progress;
 		bool									_complete;
