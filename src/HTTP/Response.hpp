@@ -67,7 +67,7 @@ class	Response
 	std::string			getHttpVersion() const;
 	std::string			getHeader(const std::string& key) const;
 	std::string			getBody() const;
-	int					getBodySize() const;
+	size_t				getDataSize() const;
 
 	private:
 

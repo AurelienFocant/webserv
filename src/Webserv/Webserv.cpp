@@ -287,7 +287,7 @@ void	Webserv::run()
 		}
 
 		_closeStaleConnections();
-		//_closeStaleCgi();
+		_closeStaleCgi();
 	}
 }
 
@@ -365,8 +365,21 @@ bool	Webserv::clientOutHandler(Connection & conn)
 				_startCGIresponse(conn.request_handler, conn);
 			}
 		}
+		
+		std::string body = conn.request_handler._response.getBody();
 
 		if (conn.request_handler.getResponse().getState() != Response::PROCESSING_CGI) {
+/* 			if (conn.request_handler._response.getState() == Response::READY) {
+				std::cerr << "[clientOut] Formatting response, body size = " 
+				<< body.size() << std::endl;
+				std::cout << "CGI Response 1000 first: " << body.substr(0, 1000) << std::endl;
+				if (body.size() > 100) {
+				std::cout << "CGI Response last 100: " 
+					<< body.substr(body.size() - 100, 100) << std::endl;
+				}
+				std::cout << "Body size: " << body.size() << std::endl;
+				std::cout << "Expected: " << conn.request_handler.getRequest().getContentLength() << std::endl;
+				} */
 			conn.request_handler._response.formatResponse();
 			conn.sendResponse();
 		}
@@ -442,10 +455,11 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		return (false);
 	}
 
-	if (conn.request_handler._response._offset == conn.request_handler.getRequest().getContentLength()) {
+	if (conn.cgi_stdin_offset == conn.request_handler.getRequest().getContentLength()) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
+		conn.cgi_fd[1] = -1;
 
 /* 		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 			close(conn.cgi_fd[0]);
@@ -469,7 +483,7 @@ bool Webserv::cgiOutHandler(Connection& conn)
     memset(buffer, 0, sizeof(buffer));
 
     ssize_t bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer));
-    
+
     if (bytes_read < 0) {
         	return true;
     }
@@ -501,7 +515,9 @@ bool Webserv::cgiOutHandler(Connection& conn)
         size_t body_start = end + (eof ? 4 : 2);
         std::string body = response.getBody().substr(body_start);
         
-/*         std::cerr << "[cgiOut] Headers:\n" << headers_str << std::endl;
+        //std::cerr << "[cgiOut] Headers:\n" << headers_str << std::endl;
+/*         std::cerr << "[cgiOut] Body: " << body << std::endl;
+        std::cerr << "////////////" << headers_str << std::endl;
         std::cerr << "[cgiOut] Body size: " << body.size() << std::endl; */
 
         std::stringstream ss(headers_str);

@@ -24,8 +24,12 @@ void	Response::formatResponse()
 	if (_method != HEAD)
 		_data += _body;
 	
-	//std::cout << "First Lines Response: " << _data.substr(0, 500) << std::endl;
+	std::cerr << "[formatResponse] Headers size = " 
+			<< (_data.size() - _body.size()) << std::endl;
+	std::cerr << "[formatResponse] Body size = " << _body.size() << std::endl;
+	std::cerr << "[formatResponse] Total _data size = " << _data.size() << std::endl;
 
+	_offset = 0;
 	_state = SENDING;
 }
 
@@ -141,6 +145,11 @@ std::string	Response::getBody() const
 void	Response::setBody(const std::string& content)
 {
 	_body = content;
+}
+
+size_t	Response::getDataSize() const
+{
+	return _data.size();
 }
 
 void	Response::addCgiBody(char* content, size_t size) {
