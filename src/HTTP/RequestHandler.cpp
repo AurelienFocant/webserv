@@ -156,10 +156,10 @@ bool	RequestHandler::resolvePath()
 		}
 		if (!_cgi_exec_virtual.empty())
 		{
-			if (*_matched_location->getRoot().end() != '/')
-			_cgi_exec = *_matched_location->getRoot().end() != '/'
-			? _matched_location->getRoot() + '/' + _cgi_exec_virtual
-			: _matched_location->getRoot() + _cgi_exec_virtual;
+			std::string root = _matched_location->getRoot();
+			_cgi_exec = (!root.empty() && root[root.size() -1] != '/')
+			? root + '/' + _cgi_exec_virtual
+			: root + _cgi_exec_virtual;
 		}
 		_response.isCGI = true;
 

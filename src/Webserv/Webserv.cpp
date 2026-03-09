@@ -234,6 +234,7 @@ void	Webserv::initWebServer()
 
 
 		// signal(SIGINT, sigintHandler);
+		signal(SIGPIPE, SIG_IGN);
 	}
 }
 
@@ -285,8 +286,8 @@ void	Webserv::run()
 			currConn.setLastConnTime(std::time(NULL));
 		}
 
-		_closeStaleConnections();
-		_closeStaleCgi();
+		//_closeStaleConnections();
+		//_closeStaleCgi();
 	}
 }
 
@@ -413,6 +414,21 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 	//			info.connection = conn;
 	//			info.handler = &Webserv::cgiIn;
 	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
+
+	///////TEST AJOUTE LES 2 PIPES A EPOLL
+	if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP, EPOLL_CTL_ADD)) {
+		std::cerr << "[ERROR] Cannot add CGI stdout to epoll" << std::endl;
+		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
+		_connections.erase(conn.cgi_fd[1]);
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
+		return false;
+	}
+
+	t_info info_out(conn, &Webserv::cgiOutHandler);
+	_connections.insert(std::make_pair(conn.cgi_fd[0], info_out));
+	//////////////////////////////////////////
+
 	conn.request_handler._response.setState(Response::PROCESSING_CGI);
 	conn.cgi_timeout = std::time(NULL);
 	return (true);
@@ -432,7 +448,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
 
-		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
+/* 		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 			close(conn.cgi_fd[0]);
 			close(conn.cgi_fd[1]);
 			return (false);
@@ -440,7 +456,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 
 		t_info	info(conn, &Webserv::cgiOutHandler);
 		info.connection.setLastConnTime(std::time(NULL));
-		_connections.insert(std::make_pair(conn.cgi_fd[0], info));
+		_connections.insert(std::make_pair(conn.cgi_fd[0], info)); */
 		conn.request_handler._response._offset = 0;
 	}
 	conn.cgi_timeout = std::time(NULL);
@@ -452,6 +468,9 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 	char buffer[4096];
 
 	ssize_t	bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer)); //-->check for partial read
+	
+	std::cerr << "[cgiOutHandler] bytes_read = " << bytes_read << std::endl;
+
 	if (bytes_read < 0) {
 		return (false);
 	}
@@ -471,35 +490,51 @@ bool	Webserv::cgiOutHandler(Connection& conn)
 
 		// Extract headers
 		Response &response = conn.request_handler._response;
-		size_t end = response.getBody().find("\n\n");
+		size_t end = response.getBody().find("\r\n\r\n");
 		if (end == std::string::npos)
-		{
+			end = response.getBody().find("\n\n");
+		if (end == std::string::npos) {
 			response.setStatusCode(INTERNAL_SERVER_ERROR);
 			return false;
 		}
+
 		std::string headers_str = response.getBody().substr(0, end);
 		std::string body;
 		if (end + 2 <= response.getBody().size())
-			body = response.getBody().substr(end + 2); 
+			body = response.getBody().substr(end + 2);
+		else if (end + 4 <= response.getBody().size())
+			body = response.getBody().substr(end + 4);
 
-		std::cout << "[DEBUG] Cgi headers: " << headers_str << std::endl;
-		std::cout << "[DEBUG] Cgi body: " << body << std::endl;
+		std::cerr << "[DEBUG] CGI headers:\n" << headers_str << std::endl;
+		std::cerr << "[DEBUG] CGI body size: " << body.size() << std::endl;
 
-		std::stringstream ss;
-		ss << headers_str;
-		std::string line;	
-		while (std::getline(ss, line))
-		{
-			if (line.empty())
+		std::stringstream ss(headers_str);
+		std::string line;
+		while (std::getline(ss, line)) {
+			if (line.empty() || line == "\r")
 				continue;
+			
+			if (!line.empty() && line[line.size() - 1] == '\r')
+				line = line.substr(0, line.size() - 1);
+			
 			size_t colon = line.find(":");
 			if (colon == std::string::npos)
 				continue;
-			std::string key = headers_str.substr(0, colon);
-			std::string value = headers_str.substr(colon + 2);
-
+			
+			std::string key = line.substr(0, colon);
+			std::string value = line.substr(colon + 2);
+			
+			std::cerr << "[DEBUG] Header: " << key << " = " << value << std::endl;
 			response.setHeader(key, value);
+
+			std::cerr << "[DEBUG] CGI total output size: " << response.getBody().size() << std::endl;
+			std::cerr << "[DEBUG] Headers end position: " << end << std::endl;
+			std::cerr << "[DEBUG] Headers:\n" << headers_str << std::endl;
+			std::cerr << "[DEBUG] Body size after extraction: " << body.size() << std::endl;
+			std::cerr << "[DEBUG] First 100 bytes of body: " 
+			<< body.substr(0, std::min((size_t)100, body.size())) << std::endl;
 		}
+
 		response.setBody(body);
 
 		resp::prepareResponse(response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
