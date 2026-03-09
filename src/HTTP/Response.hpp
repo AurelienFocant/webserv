@@ -34,7 +34,7 @@ class	Response
 	/* Public Attributes */
 
 	bool				isCGI;
-	size_t								_offset;
+	size_t				_offset;
 
 	/*Publics Methods*/
 

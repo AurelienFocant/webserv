@@ -590,6 +590,11 @@ void	Request::setComplete(bool status) {
 	return ;
 }
 
+void	Request::setStatusCode(t_HttpCode status_code)
+{
+	_status_code = status_code;
+}
+
 bool	Request::addInput(const std::string& input) {
 	_full_input += input;
 	HTTPTokenizer::addInput(input);
