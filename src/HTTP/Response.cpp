@@ -23,6 +23,8 @@ void	Response::formatResponse()
 
 	if (_method != HEAD)
 		_data += _body;
+	
+	//std::cout << "First Lines Response: " << _data.substr(0, 500) << std::endl;
 
 	_state = SENDING;
 }
@@ -141,9 +143,9 @@ void	Response::setBody(const std::string& content)
 	_body = content;
 }
 
-void	Response::addCgiBody(char* content) {
+void	Response::addCgiBody(char* content, size_t size) {
 	if (content)
-		_body += content;
+		_body.append(content, size);
 	return ;
 }
 

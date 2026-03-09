@@ -134,8 +134,6 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 		std::stringstream ss;
 		ss << body_size;
 		vect.push_back("CONTENT_LENGTH=" + ss.str());
-		
-		std::cerr << "[DEBUG] Added CONTENT_LENGTH=" << body_size << std::endl;
 	}
 
 	if (!handler.getCGIExec().empty())
@@ -144,7 +142,6 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 		//vect.push_back("SCRIPT_FILENAME=" + handler.getCGIExec());
 		vect.push_back("PATH_INFO=" + handler.getPathInfo());
 		vect.push_back("PATH_TRANSLATED=" + handler.getResolvedPath());
-		//vect.push_back("CONTENT_LENGTH=10000610");
 
 	}
 	else

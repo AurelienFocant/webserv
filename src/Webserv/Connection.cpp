@@ -27,7 +27,7 @@ std::string	Connection::receive()
 
 void	Connection::sendResponse()
 {
-	const char *data;
+	const char 		*data;
 	size_t		to_send = 0;
 
 	data = request_handler._response.getDataToSend(to_send);
@@ -37,7 +37,12 @@ void	Connection::sendResponse()
 
 	ssize_t bytesSent = send(_fd, data, to_send, MSG_NOSIGNAL);
 
-	std::cerr << "sent: " << data << std::endl;
+	//std::cerr << "sent: " << data << std::endl;
+	std::cout << "Bytes send: " << bytesSent << std::endl;
+	std::cout << "To send: " << to_send << std::endl;
+	std::cout << "First 100 bytes: [" 
+			<< std::string(data, std::min((size_t)100, to_send)) 
+			<< "]\n";
 
 	if (bytesSent > 0)
 		request_handler._response.updateBytesSend(bytesSent);
