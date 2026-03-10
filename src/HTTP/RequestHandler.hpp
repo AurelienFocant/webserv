@@ -37,7 +37,6 @@ class RequestHandler
 	std::string				_request_path;
 	std::string				_resolved_path;
 	std::string				_cgi_exec;
-	std::string				_cgi_exec_virtual;
 	const Location*			_matched_location;
 	t_extension				_matched_extension;
 	std::string				_ext_str;
@@ -117,7 +116,6 @@ class RequestHandler
 	t_extension				getExtension()	const	{ return (_matched_extension);};
 	std::string				getResolvedPath()	const	{ return (_resolved_path);};
 	std::string				getCGIExec()		const	{return _cgi_exec;}
-	std::string				getCGIExecVirtual()		const	{return _cgi_exec_virtual;}
 
 	/* Setters */
 	void					setVirtualServer(const VirtualServer& server);

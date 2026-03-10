@@ -35,11 +35,11 @@ void	Connection::sendResponse()
 
 	data = request_handler._response.getDataToSend(to_send);
 
-/* 	if (to_send >= to_send - request_handler._response._offset)
-		std::cout << "left to send: " << to_send - request_handler._response._offset << " / " << request_handler._response.getDataSize() << std::endl; */
+	if (to_send >= to_send - request_handler._response._offset)
+		std::cout << "left to send: " << to_send - request_handler._response._offset << " / " << request_handler._response.getDataSize() << std::endl;
 
-	if (to_send > MAX_CHUNK_SIZE)
-		to_send = MAX_CHUNK_SIZE;
+/* 	if (to_send > MAX_CHUNK_SIZE)
+		to_send = MAX_CHUNK_SIZE; */
 
 	ssize_t bytesSent = send(_fd, data, to_send, MSG_NOSIGNAL);
 

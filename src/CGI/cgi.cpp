@@ -138,11 +138,8 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 
 	if (!handler.getCGIExec().empty())
 	{
-		//vect.push_back("SCRIPT_NAME=" + handler.getCGIExecVirtual());
-		//vect.push_back("SCRIPT_FILENAME=" + handler.getCGIExec());
 		vect.push_back("PATH_INFO=" + handler.getPathInfo());
 		vect.push_back("PATH_TRANSLATED=" + handler.getResolvedPath());
-
 	}
 	else
 	{
@@ -175,7 +172,6 @@ char*	cgi::convertStringToChar(const std::string& string)
 	}
 	return (str);
 }
-
 
 bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 {

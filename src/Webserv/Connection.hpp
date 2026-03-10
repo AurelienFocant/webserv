@@ -29,7 +29,7 @@
 #include "RequestHandler.hpp"
 #include "VirtualServer.hpp"
 
-#define	MAX_CHUNK_SIZE 16000
+#define	MAX_CHUNK_SIZE 120000
 
 class RequestHandler;
 class Request;

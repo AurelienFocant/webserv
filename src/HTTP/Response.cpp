@@ -19,8 +19,6 @@ void	Response::formatResponse()
 
 	_data = buildHttpResponse();
 
-	std::string res = buildHttpResponse();
-
 	if (_method != HEAD)
 		_data += _body;
 	
