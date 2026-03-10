@@ -427,7 +427,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		return (false);
 	}
 
-	if (conn.request_handler._response._offset == conn.request_handler.getRequest().getContentLength()) {
+	if (conn.request_handler._response._offset == conn.request_handler.getRequest().getBody().size()) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);

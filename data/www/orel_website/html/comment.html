@@ -24,12 +24,31 @@
 		<div class="container">
 			<form id="postComment" action="/meuuuuh.py" method="get" class="comment-box">
 				<label for="comment">Say it louder for the back:</label><br>
-				<select name="animal">
-					<option value="">-- Choose an animal --</option>
+				<select name="animal" required>
+					<option value="" disabled selected>Who's your champion ?</option>
 					<option value="cow">Cow</option>
 					<option value="dragon">Dragon</option>
+					<option value="beavis">Beavis</option>
+					<option value="cheese">Cheese</option>
+					<option value="cow">Cow</option>
+					<option value="daemon">Daemon</option>
+					<option value="dragon">Dragon</option>
+					<option value="fox">Fox</option>
+					<option value="ghostbusters">Ghostbusters</option>
+					<option value="kitty">Kitty</option>
+					<option value="meow">Meow</option>
+					<option value="miki">Miki</option>
+					<option value="milk">Milk</option>
+					<option value="octopus">Octopus</option>
+					<option value="pig">Pig</option>
+					<option value="stegosaurus">Stegosaurus</option>
+					<option value="stimpy">Stimpy</option>
+					<option value="trex">Trex</option>
+					<option value="turkey">Turkey</option>
+					<option value="turtle">Turtle</option>
+					<option value="tux">Tux</option>
 				</select>
-				<textarea id="comment" name="comment" placeholder="Type your comment here..." required></textarea><br>
+				<textarea id="comment" name="comment" placeholder="What would she say ?" required></textarea><br>
 				<button type="submit">Send</button>
 			</form>
 		</div>
