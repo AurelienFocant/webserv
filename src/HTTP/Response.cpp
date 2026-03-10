@@ -19,11 +19,15 @@ void	Response::formatResponse()
 
 	_data = buildHttpResponse();
 
-	std::string res = buildHttpResponse();
-
 	if (_method != HEAD)
 		_data += _body;
+	
+	std::cerr << "[formatResponse] Headers size = " 
+			<< (_data.size() - _body.size()) << std::endl;
+	std::cerr << "[formatResponse] Body size = " << _body.size() << std::endl;
+	std::cerr << "[formatResponse] Total _data size = " << _data.size() << std::endl;
 
+	_offset = 0;
 	_state = SENDING;
 }
 
@@ -145,7 +149,11 @@ void	Response::addCgiBody(char* content, size_t bytes_read)
 {
 	if (content)
 		_body.append(content, bytes_read);
-	return ;
+}
+
+size_t	Response::getDataSize() const
+{
+	return _data.size();
 }
 
 /* RESET */

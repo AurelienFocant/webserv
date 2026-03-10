@@ -111,7 +111,10 @@ bool	Request::parseRequest() {
 			_progress = DONE;
 			_complete = true;
 			if (_status_code == INIT_STATE)
+			{
 				_status_code = BAD_REQUEST;
+				std::cout << "STAT-1: " << _status_code << "\n";
+			}
 			return (_complete);
 		}
 		setupBodyHandler();
@@ -147,6 +150,7 @@ void	Request::parseFirstLine() {
 				_complete = true;
 				_progress = DONE;
 				_status_code = BAD_REQUEST;
+				std::cout << "STAT-2: " << _status_code << "\n";
 				break ;
 			default:
 				_complete = true;
@@ -180,6 +184,7 @@ void	Request::parseHeader() {
 				_progress = DONE;
 				_complete = true;
 				_status_code = BAD_REQUEST;
+				std::cout << "STAT-3: " << _status_code << "\n";
 			}
 			++_list_it;
 	}
@@ -206,6 +211,7 @@ void	Request::extractFirstLineInfo() {
 			_complete = true;
 			_progress = DONE;
 			_status_code = BAD_REQUEST;
+			std::cout << "STAT-4: " << _status_code << "\n";
 	}
 	return ;
 }
@@ -221,6 +227,7 @@ bool	Request::isFirstLineValid() {
 	}
 	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
 		_status_code = BAD_REQUEST;
+		std::cout << "STAT-5: " << _status_code << "\n";
 		return (false);
 	}
 	return (true);
@@ -244,6 +251,7 @@ bool	Request::setupBodyHandler() {
 	else {
 		_complete = true;
 		_status_code = BAD_REQUEST;
+		std::cout << "STAT-6: " << _status_code << "\n";
 	}
 	return (_complete);
 }
@@ -277,6 +285,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = BAD_REQUEST;
+			std::cout << "STAT-7: " << _status_code << "\n";
 			return (_complete);
 		}
 		dft.erase(pos);
@@ -293,6 +302,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = BAD_REQUEST;
+			std::cout << "STAT-8: " << _status_code << "\n";
 			return (_complete);
 		}
 		if (!_content_length) {
@@ -324,6 +334,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			if (!_content_encoding) {
 				_progress = DONE;
 				_complete = true;
+				_status_code = OK;
 				_content_length = _body.size();
 				std::cerr << "\nRequest: ligne -321: " << _body << std::endl; //->
 			}

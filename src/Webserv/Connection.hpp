@@ -29,7 +29,7 @@
 #include "RequestHandler.hpp"
 #include "VirtualServer.hpp"
 
-#define	MAX_CHUNK_SIZE 8192
+#define	MAX_CHUNK_SIZE 120000
 
 class RequestHandler;
 class Request;
@@ -62,6 +62,7 @@ class Connection
 		void	sendCgiContent(int& bytes_send);
 		pid_t		child_pid;
 		int			cgi_fd[2];
+		size_t		cgi_stdin_offset;
 		std::time_t	cgi_timeout;
 
 		void		setEvent(struct epoll_event event);

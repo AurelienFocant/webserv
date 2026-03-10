@@ -58,7 +58,6 @@ class	Response
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBody(const std::string& content);
 	void				addCgiBody(char* content, size_t bytes_read);
-
 	void				setBodySize(int size);
 
 	/*Getters*/
@@ -67,7 +66,7 @@ class	Response
 	std::string			getHttpVersion() const;
 	std::string			getHeader(const std::string& key) const;
 	std::string			getBody() const;
-	int					getBodySize() const;
+	size_t				getDataSize() const;
 
 	private:
 

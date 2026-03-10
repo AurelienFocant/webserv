@@ -234,6 +234,7 @@ void	Webserv::initWebServer()
 
 
 		// signal(SIGINT, sigintHandler);
+		signal(SIGPIPE, SIG_IGN);
 	}
 }
 
@@ -363,10 +364,21 @@ bool	Webserv::clientOutHandler(Connection & conn)
 				|| conn.request_handler.getResponse().getStatusCode() == CREATED)) {
 				_startCGIresponse(conn.request_handler, conn);
 			}
-			
 		}
+		
+		std::string body = conn.request_handler._response.getBody();
 
 		if (conn.request_handler.getResponse().getState() != Response::PROCESSING_CGI) {
+/* 			if (conn.request_handler._response.getState() == Response::READY) {
+				std::cerr << "[clientOut] Formatting response, body size = " 
+				<< body.size() << std::endl;
+				std::cout << "CGI Response 1000 first: " << body.substr(0, 1000) << std::endl;
+				if (body.size() > 100) {
+				std::cout << "CGI Response last 100: " 
+					<< body.substr(body.size() - 100, 100) << std::endl;
+				}
+				std::cout << "Body size: " << body.size() << std::endl;
+				} */
 			conn.request_handler._response.formatResponse();
 			conn.sendResponse();
 		}
@@ -413,6 +425,21 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 	//			info.connection = conn;
 	//			info.handler = &Webserv::cgiIn;
 	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
+
+	///////TEST AJOUTE LES 2 PIPES A EPOLL
+	if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP, EPOLL_CTL_ADD)) {
+		std::cerr << "[ERROR] Cannot add CGI stdout to epoll" << std::endl;
+		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
+		_connections.erase(conn.cgi_fd[1]);
+		close(conn.cgi_fd[0]);
+		close(conn.cgi_fd[1]);
+		return false;
+	}
+
+	t_info info_out(conn, &Webserv::cgiOutHandler);
+	_connections.insert(std::make_pair(conn.cgi_fd[0], info_out));
+	//////////////////////////////////////////
+
 	conn.request_handler._response.setState(Response::PROCESSING_CGI);
 	conn.cgi_timeout = std::time(NULL);
 	return (true);
@@ -427,12 +454,13 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		return (false);
 	}
 
-	if (conn.request_handler._response._offset == conn.request_handler.getRequest().getBody().size()) {
+	if (conn.cgi_stdin_offset == conn.request_handler.getRequest().getContentLength()) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
+		conn.cgi_fd[1] = -1;
 
-		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
+/* 		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 			close(conn.cgi_fd[0]);
 			close(conn.cgi_fd[1]);
 			return (false);
@@ -440,74 +468,91 @@ bool	Webserv::cgiInHandler(Connection& conn)
 
 		t_info	info(conn, &Webserv::cgiOutHandler);
 		info.connection.setLastConnTime(std::time(NULL));
-		_connections.insert(std::make_pair(conn.cgi_fd[0], info));
+		_connections.insert(std::make_pair(conn.cgi_fd[0], info)); */
 		conn.request_handler._response._offset = 0;
 	}
 	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }
 
-bool	Webserv::cgiOutHandler(Connection& conn)
+bool Webserv::cgiOutHandler(Connection& conn)
 {
-	char buffer[4096];
+    Response &response = conn.request_handler._response;
+    char buffer[64000];
+    memset(buffer, 0, sizeof(buffer));
 
-	ssize_t	bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer)); //-->check for partial read
+    ssize_t bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer));
 
-	if (bytes_read < 0) {
-		return (false);
+    if (bytes_read < 0) {
+        return true;
+    }
+    else if (bytes_read == 0) {
+        
+        epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
+        _connections.erase(conn.cgi_fd[0]);
+        close(conn.cgi_fd[0]);
+
+        int status;
+        if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
+            kill(conn.child_pid, SIGKILL);
+			perror("Kill child:");
+        }
+        
+	// Extract headers
+        size_t end = response.getBody().find("\r\n\r\n");
+        bool eof = true;
+        if (end == std::string::npos) {
+            end = response.getBody().find("\n\n");
+            eof = false;
+        }
+        
+        if (end == std::string::npos) {
+            response.setStatusCode(INTERNAL_SERVER_ERROR);
+            return false;
+        }
+
+        std::string headers_str = response.getBody().substr(0, end);
+        size_t body_start = end + (eof ? 4 : 2);
+        std::string body = response.getBody().substr(body_start);
+
+        std::stringstream ss(headers_str);
+        std::string line;
+        while (std::getline(ss, line)) {
+            if (line.empty() || line == "\r")
+                continue;
+            
+            if (!line.empty() && line[line.size() - 1] == '\r')
+                line = line.substr(0, line.size() - 1);
+            
+            size_t colon = line.find(":");
+            if (colon == std::string::npos)
+                continue;
+            
+            std::string key = line.substr(0, colon);
+            std::string value = line.substr(colon + 2);
+
+			if (key == "Status") {
+				size_t space = value.find(' ');
+				std::string code_str = (space != std::string::npos) ? value.substr(0, space) : value;
+				int status_code = atoi(code_str.c_str());
+				response.setStatusCode(status_code);
+			}
+			else {
+           		response.setHeader(key, value);
+        	}
 	}
 
-	if (bytes_read > 0) {
-		conn.request_handler._response.addCgiBody(buffer, bytes_read);
-		conn.cgi_timeout = std::time(NULL);
-		return (true);
-	}
-
-	if (bytes_read == 0) {
-		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
-		_connections.erase(conn.cgi_fd[0]);
-		close(conn.cgi_fd[0]);
-
-		// Build Response from CGI
-		int status;
-		if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
-			if (!kill(conn.child_pid, SIGKILL))
-				perror("Kill child:");
-		}
-		conn.request_handler.requestIsComplete();
-		conn.request_handler._response.setState(Response::READY);
-
-		// Extract headers
-		Response &response = conn.request_handler._response;
-		size_t end = response.getBody().find("\n\n");
-		if (end == std::string::npos) {
-			response.setStatusCode(INTERNAL_SERVER_ERROR);
-			return false;
-		}
-		std::string headers_str = response.getBody().substr(0, end);
-		std::string body;
-		if (end + 2 <= response.getBody().size())
-			body = response.getBody().substr(end + 2); 
-
-		std::stringstream ss;
-		ss << headers_str;
-		std::string line;	
-		while (std::getline(ss, line)) {
-			if (line.empty())
-				continue;
-			size_t colon = line.find(":");
-			if (colon == std::string::npos)
-				continue;
-			std::string key = headers_str.substr(0, colon);
-			std::string value = headers_str.substr(colon + 2);
-
-			response.setHeader(key, value);
-		}
-		response.setBody(body);
-
-		resp::prepareResponse(response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
-	}
-	return (true);
+        response.setBody(body);
+        
+        conn.request_handler.requestIsComplete();
+        resp::prepareResponse(response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+        response.setState(Response::READY);
+    }
+    else {
+        response.addCgiBody(buffer, bytes_read);
+        conn.cgi_timeout = std::time(NULL);
+    }
+    return true;
 }
 
 // Getters

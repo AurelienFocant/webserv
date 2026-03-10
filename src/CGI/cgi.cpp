@@ -124,10 +124,30 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect)
 {
 	vect.push_back("REQUEST_METHOD=" + methodToString(handler.getRequest().getMethod()));
-	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getRequestUri());
+	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getHttpVersion());
 	vect.push_back("QUERY_STRING=" + handler.getQuery());
-	vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
-	vect.push_back("SCRIPT_FILENAME=" + handler.getResolvedPath()); 
+
+	if (handler.getRequest().getMethod() == POST)
+	{
+		size_t body_size = handler.getRequest().getBody().size();
+		
+		std::stringstream ss;
+		ss << body_size;
+		vect.push_back("CONTENT_LENGTH=" + ss.str());
+	}
+
+	if (!handler.getCGIExec().empty())
+	{
+		vect.push_back("PATH_INFO=" + handler.getPathInfo());
+		vect.push_back("PATH_TRANSLATED=" + handler.getResolvedPath());
+	}
+	else
+	{
+		vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
+		vect.push_back("SCRIPT_FILENAME=" + handler.getResolvedPath());
+		if (!handler.getPathInfo().empty())
+			vect.push_back("PATH_INFO=" + handler.getPathInfo());
+	}
 	return (true);
 }
 
@@ -152,7 +172,6 @@ char*	cgi::convertStringToChar(const std::string& string)
 	}
 	return (str);
 }
-
 
 bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 {
