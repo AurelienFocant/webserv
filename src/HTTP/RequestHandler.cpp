@@ -232,9 +232,9 @@ bool	RequestHandler::detectCGI()
 	if (!_matched_location->getCGI() && _cgi_exec.empty())
 		return false;
 
-	// /* FOR TESTER */
-	if (_request.getMethod() == GET || _request.getMethod() == HEAD)
-		return false;
+	// // /* FOR TESTER */
+	// if (_request.getMethod() == GET || _request.getMethod() == HEAD)
+	// 	return false;
 
 	if (_matched_extension == NO_EXT)
 		return false;
