@@ -267,11 +267,12 @@ bool	Request::defineBodyExtractionHandler() {
 }
 
 bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
+	size_t	pos = 0;
 	if (_content_length == 0 && _content_encoding) {
 		std::string	dft = extractInput('\n');
 		if (dft.empty())
 			return (_complete);
-		size_t	pos = dft.find('\r');
+		pos = dft.find('\r');
 		if (pos == std::string::npos) {
 			_progress = DONE;
 			_complete = true;
@@ -311,85 +312,25 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_body += extractInput(_content_length);
 			_content_length -= (_body.size() - before_len);
 		}
-	}
-	if (_content_length == 0 && !_content_encoding) {
-		_progress = DONE;
-		_complete = true;
-		_content_length = _body.size();
-	}
-	return (_complete);
-}
-
-/*
-bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
-	if (_content_length == 0 
-		|| _content_length == std::numeric_limits<unsigned long>::max()) {
-		std::string	dft = extractInput('\n');
-		if (dft.empty())
-			return (_complete);
-		size_t	pos = dft.find('\r');
-		if (pos == std::string::npos) {
-			_progress = DONE;
-			_complete = true;
-			_status_code = BAD_REQUEST;
-			return (_complete);
-		}
-		dft.erase(pos);
-		//avoiding ss fail by passing an empty string
-		if (dft.empty())
-		{
-			_progress = DONE;
-			_complete = true;
-			_status_code = OK;
-			_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
-			return _complete;
-		}
-		std::stringstream	ss;
-		ss << std::hex << dft;
-		ss >> _content_length; 
-		if (ss.fail()) {
-			_progress = DONE;
-			_complete = true;
-			_status_code = BAD_REQUEST;
-			return (_complete);
-		}
-		if (_content_length)
-			_content_length += 2;
-		else {
-			dft = extractInput('\n');
-			if (dft.empty())
-				return (_complete);
-			pos = dft.find('\r');
-			if (pos != 0) {
+		if (_content_length == 0) {
+			pos = _body.find("\r\n");
+			if (pos == _body.size() - 2)
+				_body.erase(pos);
+			else {
 				_progress = DONE;
 				_complete = true;
 				_status_code = BAD_REQUEST;
-				return (_complete);
 			}
-			else { //doublon
+			if (!_content_encoding) {
 				_progress = DONE;
 				_complete = true;
-				_status_code = OK;
-				_content_length = std::atol(getHeaderValues("CONTENT_LENGTH").at(0).c_str());
+				_content_length = _body.size();
+				std::cerr << "\nRequest: ligne -321: " << _body << std::endl; //->
 			}
-		}
-	}
-	else {
-		//check for max_body size
-		size_t	before_len = _body.size();
-		if (before_len + _content_length > max_body) {
-			_progress = DONE;
-			_complete = true;
-			_status_code = REQUEST_ENTITY_TOO_LARGE;
-		}
-		else {
-			_body += extractInput(_content_length);
-			_content_length -= (_body.size() - before_len);
 		}
 	}
 	return (_complete);
 }
-*/
 
 bool	Request::bodyHandlerContentLength(unsigned int max_body) {
 	//check for max_body size
