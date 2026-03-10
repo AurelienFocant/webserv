@@ -77,4 +77,7 @@ content returned: NOOOOO
 14. Test POST http://localhost:7070/directory/youpi.bla with a size of 100000000 -> Hanging somewhere :(
 14. Test POST http://localhost:7070/directory/youpi.bla with a size of 100000000 -> now we return 413 Request Entity Too Large and it's wrong 
 FATAL ERROR ON LAST TEST: bad status code
+14. Test POST http://localhost:7070/directory/youpi.bla with a size of 100000000 -> empty script is detected in validatePath()
+FATAL ERROR ON LAST TEST: bad cgi returned size body
+
 

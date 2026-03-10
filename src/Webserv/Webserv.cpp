@@ -331,13 +331,13 @@ bool	Webserv::clientInHandler(Connection & conn)
 		{
 			conn.request_handler.setVirtualServer(_resolveVirtualServer(conn));
 			conn.request_handler.findLocation();
-/* 			if (!conn.request_handler.isAllowedMethod())
-				return false; */
 		}
 
 		if (conn.request_handler.getVirtualServer() != NULL)
 		{
 			conn.request_handler.setRoot(conn.request_handler.getVirtualServer()->getRoot());
+			if (!conn.request_handler.isAllowedMethod())
+				conn.request_handler._request.setComplete("true");
 			if (!conn.request_handler.getRequest().isCompleted())
 				conn.request_handler.processBody();
 		}

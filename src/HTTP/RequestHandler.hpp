@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 #include <ctime>
 
-
 #include "HTTPenum.hpp"
 #include "resp.hpp"
 #include "../Utils/fileSystem.hpp"
@@ -31,7 +30,6 @@ class RequestHandler
 
 	/*PRIVATE ATTRIBUTES */
 	/* Objects */
-	Request					_request;
 	const VirtualServer*	_server;
 
 	/* Path Resolution */
@@ -66,7 +64,6 @@ class RequestHandler
 	bool			hasRedirect();
 
 	/* Request processing */
-	bool			isAllowedMethod();
 	bool			processMethods();
 	bool			processGetMethod();
 	bool			processHeadMethod();
@@ -94,6 +91,7 @@ class RequestHandler
 	RequestHandler&	operator=(const RequestHandler& rhs);
 
 	/* Public Attributes */
+	Request			_request;
 	Response		_response;
 
 
@@ -102,6 +100,8 @@ class RequestHandler
 	void			processRequest(const std::string& request_str);
 	void			processBody();
 	void			findLocation();
+	bool			isAllowedMethod();
+
 	void			clean();
 
 	/* Getters */

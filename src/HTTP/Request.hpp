@@ -35,6 +35,7 @@ class	Request	: private HTTPTokenizer {
 
 	/*Setters - Getters*/
 		void			setComplete(bool status);
+		void			setStatusCode(t_HttpCode status_code);
 		t_method		getMethod() const ;
 		std::string		getRequestUri() const ;
 		std::string		getHttpVersion() const ;
