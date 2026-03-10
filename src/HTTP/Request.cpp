@@ -251,6 +251,7 @@ bool	Request::setupBodyHandler() {
 bool	Request::defineBodyExtractionHandler() {
 	if (_content_encoding) {
 		_body_handler = &Request::bodyHandlerTransfertEncoding;
+		_content_length = 0;
 	}
 	else if (_content_length != std::numeric_limits<unsigned long>::max()) {
 		_body_handler = &Request::bodyHandlerContentLength; 
@@ -265,6 +266,61 @@ bool	Request::defineBodyExtractionHandler() {
 	return (true);
 }
 
+bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
+	if (_content_length == 0 && _content_encoding) {
+		std::string	dft = extractInput('\n');
+		if (dft.empty())
+			return (_complete);
+		size_t	pos = dft.find('\r');
+		if (pos == std::string::npos) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
+		dft.erase(pos);
+		if (dft.empty()) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
+		std::stringstream	ss;
+		ss << std::hex << dft;
+		ss >> _content_length; 
+		if (ss.fail()) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = BAD_REQUEST;
+			return (_complete);
+		}
+		if (!_content_length) {
+			_content_encoding = false;
+		}
+		_content_length += 2;
+	}
+	if (_content_length > 0) {
+		//check for max_body size
+		size_t	before_len = _body.size();
+		if (before_len + _content_length > max_body) {
+			_progress = DONE;
+			_complete = true;
+			_status_code = REQUEST_ENTITY_TOO_LARGE;
+		}
+		else {
+			_body += extractInput(_content_length);
+			_content_length -= (_body.size() - before_len);
+		}
+	}
+	if (_content_length == 0 && !_content_encoding) {
+		_progress = DONE;
+		_complete = true;
+		_content_length = _body.size();
+	}
+	return (_complete);
+}
+
+/*
 bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 	if (_content_length == 0 
 		|| _content_length == std::numeric_limits<unsigned long>::max()) {
@@ -333,6 +389,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 	}
 	return (_complete);
 }
+*/
 
 bool	Request::bodyHandlerContentLength(unsigned int max_body) {
 	//check for max_body size
