@@ -174,7 +174,7 @@ void	HTTPTokenizer::cleanTokenList() {
 	_nbr_eol = 0;
 }
 
-bool	HTTPTokenizer::addInput(std::string input) {
+bool	HTTPTokenizer::addInput(const std::string& input) {
 	_input += input;
 	_it = _input.begin();
 	return (true);

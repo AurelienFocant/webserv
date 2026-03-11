@@ -20,7 +20,7 @@ class	HTTPTokenizer : private Tokenizer {
 		std::string				getWord(std::string delim_list) ;
 		std::string				extractInput(size_t len) ;
 		std::string				extractInput(char character) ;
-		bool					addInput(std::string input) ;
+		bool					addInput(const std::string& input) ;
 		void					cleanTokenList() ;
 		void					trimStart(std::string& string) ;
 		void					advance() ;
