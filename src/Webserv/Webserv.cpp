@@ -288,6 +288,7 @@ void	Webserv::run()
 
 		_closeStaleConnections();
 		_closeStaleCgi();
+		//usleep(100);--> cheat ?
 	}
 }
 
@@ -397,6 +398,7 @@ bool	Webserv::clientOutHandler(Connection & conn)
 
 			_connections.find(conn.getFd())->second.handler = &Webserv::clientInHandler;
 		}
+
 	}
 	return (true);
 }
@@ -405,6 +407,8 @@ bool	Webserv::clientOutHandler(Connection & conn)
 // CGI HANDLERS
 bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 {
+	if (!_addFdToEpoll(conn.getFd(), 0, EPOLL_CTL_MOD))
+		conn.conn_closed = true;
 	char **env = cgi::buildCgiEnv(reqHandler);
 	if (!env)
 		return (false);
@@ -471,6 +475,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		_connections.insert(std::make_pair(conn.cgi_fd[0], info)); */
 		conn.request_handler._response._offset = 0;
 	}
+
 	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }
@@ -488,6 +493,9 @@ bool Webserv::cgiOutHandler(Connection& conn)
     }
     else if (bytes_read == 0) {
         
+		if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
+			conn.conn_closed = true;
+
         epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
         _connections.erase(conn.cgi_fd[0]);
         close(conn.cgi_fd[0]);

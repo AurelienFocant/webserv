@@ -170,6 +170,7 @@ std::string	HTTPTokenizer::extractInput(char character) {
 
 void	HTTPTokenizer::cleanTokenList() {
 	_token_list.clear();
+	_token_list.reserve(4);
 	_tokenizing = 0;
 	_nbr_eol = 0;
 }

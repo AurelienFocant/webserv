@@ -51,6 +51,7 @@ Request::Request(std::string const& request) : HTTPTokenizer(request)
 bool	Request::cleanRequest() {
 	//debug
 	_full_input.clear();
+	_full_input.reserve(0);
 
 	//Request State
 	_progress = START;
@@ -62,6 +63,7 @@ bool	Request::cleanRequest() {
 	_request_uri.clear();
 	_http_version = "HTTP/1.0";
 	_body.clear();
+	_body.reserve(0);
 
 	//request usefull header informations
 	_headers.clear();
@@ -596,7 +598,7 @@ void	Request::setStatusCode(t_HttpCode status_code)
 }
 
 bool	Request::addInput(const std::string& input) {
-	//_full_input += input;
+	_full_input += input;
 	HTTPTokenizer::addInput(input);
 	return (true);
 }
