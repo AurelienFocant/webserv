@@ -323,7 +323,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_content_length -= (_body.size() - before_len);
 		}
 		if (_content_length == 0) {
-			pos = _body.find("\r\n");
+			pos = _body.rfind("\r\n");
 			if (pos == _body.size() - 2)
 				_body.erase(pos);
 			else {

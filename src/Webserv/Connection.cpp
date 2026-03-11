@@ -35,6 +35,12 @@ void	Connection::sendResponse()
 
 	data = request_handler._response.getDataToSend(to_send);
 
+	if (data && request_handler._response._offset == 0) {
+		std::stringstream	stream(data);
+		char	buff[256];
+		stream.getline(buff, 256);
+		std::cerr << "[Status line]: " << buff << std::endl;
+	}
 	if (to_send >= to_send - request_handler._response._offset)
 		std::cout << "left to send: " << to_send - request_handler._response._offset << " / " << request_handler._response.getDataSize() << std::endl;
 
