@@ -233,8 +233,8 @@ bool	RequestHandler::detectCGI()
 		return false;
 
 	// /* FOR TESTER */
-	 if (_request.getMethod() == GET || _request.getMethod() == HEAD)
-	 	return false;
+	//if (_request.getMethod() == GET || _request.getMethod() == HEAD)
+	// 	return false;
 
 	if (_matched_extension == NO_EXT)
 		return false;
