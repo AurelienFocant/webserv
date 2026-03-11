@@ -112,7 +112,7 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 				header += "HTTP_" + it->first + "=" + it->second;
 		}
 	}
-	if (handler.getRequest().getHeaderValues("CONTENT_LENGTH").empty()) {
+	if (handler.getRequest().getHeaderValues("CONTENT_LENGTH").at(0) == "") {
 		std::stringstream	stream;
 		stream << handler.getRequest().getContentLength();
 		header.clear();
@@ -133,15 +133,6 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 	vect.push_back("REQUEST_METHOD=" + methodToString(handler.getRequest().getMethod()));
 	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getHttpVersion());
 	vect.push_back("QUERY_STRING=" + handler.getQuery());
-
-	if (handler.getResponse().isCGI)
-	{
-		size_t body_size = handler.getRequest().getContentLength();
-		
-		std::stringstream ss;
-		ss << body_size;
-		vect.push_back("CONTENT_LENGTH=" + ss.str());
-	}
 
 	if (!handler.getCGIExec().empty())
 	{
