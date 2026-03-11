@@ -127,9 +127,9 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getHttpVersion());
 	vect.push_back("QUERY_STRING=" + handler.getQuery());
 
-	if (handler.getRequest().getMethod() == POST)
+	if (handler.getResponse().isCGI)
 	{
-		size_t body_size = handler.getRequest().getBody().size();
+		size_t body_size = handler.getRequest().getContentLength();
 		
 		std::stringstream ss;
 		ss << body_size;

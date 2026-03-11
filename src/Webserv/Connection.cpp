@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#define BUFFER_SIZE	4096
+#define BUFFER_SIZE	32000
 
 std::string	Connection::receive()
 {
@@ -55,7 +55,7 @@ void	Connection::sendResponse()
 
 		if (request_handler._response.isDone()) {
 			std::cout << "Final offset: " << request_handler._response._offset << std::endl;
-			std::cerr << "[sendResponse] LAST SEND - Response complete!" << std::endl;
+			std::cerr << "[sendResponse] LAST SEND - Response complete!\n" << std::endl;
 		}
 	}
 	else if (bytesSent < 0)
@@ -64,16 +64,12 @@ void	Connection::sendResponse()
 
 void	Connection::sendCgiContent(int& bytes_sent)
 {
-	std::string content = request_handler.getRequest().getBody();
+	const std::string& content = request_handler.getRequest().getBody();
 	if (content.size() <= cgi_stdin_offset)
 		return ;
 	bytes_sent = write(cgi_fd[1], content.c_str() + cgi_stdin_offset, content.size() - cgi_stdin_offset);
-	if (bytes_sent <= 0)
-	{
-		cgi_stdin_offset = 0;
-		return ;
-	}
-	cgi_stdin_offset += bytes_sent;
+	if (bytes_sent > 0)
+		cgi_stdin_offset += bytes_sent;
 	return ;
 }
 

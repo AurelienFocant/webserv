@@ -111,10 +111,7 @@ bool	Request::parseRequest() {
 			_progress = DONE;
 			_complete = true;
 			if (_status_code == INIT_STATE)
-			{
 				_status_code = BAD_REQUEST;
-				std::cout << "STAT-1: " << _status_code << "\n";
-			}
 			return (_complete);
 		}
 		setupBodyHandler();
@@ -150,7 +147,6 @@ void	Request::parseFirstLine() {
 				_complete = true;
 				_progress = DONE;
 				_status_code = BAD_REQUEST;
-				std::cout << "STAT-2: " << _status_code << "\n";
 				break ;
 			default:
 				_complete = true;
@@ -184,7 +180,6 @@ void	Request::parseHeader() {
 				_progress = DONE;
 				_complete = true;
 				_status_code = BAD_REQUEST;
-				std::cout << "STAT-3: " << _status_code << "\n";
 			}
 			++_list_it;
 	}
@@ -211,7 +206,6 @@ void	Request::extractFirstLineInfo() {
 			_complete = true;
 			_progress = DONE;
 			_status_code = BAD_REQUEST;
-			std::cout << "STAT-4: " << _status_code << "\n";
 	}
 	return ;
 }
@@ -227,7 +221,6 @@ bool	Request::isFirstLineValid() {
 	}
 	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
 		_status_code = BAD_REQUEST;
-		std::cout << "STAT-5: " << _status_code << "\n";
 		return (false);
 	}
 	return (true);
@@ -238,6 +231,7 @@ bool	Request::setupBodyHandler() {
 		_progress = DONE;
 		_complete = true;
 		_status_code = OK;
+		_content_length = 0;
 	}
 	else if (_method == POST) { //Parsing body if POST request
 		_progress = BODY_HANDLING;
@@ -251,7 +245,6 @@ bool	Request::setupBodyHandler() {
 	else {
 		_complete = true;
 		_status_code = BAD_REQUEST;
-		std::cout << "STAT-6: " << _status_code << "\n";
 	}
 	return (_complete);
 }
@@ -285,7 +278,6 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = BAD_REQUEST;
-			std::cout << "STAT-7: " << _status_code << "\n";
 			return (_complete);
 		}
 		dft.erase(pos);
@@ -302,7 +294,6 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = BAD_REQUEST;
-			std::cout << "STAT-8: " << _status_code << "\n";
 			return (_complete);
 		}
 		if (!_content_length) {
@@ -336,7 +327,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 				_complete = true;
 				_status_code = OK;
 				_content_length = _body.size();
-				std::cerr << "\nRequest: ligne -321: " << _body << std::endl; //->
+				//std::cerr << "\nRequest: ligne -321: " << _body << std::endl; //->
 			}
 		}
 	}
@@ -549,7 +540,7 @@ std::string		Request::getHttpVersion() const {
 	return(_http_version);
 }
 
-std::string	Request::Request::getBody() const {
+const std::string&	Request::Request::getBody() const {
 	return (_body);
 }
 
@@ -605,7 +596,7 @@ void	Request::setStatusCode(t_HttpCode status_code)
 }
 
 bool	Request::addInput(const std::string& input) {
-	_full_input += input;
+	//_full_input += input;
 	HTTPTokenizer::addInput(input);
 	return (true);
 }
