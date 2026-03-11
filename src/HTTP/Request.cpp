@@ -231,6 +231,7 @@ bool	Request::setupBodyHandler() {
 		_progress = DONE;
 		_complete = true;
 		_status_code = OK;
+		_content_length = 0;
 	}
 	else if (_method == POST) { //Parsing body if POST request
 		_progress = BODY_HANDLING;
@@ -539,11 +540,7 @@ std::string		Request::getHttpVersion() const {
 	return(_http_version);
 }
 
-std::string	Request::Request::getBody() const {
-	return (_body);
-}
-
-const std::string&	Request::Request::getConstBody() const {
+const std::string&	Request::Request::getBody() const {
 	return (_body);
 }
 
