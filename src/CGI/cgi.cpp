@@ -112,6 +112,13 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 				header += "HTTP_" + it->first + "=" + it->second;
 		}
 	}
+	if (handler.getRequest().getHeaderValues("CONTENT_LENGTH").empty()) {
+		std::stringstream	stream;
+		stream << handler.getRequest().getContentLength();
+		header.clear();
+		header += "CONTENT_LENGTH=" + stream.str();
+		vect.push_back(header);
+	}
 	char **c_enc = new char*[vect.size() + 1];
 	c_enc[vect.size()] = NULL;
 	for (size_t i = 0; i < vect.size(); ++i) {
