@@ -453,10 +453,8 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		//Error do something;
 		return (false);
 	}
-
-	const std::string& body = conn.request_handler.getRequest().getBody();
-	size_t body_size = body.size();
-	if (conn.cgi_stdin_offset == body_size) {
+	
+	if (conn.cgi_stdin_offset == conn.request_handler.getRequest().getConstBody().size()) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);

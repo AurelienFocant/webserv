@@ -129,8 +129,7 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 
 	if (handler.getResponse().isCGI)
 	{
-		const std::string& body = handler.getRequest().getBody();
-		size_t body_size = body.size();
+		size_t body_size = handler.getRequest().getConstBody().size();
 		
 		std::stringstream ss;
 		ss << body_size;

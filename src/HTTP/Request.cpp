@@ -543,6 +543,10 @@ std::string	Request::Request::getBody() const {
 	return (_body);
 }
 
+const std::string&	Request::Request::getConstBody() const {
+	return (_body);
+}
+
 bool			Request::isCompleted() const {
 	return(_complete);
 }
