@@ -13,12 +13,12 @@ namespace resp
 	{
 		int status_code = response.getStatusCode();
 
-		if (response.getStatusCode() >= 400 /* && response.getBody().empty() */)
+		if (response.getStatusCode() >= 400 && response.getStatusCode() != METHOD_NOT_ALLOWED)
 		{
 			std::string body;
 			if (!resp::loadErrorPage(status_code, error_pages, body))
 			{
-				// do stuff;
+				// do stuff;c
 				// 500 error?
 			}
 			response.setBody(body);

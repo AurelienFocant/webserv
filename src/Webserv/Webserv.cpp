@@ -483,7 +483,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 bool Webserv::cgiOutHandler(Connection& conn)
 {
     Response &response = conn.request_handler._response;
-    char buffer[64000];
+    char buffer[32000];
     memset(buffer, 0, sizeof(buffer));
 
     ssize_t bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer));

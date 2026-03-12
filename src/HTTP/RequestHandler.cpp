@@ -372,6 +372,9 @@ bool	RequestHandler::validatePath()
 {
 	struct stat statBuf;
 
+	if (_matched_extension == UNKNOWN_EXT)
+		return true;
+
 	if (stat(_resolved_path.c_str(), &statBuf) != 0)
 	{
 		if (errno == ENOENT)
@@ -443,7 +446,6 @@ bool	RequestHandler::processMethods()
 
 bool	RequestHandler::processGetMethod()
 {
-	//STATIC
 	if (_is_directory)
 	{
 		if (!resolveIndex())
@@ -461,6 +463,9 @@ bool	RequestHandler::processGetMethod()
 
 	if (!resp::loadBody(_response, _resolved_path))
 		return false;
+	
+	if (_response.getMethod() == NOT_SET)
+		_response.setMethod(GET);
 
 	return true;
 }

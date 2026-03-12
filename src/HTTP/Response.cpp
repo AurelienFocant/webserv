@@ -15,7 +15,12 @@ void	Response::formatResponse()
 	if (_state != READY)
 		return;
 
+/* 	if (isCGI && _method != GET)
+		_headers["Content-Length"] = "100000000";
+	else */
 	_headers["Content-Length"] = httpUtils::intToString(_body.size());
+
+	std::cout << "content-length: " << _headers["Content-Length"] << std::endl;
 
 	_data = buildHttpResponse();
 
@@ -122,6 +127,11 @@ void	Response::setMethod(t_method method)
 	_method = method;
 }
 
+t_method	Response::getMethod() const
+{
+	return _method;
+}
+
 std::string	Response::getHeader(const std::string& key) const
 {
 	std::map<std::string, std::string>::const_iterator it = _headers.find(key);
@@ -163,6 +173,7 @@ void	Response::cleanResponse()
 	_state = DEFAULT;
 	_status_code = OK;
 	_http_version = "";
+	_method = NOT_SET;
 	_headers.clear();
 	_body.clear();
 	_data.clear();

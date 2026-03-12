@@ -64,6 +64,7 @@ class	Response
 	int					getState() const;
 	int					getStatusCode() const;
 	std::string			getHttpVersion() const;
+	t_method			getMethod() const;
 	std::string			getHeader(const std::string& key) const;
 	std::string			getBody() const;
 	size_t				getDataSize() const;
