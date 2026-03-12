@@ -15,20 +15,16 @@ void	Response::formatResponse()
 	if (_state != READY)
 		return;
 
-/* 	if (isCGI && _method != GET)
-		_headers["Content-Length"] = "100000000";
-	else */
 	_headers["Content-Length"] = httpUtils::intToString(_body.size());
 
-	std::cout << "content-length: " << _headers["Content-Length"] << std::endl;
-
 	_data = buildHttpResponse();
+
+	std::cerr << "[formatResponse] Headers size = " << (_data.size()) << std::endl;
+	std::cerr << "[formatResponse] Header = " << _data << std::endl;
 
 	if (_method != HEAD)
 		_data += _body;
 	
-	std::cerr << "[formatResponse] Headers size = " 
-			<< (_data.size() - _body.size()) << std::endl;
 	std::cerr << "[formatResponse] Body size = " << _body.size() << std::endl;
 	std::cerr << "[formatResponse] Total _data size = " << _data.size() << std::endl;
 
