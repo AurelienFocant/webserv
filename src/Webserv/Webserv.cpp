@@ -463,6 +463,7 @@ bool	Webserv::cgiInHandler(Connection& conn)
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
 		conn.cgi_fd[1] = -1;
+		conn.cgi_stdin_offset = 0;
 
 /* 		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 			close(conn.cgi_fd[0]);
