@@ -82,7 +82,7 @@ bool	RequestHandler::extractPath()
 	return true;
 }
 
-void	RequestHandler::findLocation()
+void	RequestHandler::matchLocation()
 {
 	std::string	ext;
 	size_t		longest_match = 0;

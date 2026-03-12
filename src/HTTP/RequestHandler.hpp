@@ -100,7 +100,7 @@ class RequestHandler
 	void			handleRequest();
 	void			processRequest(const std::string& request_str);
 	void			processBody();
-	void			findLocation();
+	void			matchLocation();
 	bool			isAllowedMethod();
 
 	void			clean();
