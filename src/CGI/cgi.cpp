@@ -98,18 +98,17 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 	addFirstLineInfo(handler, vect);
 	for (std::multimap<std::string, std::string>::const_iterator it = cpp_env.begin(); it != cpp_env.end(); ++it) {
 		if (previous_key == it->first) {
-			header += ", " + it->second;
+			vect.back() += ", " + it->second;
 		}
 		else {
 			previous_key.clear();
 			previous_key = it->first;
-			if (!header.empty())
-				vect.push_back(header);
 			header.clear();
 			if (it->first == "CONTENT_LENGTH" || it->first == "CONTENT_TYPE")
 				header += it->first + "=" + it->second;
 			else
 				header += "HTTP_" + it->first + "=" + it->second;
+			vect.push_back(header);
 		}
 	}
 	if (handler.getRequest().getHeaderValues("CONTENT_LENGTH").at(0) == "") {
