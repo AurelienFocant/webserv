@@ -98,8 +98,6 @@ namespace path
 
 	bool	resolve(PathContext& ctx, Response& resp)
 	{
-		std::cout << "[resolvePath] Request path: " << ctx.request_path << std::endl;
-		
 		if (detectCGI(ctx))
 		{
 			if (!ctx.matched_location->getAlias().empty())

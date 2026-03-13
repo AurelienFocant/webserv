@@ -29,6 +29,15 @@ void	RequestHandler::processBody()
 
 void	RequestHandler::handleRequest()
 {
+	/* DEBUG */
+	std::cout << "[resolvePath] Request path: " << _ctx.request_path << std::endl;
+
+	std::cout << "[resolvePath] LOCATION NAME: " << _ctx.matched_location->getName() << std::endl;
+	const std::set<std::string>& methods = _ctx.matched_location->getAllowedMethods();
+	for (std::set<std::string>::const_iterator it = methods.begin(); it != methods.end(); ++it)
+		std::cerr << "[resolvePath] ALLOWED: " << *it << std::endl;
+	/* //////////////////////////// */
+	
 	if (_request.getStatusCode() != OK)
 		_response.setStatusCode(_request.getStatusCode());
 

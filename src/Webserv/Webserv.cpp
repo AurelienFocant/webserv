@@ -338,7 +338,7 @@ bool	Webserv::clientInHandler(Connection & conn)
 		{
 			conn.request_handler.setRoot(conn.request_handler.getVirtualServer()->getRoot());
 			if (!conn.request_handler.isAllowedMethod())
-				conn.request_handler._request.setComplete("true");
+				conn.request_handler._request.setComplete(true);
 			if (!conn.request_handler.getRequest().isCompleted())
 				conn.request_handler.processBody();
 		}
