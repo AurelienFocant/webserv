@@ -32,55 +32,18 @@ class RequestHandler
 	/* Objects */
 	const VirtualServer*	_server;
 
-	/* Path Resolution */
-	std::string				_root;
-	std::string				_request_path;
-	std::string				_resolved_path;
-	std::string				_cgi_exec;
-	const Location*			_matched_location;
-	t_extension				_matched_extension;
-	std::string				_ext_str;
-	bool					_is_directory;
-
-	/* CGI ENV */
-	std::string				_script_name;
-	std::string				_path_info;
-	std::string				_query;
 
 	/* PRIVATE METHODS */
 	void			addInput(const std::string& input);
 
-	/* Path processing */
-	bool			extractPath();
-	bool			resolvePath();
-	bool			validatePath();
-
-	bool			decodePath(const std::string& encoded, std::string& decoded);
-	bool			normalizePath();
-	bool			detectCGI();
-
-	/*  Redirections */
-	bool			handleConfigRedirect();
-	bool			handleTrailingSlash();
-	bool			hasRedirect();
-
 	/* Request processing */
-	bool			processMethods();
-	bool			processGetMethod();
-	bool			processHeadMethod();
-	bool			processPostMethod();
-	bool			processDeleteMethod();
+;
 	bool			_hasContentTypeHeader();
 	bool			_isMultiformData();
 	std::string		_extractBoundary();
 	std::string		_extractFilename(std::string boundary);
 	std::string		_verifyFile(std::string filename);
 	bool			_saveDataToFile(std::string filename);
-
-	/* Directory listing / Index */
-	bool			resolveIndex();
-	bool			hasAutoIndex();
-	void			generateAutoIndex();
 
 	public:
 
@@ -100,8 +63,7 @@ class RequestHandler
 	void			handleRequest();
 	void			processRequest(const std::string& request_str);
 	void			processBody();
-	void			matchLocation();
-	bool			isAllowedMethod();
+	
 
 	void			clean();
 

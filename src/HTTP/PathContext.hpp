@@ -17,7 +17,7 @@ struct PathContext
 	t_extension				matched_extension;
 	std::string				ext_str;
 	bool					is_directory;
-	//bool					is_cgi;
+	bool					is_cgi;
 
 	/* CGI ENV */
 	std::string				script_name;
