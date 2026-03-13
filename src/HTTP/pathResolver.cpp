@@ -46,15 +46,19 @@ namespace path
 	void	matchLocation(PathContext& ctx, const VirtualServer* server)
 	{
 		std::string		ext;
+		std::string		last_char;
 		size_t			longest_match = 0;
 
 		for (std::map<std::string, Location>::const_iterator it = server->getLocations().begin(); it != server->getLocations().end(); it++)
 		{
-			const std::string&	route_path = it->first;
+			std::string			route_path = it->first;
 			const Location*		location = &(it->second);
 
+			if (route_path.size() > 1 && route_path[route_path.size() -1] == '/')
+				route_path = route_path.substr(0,route_path.size() -1);
+
 			//Check if the requested path match an extension or begin with a Location name
-			if (route_path[route_path.size() -1] == '$')
+			if (route_path.substr(0,route_path.size() -1) == "$")
 			{
 				ext = route_path.substr(0, route_path.size() -1);
 				size_t start = ctx.request_path.find(ext);
