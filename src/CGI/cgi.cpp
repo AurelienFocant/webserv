@@ -203,9 +203,6 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 		execve(argv[0], argv, env);
 
 		//In case of error in the child, clean everything and exit
-		close(pipe_in[0]);
-		close(pipe_out[1]);
-
 		delete[](env);
 		free(argv[0]);
 		argv[0] = NULL;
