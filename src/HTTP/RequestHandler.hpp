@@ -12,9 +12,9 @@
 #include <ctime>
 
 #include "HTTPenum.hpp"
-#include "PathContext.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+#include "pathResolver.hpp"
 #include "resp.hpp"
 
 class Connection;
@@ -72,7 +72,6 @@ class RequestHandler
 	/* Setters */
 	void					setVirtualServer(const VirtualServer& server);
 	void					setRoot(const std::string& root);
-	//void					setContext(const )
 
 };
 

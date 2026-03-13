@@ -1,26 +1,29 @@
 
 /* #include "paths.hpp"
 #include "method.hpp" */
-#include "http.hpp"
+
+#include "pathResolver.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "VirtualServer.hpp"
-#include "PathContext.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
 
-#include "Location.hpp"
-#include "resp.hpp"
-#include "upload.hpp"
-#include "autoindex.hpp"
-#include <unistd.h>
-
 #include <sstream>
+#include <string.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <cerrno>
 
-/* PATH */
+struct PathContext;
+
+PathContext::PathContext()
+	: matched_location(NULL)
+	, matched_extension(NO_EXT)
+	, is_directory(false)
+	, is_cgi(false)
+{}
+
 namespace path
 {
 	bool	extract(PathContext& ctx, const Request& req, Response& resp)
@@ -47,10 +50,6 @@ namespace path
 	{
 		std::string		ext;
 		size_t			longest_match = 0;
-
-/* 		// now in findLocation
-		if (ctx.request_path.empty())
-			extract(ctx, req, resp); */
 
 		for (std::map<std::string, Location>::const_iterator it = server->getLocations().begin(); it != server->getLocations().end(); it++)
 		{
@@ -365,174 +364,3 @@ namespace path
 	}
 }
 
-/* METHOD */
-
-namespace method
-{
-	bool	dispatch(PathContext& ctx, Request& req, Response& resp)
-	{
-	/* 		if (resp.isCGI)
-			return (true); */
-
-		switch(req.getMethod())
-		{
-			case GET:
-				return processGet(ctx, resp);
-			case HEAD:
-				return processHead(ctx, resp);
-			case POST:
-				return processPost(ctx, req, resp);
-			case DELETE:
-				return processDelete(ctx, resp);
-			default: 
-				resp.setStatusCode(METHOD_NOT_ALLOWED); 
-				return false;
-		}
-		return (true);
-	}
-
-	bool	isAllowed(const PathContext& ctx, Request& req, Response& resp)
-	{
-		std::set<std::string> allowed = ctx.matched_location->getAllowedMethods();
-
-		if (allowed.empty())
-			return true;
-
-		std::string method_str = methodToString(req.getMethod());
-
-		if (allowed.find(method_str) == allowed.end())
-		{
-			req.setStatusCode(METHOD_NOT_ALLOWED);
-			resp.setHeader("Allow", resp::buildAllowHeader(allowed));
-			return false;
-		}
-		return true;
-	}
-
-	bool	processGet(PathContext& ctx, Response& resp)
-	{
-		if (ctx.is_directory)
-		{
-			if (!resolveIndex(ctx))
-			{
-				if (hasAutoIndex(ctx))
-				{
-					generateAutoIndex(ctx, resp);
-						return true;
-				}
-				resp.setStatusCode(NOT_FOUND);
-				return false;
-			}
-		}
-
-		if (!resp::loadBody(resp, ctx.resolved_path))
-			return false;
-		
-		if (resp.getMethod() == NOT_SET)
-			resp.setMethod(GET);
-
-		return true;	
-	}
-
-	bool	processHead(PathContext& ctx, Response& resp)
-	{
-		resp.setMethod(HEAD);
-		processGet(ctx, resp);
-		return (false);
-	}
-
-	// ???????
-	bool	processPost(PathContext& ctx, const Request& req, Response& resp)
-	{
-		if (!upload::hasContentTypeHeader(req)) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
-		}
-
-		if (!upload::isMultiformData(req)) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
-		}
-
-		std::string boundary = upload::extractBoundary(req);
-		if (boundary.empty()) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
-		}
-
-		std::string filename = upload::extractFilename(req, boundary);
-		if (filename.empty()) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
-		}
-
-		filename = upload::verifyFile(ctx, filename);
-		if (filename.empty()) {
-			resp.setStatusCode(FORBIDDEN);		return (false);
-		}
-
-		if (!upload::saveDataToFile(req, filename)) {
-			resp.setStatusCode(INTERNAL_SERVER_ERROR);	return (false);
-		};
-
-		resp.setStatusCode(CREATED);
-		resp.setHeader("Content-Length", "0");
-		resp.setHttpVersion(req.getHttpVersion());
-		return (true);
-	}
-
-	bool	processDelete(const PathContext& ctx, Response& resp)
-	{
-		if (ctx.is_directory) {
-			resp.setStatusCode(FORBIDDEN); return (false);
-		}
-
-		if (!fileSystem::isFile(ctx.resolved_path)) {
-			resp.setStatusCode(NOT_FOUND); return (false);
-		}
-
-		std::string dirname	= fileSystem::getDirname(ctx.resolved_path);
-		if (!fileSystem::isWritable(dirname) || !fileSystem::isExecutable(dirname)) {
-			resp.setStatusCode(FORBIDDEN); return (false);
-		}
-
-		if (unlink(ctx.resolved_path.c_str()) != 0) {
-			resp.setStatusCode(FORBIDDEN); return (false);
-		}
-
-		resp.setStatusCode(NO_CONTENT);
-		return (true);
-	}
-
-	/* INDEX/DIRECTORY HANDLING */
-
-	bool	resolveIndex(PathContext& ctx)
-	{
-		const std::vector<std::string> indexes = ctx.matched_location->getIndexes();
-
-		std::string	dir_path = ctx.resolved_path;
-		if (!dir_path.empty() && dir_path[dir_path.size() -1] != '/')
-			dir_path += '/';
-
-		for (size_t i = 0; i < indexes.size(); i++)
-		{
-			std::string test_path = dir_path + indexes[i];
-			if (access(test_path.c_str(), R_OK) == 0)
-			{
-				ctx.resolved_path = test_path;
-				ctx.is_directory = false;
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool	hasAutoIndex(const PathContext& ctx)
-	{
-		return ctx.matched_location->getAutoIndex();
-	}
-
-	void	generateAutoIndex(const PathContext& ctx, Response& resp)
-	{
-		std::string	html = ::generateAutoIndex(ctx.resolved_path);
-
-		resp.setBody(html);
-		resp.setHeader("Content-Type", "text/html");
-	}
-}

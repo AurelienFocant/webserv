@@ -1,7 +1,8 @@
 
 #include "RequestHandler.hpp"
 #include "VirtualServer.hpp"
-#include "http.hpp"
+#include "pathResolver.hpp"
+#include "methods.hpp"
 
 /* ////////////REQUEST HANDLER////////////////// */
 
@@ -89,6 +90,18 @@ const VirtualServer*	RequestHandler::getVirtualServer() const
 {
 	return _server;
 }
+
+std::string				getQuery()	const { return (_ctx.query);}
+
+std::string				getPathInfo()	const { return (_ctx.path_info);}
+
+std::string				getScriptName()	const { return (_ctx.script_name);}
+
+t_extension				getExtension()	const	{ return (_ctx.matched_extension);};
+
+std::string				getResolvedPath()	const	{ return (_ctx.resolved_path);};
+
+std::string				getCGIExec()		const	{return _ctx.cgi_exec;}
 
 /* Setters */
 void	RequestHandler::setVirtualServer(const VirtualServer& server)
