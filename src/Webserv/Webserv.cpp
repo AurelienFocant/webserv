@@ -321,7 +321,6 @@ bool	Webserv::clientInHandler(Connection & conn)
 {
 	if (conn.getEvent().events & EPOLLIN) {
 
-		//std::string request_str = _receiveLoop(conn.getFd());
 		std::string request_str = conn.receive();
 		if (!request_str.size()) {
 			return (false);
