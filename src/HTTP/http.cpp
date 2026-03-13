@@ -1,5 +1,3 @@
-#ifndef HTTP_HPP
-#define HTTP_HPP
 
 /* #include "paths.hpp"
 #include "method.hpp" */
@@ -7,6 +5,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "VirtualServer.hpp"
+#include "PathContext.hpp"
 #include "../Utils/fileSystem.hpp"
 #include "../Utils/httpUtils.hpp"
 
@@ -18,6 +17,7 @@
 
 #include <sstream>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <cerrno>
 
 /* PATH */
@@ -27,30 +27,30 @@ namespace path
 	{
 		if (req.getRequestUri().empty() || req.getRequestUri().at(0) != '/')
 		{
-			resp.setStatusCode(BADreq);
+			resp.setStatusCode(BAD_REQUEST);
 			return false;
 		}
 
-		req_path = req.getRequestUri();
+		ctx.request_path = req.getRequestUri();
 
-		size_t query_pos = req_path.find("?");
+		size_t query_pos = ctx.request_path.find("?");
 		if (query_pos != std::string::npos)
 		{
-			ctx.query = req_path.substr(query_pos + 1);
-			req_path = req_path.substr(0, query_pos);
+			ctx.query = ctx.request_path.substr(query_pos + 1);
+			ctx.request_path = ctx.request_path.substr(0, query_pos);
 		}
 		
 		return true;
 	}
 
-	bool	matchLocation(PathContext& ctx, const VirtualServer* server)
+	void	matchLocation(PathContext& ctx, const VirtualServer* server)
 	{
 		std::string		ext;
 		size_t			longest_match = 0;
 
-		// really useful??
+/* 		// now in findLocation
 		if (ctx.request_path.empty())
-			extract(ctx, req, resp);
+			extract(ctx, req, resp); */
 
 		for (std::map<std::string, Location>::const_iterator it = server->getLocations().begin(); it != server->getLocations().end(); it++)
 		{
@@ -75,8 +75,8 @@ namespace path
 								ctx.cgi_exec = location->getCGIExec();
 							//else if (idem pour cgi_on)
 						}
-						if (!ctx.ctx.ctx.matched_location)
-							ctx.ctx.ctx.matched_location = location;
+						if (!ctx.matched_location)
+							ctx.matched_location = location;
 					}
 				}
 			}
@@ -91,13 +91,13 @@ namespace path
 					if (route_len > longest_match)
 					{
 						longest_match = route_path.size();
-						ctx.ctx.ctx.matched_location = location;
+						ctx.matched_location = location;
 					}
 				}
 			}
 		}
-		if (!ctx.ctx.ctx.matched_location)
-			ctx.ctx.ctx.matched_location = &( ctx.matched_location->getLocationAt("MAIN"));
+		if (!ctx.matched_location)
+			ctx.matched_location = &(server->getLocationAt("MAIN"));
 	}
 
 	bool	resolve(PathContext& ctx, Response& resp)
@@ -106,21 +106,21 @@ namespace path
 		
 		if (detectCGI(ctx))
 		{
-			if (!ctx.ctx.ctx.matched_location->getAlias().empty())
+			if (!ctx.matched_location->getAlias().empty())
 			{
-				std::string	location_path	= ctx.ctx.ctx.matched_location->getName();
+				std::string	location_path	= ctx.matched_location->getName();
 				std::string	remaining_path	= ctx.request_path.substr(location_path.size());
-				ctx.resolved_path = ctx.ctx.ctx.matched_location->getAlias() + remaining_path;
+				ctx.resolved_path = ctx.matched_location->getAlias() + remaining_path;
 			}
 			else
 			{
-				if (!ctx.ctx.ctx.matched_location->getRoot().empty())	
-				ctx.root = ctx.ctx.ctx.matched_location->getRoot();
+				if (!ctx.matched_location->getRoot().empty())	
+				ctx.root = ctx.matched_location->getRoot();
 				ctx.resolved_path = ctx.root + ctx.script_name;
 			}
 			if (!ctx.cgi_exec.empty())
 			{
-				std::string root = ctx.ctx.ctx.matched_location->getRoot();
+				std::string root = ctx.matched_location->getRoot();
 				ctx.cgi_exec = (!root.empty() && root[root.size() -1] != '/')
 				? root + '/' + ctx.cgi_exec
 				: root + ctx.cgi_exec;
@@ -136,16 +136,16 @@ namespace path
 				return false;
 			if (handleConfigRedirect(ctx, resp))
 				return false;
-			if (!ctx.ctx.ctx.matched_location->getAlias().empty())
+			if (!ctx.matched_location->getAlias().empty())
 			{
-				std::string	location_path	= ctx.ctx.ctx.matched_location->getName();
+				std::string	location_path	= ctx.matched_location->getName();
 				std::string	remaining_path	= ctx.request_path.substr(location_path.size());
-				ctx.resolved_path = ctx.ctx.ctx.matched_location->getAlias() + remaining_path;
+				ctx.resolved_path = ctx.matched_location->getAlias() + remaining_path;
 			}
 			else 
 			{
-				if (!ctx.ctx.ctx.matched_location->getRoot().empty())
-					ctx.root = ctx.ctx.ctx.matched_location->getRoot();
+				if (!ctx.matched_location->getRoot().empty())
+					ctx.root = ctx.matched_location->getRoot();
 				ctx.resolved_path = ctx.root + ctx.request_path;
 			}
 		}
@@ -166,7 +166,7 @@ namespace path
 			else if (errno == EACCES)
 				resp.setStatusCode(FORBIDDEN);
 			else
-				resp.setStatusCode(INTERNAL ctx.matched_location_ERROR);
+				resp.setStatusCode(INTERNAL_SERVER_ERROR);
 			return false;
 		}
 
@@ -179,13 +179,13 @@ namespace path
 
 		ctx.is_directory = S_ISDIR(statBuf.st_mode);
 
-		if (ctx.is_directory && hasTrailingSlash())
+		if (ctx.is_directory && hasTrailingSlash(ctx, resp))
 			return false;
 
 		return true;
 	}
 
-	bool	decodePath(const std::string& encoded, std::string& decoded, Response& resp)
+	bool	decodePath(const std::string& encoded, std::string& decoded)
 	{
 		//avoid useless reallocations (borne superieure)
 		decoded.reserve(encoded.size());
@@ -219,14 +219,15 @@ namespace path
 
 	bool	normalizePath(PathContext& ctx, Response& resp)
 	{
-		std::string cage_root = _ctx.ctx.matched_location->getName() == "MAIN" || ctx.matched_extension != NO_EXT  ? "" : _ctx.ctx.matched_location->getName();
+		std::string cage_root = ctx.matched_location->getName() == "MAIN" || ctx.matched_extension != NO_EXT 
+			? "" : ctx.matched_location->getName();
 
 		std::string	decoded_path;
 
 		if (!decodePath(ctx.request_path, decoded_path))
 		{
 			std::cerr << "[ERROR] Path traversal attempt" << std::endl;
-			resp.setStatusCode(403);
+			resp.setStatusCode(FORBIDDEN);
 			return false;
 		}
 
@@ -263,7 +264,7 @@ namespace path
 				if (segments.empty())
 				{
 					std::cerr << "[ERROR] Path traversal attempt" << std::endl;
-					resp.setStatusCode(403);
+					resp.setStatusCode(FORBIDDEN);
 					return false;
 				}
 				segments.pop_back();
@@ -291,7 +292,7 @@ namespace path
 
 	bool	detectCGI(PathContext& ctx)
 	{
-		if (!_ctx.matched_location->getCGI() && ctx.cgi_exec.empty())
+		if (!ctx.matched_location->getCGI() && ctx.cgi_exec.empty())
 			return false;
 
 		if (ctx.matched_extension == NO_EXT)
@@ -306,7 +307,7 @@ namespace path
 		size_t ext_end = start + ext_str.size();
 
 		ctx.script_name = (ctx.matched_extension == UNKNOWN_EXT) 
-			? ctx.cgi_exec :ctx.request_path.substr(0, ext_end);
+			? ctx.cgi_exec : ctx.request_path.substr(0, ext_end);
 
 		ctx.path_info = "";
 
@@ -368,17 +369,17 @@ namespace path
 
 namespace method
 {
-	bool	dispatch(const PathContext& ctx, const Request& req, const Response& resp, const VirtualServer& server)
+	bool	dispatch(PathContext& ctx, Request& req, Response& resp)
 	{
-/* 		if (resp.isCGI)
+	/* 		if (resp.isCGI)
 			return (true); */
 
 		switch(req.getMethod())
 		{
 			case GET:
-				return processGet(ctx, req, resp, server);
+				return processGet(ctx, resp);
 			case HEAD:
-				return processHead(ctx, req, resp, server);
+				return processHead(ctx, resp);
 			case POST:
 				return processPost(ctx, req, resp);
 			case DELETE:
@@ -390,7 +391,7 @@ namespace method
 		return (true);
 	}
 
-	bool	isAllowed(const PathContext& ctx, const Request& req, const Response& resp)
+	bool	isAllowed(const PathContext& ctx, Request& req, Response& resp)
 	{
 		std::set<std::string> allowed = ctx.matched_location->getAllowedMethods();
 
@@ -408,16 +409,16 @@ namespace method
 		return true;
 	}
 
-	bool	processGet(const PathContext& ctx, const Request& req, const Response& resp, const VirtualServer& server)
+	bool	processGet(PathContext& ctx, Response& resp)
 	{
 		if (ctx.is_directory)
 		{
-			if (!resolveIndex(ctx, server))
+			if (!resolveIndex(ctx))
 			{
-				if (hasAutoIndex(ctx, server))
+				if (hasAutoIndex(ctx))
 				{
 					generateAutoIndex(ctx, resp);
-					return true;
+						return true;
 				}
 				resp.setStatusCode(NOT_FOUND);
 				return false;
@@ -433,41 +434,41 @@ namespace method
 		return true;	
 	}
 
-	bool	processHead(const PathContext& ctx, const Request& req, const Response& resp, const VirtualServer& server)
+	bool	processHead(PathContext& ctx, Response& resp)
 	{
 		resp.setMethod(HEAD);
-		processGet();
+		processGet(ctx, resp);
 		return (false);
 	}
 
 	// ???????
-	bool	processPost(const PathContext& ctx, const Request& req, const Response& resp)
+	bool	processPost(PathContext& ctx, const Request& req, Response& resp)
 	{
-		if (!_hasContentTypeHeader()) {
-			resp.setStatusCode(BADreq);	return (false);
+		if (!upload::hasContentTypeHeader(req)) {
+			resp.setStatusCode(BAD_REQUEST);	return (false);
 		}
 
-		if (!_isMultiformData()) {
-			resp.setStatusCode(BADreq);	return (false);
+		if (!upload::isMultiformData(req)) {
+			resp.setStatusCode(BAD_REQUEST);	return (false);
 		}
 
-		std::string boundary = _extractBoundary();
+		std::string boundary = upload::extractBoundary(req);
 		if (boundary.empty()) {
-			resp.setStatusCode(BADreq);	return (false);
+			resp.setStatusCode(BAD_REQUEST);	return (false);
 		}
 
-		std::string filename = _extractFilename(boundary);
+		std::string filename = upload::extractFilename(req, boundary);
 		if (filename.empty()) {
-			resp.setStatusCode(BADreq);	return (false);
+			resp.setStatusCode(BAD_REQUEST);	return (false);
 		}
 
-		filename = _verifyFile(filename);
+		filename = upload::verifyFile(ctx, filename);
 		if (filename.empty()) {
 			resp.setStatusCode(FORBIDDEN);		return (false);
 		}
 
-		if (!_saveDataToFile(filename)) {
-			resp.setStatusCode(INTERNAL ctx.matched_location_ERROR);	return (false);
+		if (!upload::saveDataToFile(req, filename)) {
+			resp.setStatusCode(INTERNAL_SERVER_ERROR);	return (false);
 		};
 
 		resp.setStatusCode(CREATED);
@@ -476,7 +477,7 @@ namespace method
 		return (true);
 	}
 
-	bool	processDelete(const PathContext& ctx, const Request& req, const Response& resp)
+	bool	processDelete(const PathContext& ctx, Response& resp)
 	{
 		if (ctx.is_directory) {
 			resp.setStatusCode(FORBIDDEN); return (false);
@@ -501,7 +502,7 @@ namespace method
 
 	/* INDEX/DIRECTORY HANDLING */
 
-	bool	resolveIndex(const PathContext& ctx, const VirtualServer& server)
+	bool	resolveIndex(PathContext& ctx)
 	{
 		const std::vector<std::string> indexes = ctx.matched_location->getIndexes();
 
@@ -522,18 +523,16 @@ namespace method
 		return false;
 	}
 
-	bool	hasAutoIndex(const PathContext& ctx, const VirtualServer& server)
+	bool	hasAutoIndex(const PathContext& ctx)
 	{
-		return ctx.matched_location->getAutoindex();
+		return ctx.matched_location->getAutoIndex();
 	}
 
 	void	generateAutoIndex(const PathContext& ctx, Response& resp)
 	{
 		std::string	html = ::generateAutoIndex(ctx.resolved_path);
 
-		res.setBody(html);
-		res.setHeader("Content-Type", "text/html");
+		resp.setBody(html);
+		resp.setHeader("Content-Type", "text/html");
 	}
 }
-
-#endif

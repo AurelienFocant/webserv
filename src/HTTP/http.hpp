@@ -12,11 +12,11 @@ class VirtualServer;
 namespace path
 {
 	bool		extract(PathContext& ctx, const Request& req, Response& resp);
-	bool		matchLocation(PathContext& ctx, const VirtualServer* server);
+	void		matchLocation(PathContext& ctx, const VirtualServer* server);
 	bool		resolve(PathContext& ctx, Response& resp);
 	bool		validate(PathContext& ctx, Response& resp);
 
-	bool		decodePath(const std::string& encoded, std::string& decoded, Response& resp);
+	bool		decodePath(const std::string& encoded, std::string& decoded);
 	bool		normalizePath(PathContext& ctx, Response& resp);
 	bool		detectCGI(PathContext& ctx);
 	bool		handleConfigRedirect(PathContext& ctx, Response& resp);
@@ -26,17 +26,16 @@ namespace path
 
 namespace method
 {
-	bool		dispatch(const PathContext& ctx, const Request& req, const Response& resp, const VirtualServer& server);
-	bool		isAllowed(const PathContext& ctx, const Request& req, const Response& resp);
+	bool		dispatch(PathContext& ctx, Request& req, Response& resp);
+	bool		isAllowed(const PathContext& ctx, Request& req, Response& resp);
 
-	bool		processGet(const PathContext& ctx, const Request& req, const Response& resp, const VirtualServer& server);
-	bool		processHead(const PathContext& ctx, const Request& req, const Response& resp, const VirtualServer& server);
-	bool		processPost(const PathContext& ctx, const Request& req, const Response& resp);
-	bool		processDelete(const PathContext& ctx, const Request& req, const Response& resp);
+	bool		processGet(PathContext& ctx, Response& resp);
+	bool		processHead(PathContext& ctx, Response& resp);
+	bool		processPost(PathContext& ctx, const Request& req, Response& resp);
+	bool		processDelete(const PathContext& ctx, Response& resp);
 
-
-	bool		resolveIndex(const PathContext& ctx, const VirtualServer& server);
-	bool		hasAutoIndex(const PathContext& ctx, const VirtualServer& server);
+	bool		resolveIndex(PathContext& ctx);
+	bool		hasAutoIndex(const PathContext& ctx);
 	void		generateAutoIndex(const PathContext& ctx, Response& resp);
 }
 

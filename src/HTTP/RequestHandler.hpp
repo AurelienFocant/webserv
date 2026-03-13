@@ -26,11 +26,8 @@ class RequestHandler
 
 	/*PRIVATE ATTRIBUTES */
 	const VirtualServer*	_server;
-	PathContext&			_ctx;
+	PathContext				_ctx;
 
-
-	/* PRIVATE METHODS */
-	void			addInput(const std::string& input);
 
 	public:
 
@@ -48,10 +45,10 @@ class RequestHandler
 
 	/* Main method*/
 	void			processRequest(const std::string& inpput);
-	void			processRequest(const std::string& request_str);
 	void			processBody();
 	void			handleRequest();
 	void			findLocation();
+	bool			isAllowedMethod();
 	void			resetPathContext();
 	void			requestIsComplete();
 	void 			clean();
@@ -75,6 +72,7 @@ class RequestHandler
 	/* Setters */
 	void					setVirtualServer(const VirtualServer& server);
 	void					setRoot(const std::string& root);
+	//void					setContext(const )
 
 };
 

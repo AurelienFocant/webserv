@@ -11,7 +11,6 @@ Location::Location(ConfigContext& ctxt)
 	, _cgi(ctxt.getCGI())
 	, _cgi_timeout(ctxt.getCGITimeout())
 	, _cgi_exec(ctxt.getCGIExec())
-	, _virtual(ctxt.getVirtualLocation())
 	, _max_body_size(ctxt.getMaxBodySize())
 	, _keepalive_time(ctxt.getKeepalive_time())
 	, _keepalive_timeout(ctxt.getKeepalive_timeout())
@@ -29,7 +28,6 @@ Location::Location(VirtualServer & serv)
 	, _cgi(false)
 	, _cgi_timeout(serv.getCGITimeout())
 	, _cgi_exec(serv.getCGIExec())
-	, _virtual(false)
 	, _max_body_size(serv.getMaxBodySize())
 	, _keepalive_time(serv.getKeepalive_time())
 	, _keepalive_timeout(serv.getKeepalive_timeout())
@@ -49,7 +47,6 @@ Location::Location(const Location& src)
 	, _cgi(src._cgi)
 	, _cgi_timeout(src._cgi_timeout)
 	, _cgi_exec(src._cgi_exec)
-	, _virtual(src._virtual)
 	, _max_body_size(src._max_body_size)
 	, _keepalive_time(src._keepalive_time)
 	, _keepalive_timeout(src._keepalive_timeout)
@@ -70,7 +67,6 @@ Location&	Location::operator= (const Location& rhs)
 		_autoindex			= rhs._autoindex;
 		_indexes			= rhs._indexes;
 		_cgi				= rhs._cgi;
-		_virtual			= rhs._virtual;
 		_keepalive_time		= rhs._keepalive_time;
 		_keepalive_timeout	= rhs._keepalive_timeout;
 		_error_pages		= rhs._error_pages;

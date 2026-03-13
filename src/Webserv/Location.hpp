@@ -22,8 +22,7 @@ class Location
 	bool		_cgi;
 	int			_cgi_timeout;
 	std::string	_cgi_exec;
-	bool		_virtual;
-	int			_max_body_size;
+	size_t		_max_body_size;
 
 	std::time_t	_keepalive_time;
 	std::time_t	_keepalive_timeout;
@@ -44,10 +43,9 @@ class Location
 	int							getRedirectCode()	const   {return _redirect_code;}
 	std::vector<std::string>	getIndexes()		const   {return _indexes;}
 	bool						getAutoIndex()		const   {return _autoindex;}
-	bool						getVirtual()		const	{return _virtual;}
 	std::map<int, std::string>	getErrorPages()		const	{return _error_pages;}
 	std::string					getErrorPage(int n)	const	{return _error_pages.at(n);}
-	long						getMaxBodySize()	const	{return _max_body_size;}
+	size_t						getMaxBodySize()	const	{return _max_body_size;}
 	std::string					getCGIExec()		const	{return _cgi_exec;}
 
 	void	setName(const std::string& name)					{_name = name;}
@@ -56,7 +54,6 @@ class Location
 	void	setIndexes(const std::vector<std::string>& indexes) {_indexes = indexes;}
 	void	setAutoIndex(bool autoindex)						{_autoindex = autoindex;}
 	void   	setCGI(bool b)										{_cgi = b;}
-	void   	setVirtual(bool b)									{_virtual = b;}
 	void   	setAlias(std::string a)								{_alias = a;}
 	void   	setErrorPages(std::map<int, std::string> ep)		{_error_pages = ep;}
 	void   	setErrorPage(int code, std::string page)			{_error_pages.insert(std::make_pair(code, page));}

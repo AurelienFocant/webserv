@@ -8,7 +8,10 @@
 #include "../Utils/fileSystem.hpp"
 #include "HTTPenum.hpp"
 
-namespace resp
+#include <fcntl.h>
+#include <unistd.h>
+
+namespace upload
 {
 	bool	hasContentTypeHeader(const Request& req)
 	{

@@ -29,7 +29,7 @@ struct PathContext
 	: matched_location(NULL)
 	, matched_extension(NO_EXT)
 	, is_directory(false)
-	//, is_cgi(false)
+	, is_cgi(false)
 	{}
 };
 

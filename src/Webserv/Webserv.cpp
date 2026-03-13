@@ -331,7 +331,7 @@ bool	Webserv::clientInHandler(Connection & conn)
 		if (conn.request_handler.getRequest().getState() > PARSED && conn.request_handler.getVirtualServer() == NULL)
 		{
 			conn.request_handler.setVirtualServer(_resolveVirtualServer(conn));
-			conn.request_handler.matchLocation();
+			conn.request_handler.findLocation();
 		}
 
 		if (conn.request_handler.getVirtualServer() != NULL)

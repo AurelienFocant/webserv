@@ -2,13 +2,12 @@
 #define UPLOAD_HPP
 
 #include <string>
-#include <fcntl.h>
 
 class Response;
 class Request;
 class PathContext;
 
-namespace resp
+namespace upload
 {
 	bool			hasContentTypeHeader(const Request& req);
 	bool			isMultiformData(const Request& req);

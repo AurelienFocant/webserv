@@ -6,6 +6,7 @@
 
 #include "VirtualServer.hpp"
 #include "Connection.hpp"
+#include "http.hpp"
 #include "cgi.hpp"
 
 const std::string defaultConfigPath("./data/webserv.nginx.conf");
