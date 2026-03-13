@@ -29,7 +29,7 @@ class ConfigContext {
 		int			_cgi_timeout;
 		std::string	_cgi_exec;
 		bool		_virtualLocation;
-		int			_max_body_size;
+		size_t		_max_body_size;
 
 		std::map<int, std::string>		_error_pages;
 		std::vector<std::string>		_indexes;
@@ -62,7 +62,7 @@ class ConfigContext {
 		std::string								getAlias()				const	{return _alias;}
 		std::map<int, std::string>				getErrorPages()	   		const	{return _error_pages;}
 		std::string								getErrorPage(int code)  const	{return _error_pages.at(code);}
-		long									getMaxBodySize()		const	{return _max_body_size;}
+		size_t									getMaxBodySize()		const	{return _max_body_size;}
 
 		void        setPort(int port)											{_port = port;}
 		void        setRoot(const std::string &root)							{_root = root;}
@@ -83,7 +83,7 @@ class ConfigContext {
 		void		setAlias(std::string a)										{_alias = a;}
 		void		setErrorPages(std::map<int, std::string> ep)				{_error_pages = ep;}
 		void		setErrorPage(int code, std::string page)					{_error_pages.insert(std::make_pair(code, page));}
-		void		setMaxBodySize(long l)										{_max_body_size = l;}
+		void		setMaxBodySize(size_t l)										{_max_body_size = l;}
 
 		ConfigContext(void);
 		ConfigContext(ContextType t);

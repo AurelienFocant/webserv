@@ -41,7 +41,8 @@ void	Connection::sendResponse()
 		stream.getline(buff, 256);
 		std::cerr << "[Status line]: " << buff << std::endl;
 	}
-	if (to_send >= to_send - request_handler._response._offset)
+
+	if (to_send > request_handler._response._offset)
 		std::cout << "left to send: " << to_send - request_handler._response._offset << " / " << request_handler._response.getDataSize() << std::endl;
 
 /* 	if (to_send > MAX_CHUNK_SIZE)
