@@ -1,7 +1,4 @@
 
-/* #include "paths.hpp"
-#include "method.hpp" */
-
 #include "pathResolver.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
