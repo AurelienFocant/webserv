@@ -188,8 +188,8 @@ namespace upload
 {
 	bool	hasContentTypeHeader(const Request& req)
 	{
-		if (req.getHeaderValues("Content-Type").size()) {
-			if (!req.getHeaderValues("Content-Type")[0].empty())
+		if (req.getContentLength() != std::string::npos) {
+			//if (!req.getHeaderValues("Content-Type")[0].empty())
 				return (true);
 		}
 		return (false);

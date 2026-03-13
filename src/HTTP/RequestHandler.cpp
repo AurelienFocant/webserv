@@ -37,7 +37,7 @@ void	RequestHandler::handleRequest()
 	for (std::set<std::string>::const_iterator it = methods.begin(); it != methods.end(); ++it)
 		std::cerr << "[resolvePath] ALLOWED: " << *it << std::endl;
 	/* //////////////////////////// */
-	
+	_response.setMethod(_request.getMethod());
 	if (_request.getStatusCode() != OK)
 		_response.setStatusCode(_request.getStatusCode());
 

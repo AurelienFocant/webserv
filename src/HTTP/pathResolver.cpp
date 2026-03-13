@@ -173,7 +173,7 @@ namespace path
 
 		ctx.is_directory = S_ISDIR(statBuf.st_mode);
 
-		if (ctx.is_directory && hasTrailingSlash(ctx, resp))
+		if (ctx.is_directory && !hasTrailingSlash(ctx, resp))
 			return false;
 
 		return true;
@@ -335,17 +335,20 @@ namespace path
 
 	bool	hasTrailingSlash(PathContext& ctx, Response& resp)
 	{
-		if (ctx.request_path[ctx.request_path.size() - 1] == '/')
-			return false;
+		std::cout << "[hasTrailingSlash] REQ METHOD: " << resp.getMethod() << std::endl;
+		if (ctx.request_path[ctx.request_path.size() - 1] == '/' || resp.getMethod() == POST)
+			return true;
 
 		std::string redirect_uri = ctx.request_path + "/";
 		if (!ctx.query.empty())
 			redirect_uri += '?' + ctx.query;
 
 		resp.setHeader("Location", redirect_uri);
+		
 		resp.setStatusCode(MOVED_PERMANENTLY);
+		//resp.setStatusCode(TEMPORARY_REDIRECT);
 
-		return true;
+		return false;
 	}
 	
 	bool	hasRedirect(const Response& resp)
