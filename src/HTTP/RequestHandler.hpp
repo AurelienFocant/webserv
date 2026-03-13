@@ -39,35 +39,32 @@ class RequestHandler
 	RequestHandler&	operator=(const RequestHandler& rhs);
 
 	/* Public Attributes */
-	Request			_request;
-	Response		_response;
+	Request					_request;
+	Response				_response;
 
 
-	/* Main method*/
-	void			processRequest(const std::string& inpput);
-	void			processBody();
-	void			handleRequest();
-	void			findLocation();
-	bool			isAllowedMethod();
-	void			resetPathContext();
-	void			requestIsComplete();
-	void 			clean();
+	/* Public methods*/
+	void					processRequest(const std::string& inpput);
+	void					processBody();
+	void					handleRequest();
+	void					findLocation();
+	bool					isAllowedMethod();
+	void					resetPathContext();
+	void					requestIsComplete();
+	void 					clean();
 
 	/* Getters */
-	const Request&			getRequest()	const ;
-	const Response&			getResponse()	const ;
-	const VirtualServer*	getVirtualServer()	const ;
-
-
-	//std::string				getRoot()		const {return _root;}
+	const Request&			getRequest() const;
+	const Response&			getResponse() const;
+	const VirtualServer*	getVirtualServer() const;
 
 	/* CGI Getters */
-	std::string				getQuery()	const { return (_ctx.query);};
-	std::string				getPathInfo()	const { return (_ctx.path_info);};
-	std::string				getScriptName()	const { return (_ctx.script_name);};
-	t_extension				getExtension()	const	{ return (_ctx.matched_extension);};
-	std::string				getResolvedPath()	const	{ return (_ctx.resolved_path);};
-	std::string				getCGIExec()		const	{return _ctx.cgi_exec;}
+	std::string				getQuery() const;
+	std::string				getPathInfo() const;
+	std::string				getScriptName() const;
+	t_extension				getExtension() const;
+	std::string				getResolvedPath() const;
+	std::string				getCGIExec() const;
 
 	/* Setters */
 	void					setVirtualServer(const VirtualServer& server);

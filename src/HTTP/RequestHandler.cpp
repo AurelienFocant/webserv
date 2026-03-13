@@ -74,7 +74,6 @@ void	RequestHandler::clean()
 	_ctx = PathContext();
 }
 
-
 /* Getters */
 const Request&	RequestHandler::getRequest() const
 {
@@ -91,17 +90,37 @@ const VirtualServer*	RequestHandler::getVirtualServer() const
 	return _server;
 }
 
-std::string				getQuery()	const { return (_ctx.query);}
+std::string	RequestHandler::getQuery() const
+{
+	return (_ctx.query);
+}
 
-std::string				getPathInfo()	const { return (_ctx.path_info);}
+std::string	RequestHandler::getPathInfo() const 
+{
+	return (_ctx.path_info);
+}
 
-std::string				getScriptName()	const { return (_ctx.script_name);}
+std::string	RequestHandler::getScriptName() const 
+{
+	return (_ctx.script_name);
+}
 
-t_extension				getExtension()	const	{ return (_ctx.matched_extension);};
+t_extension	RequestHandler::getExtension() const	
+{
+	return (_ctx.matched_extension);
+}
 
-std::string				getResolvedPath()	const	{ return (_ctx.resolved_path);};
+std::string	RequestHandler::getResolvedPath() const	
+{
+	return (_ctx.resolved_path);
+}
 
-std::string				getCGIExec()		const	{return _ctx.cgi_exec;}
+
+std::string	RequestHandler::getCGIExec() const
+{
+	return _ctx.cgi_exec;
+}
+
 
 /* Setters */
 void	RequestHandler::setVirtualServer(const VirtualServer& server)
