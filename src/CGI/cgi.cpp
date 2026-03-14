@@ -21,15 +21,15 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 
 	if (!argv[0] || !argv[1])
 	{
-		// handler.setStatusCode(500);
+		delete[](env);
 		return (false);
 	}
 
 	if (!launchCgi(conn, argv, env)) {
 		delete[](env);
-		//some errors happened, setup response code accordingly
 		return (false);
 	}
+
 	free(argv[0]);
 	argv[0] = NULL;
 	free(argv[1]);
@@ -109,7 +109,7 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 	return (true);
 }
 
-char*	cgi::findInterpreter(const t_extension& extension)
+/* char*	cgi::findInterpreter(const t_extension& extension)
 {
 	switch (extension) {
 		case (PY):
@@ -129,7 +129,7 @@ char*	cgi::convertStringToChar(const std::string& string)
 		str[i] = string[i];
 	}
 	return (str);
-}
+} */
 
 bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 {
@@ -137,7 +137,7 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 	int	pipe_in[2];
 	int	pipe_out[2];
 	if (pipe(pipe_in) < 0) {
-		return (false);
+		return (false);	
 	}
 	if (pipe(pipe_out) < 0) {
 		close(pipe_in[0]);

@@ -88,16 +88,11 @@ bool	Response::isProcessingCGI() const
 	return _state == PROCESSING_CGI;
 }
 
-/* GETTERS / SETTERS */
+/* GETTERS */
 
 int	Response::getState() const
 {
 	return _state;
-}
-
-void	Response::setState(int state)
-{
-	_state = state;
 }
 
 int	Response::getStatusCode() const
@@ -105,24 +100,9 @@ int	Response::getStatusCode() const
 	return _status_code; 
 }
 
-void	Response::setStatusCode(int status_code)
-{
-	_status_code = status_code;
-}
-
-void	Response::setHttpVersion(const std::string& version)
-{
-	_http_version = version;
-}
-
 std::string	Response::getHttpVersion() const
 {
 	return _http_version;
-}
-
-void	Response::setMethod(t_method method)
-{
-	_method = method;
 }
 
 t_method	Response::getMethod() const
@@ -136,6 +116,40 @@ std::string	Response::getHeader(const std::string& key) const
 	if (it != _headers.end())
 		return it->second;
 	return ""; 
+}
+
+size_t	Response::getDataSize() const
+{
+	return _data.size();
+}
+
+size_t	Response::getOffset() const
+{
+	return _offset;
+}
+
+
+/* SETTERS */
+
+void	Response::setState(int state)
+{
+	_state = state;
+}
+
+
+void	Response::setStatusCode(int status_code)
+{
+	_status_code = status_code;
+}
+
+void	Response::setHttpVersion(const std::string& version)
+{
+	_http_version = version;
+}
+
+void	Response::setMethod(t_method method)
+{
+	_method = method;
 }
 
 void	Response::setHeader(const std::string& key, const std::string& value)
@@ -157,16 +171,6 @@ void	Response::addCgiBody(char* content, size_t bytes_read)
 {
 	if (content)
 		_body.append(content, bytes_read);
-}
-
-size_t	Response::getDataSize() const
-{
-	return _data.size();
-}
-
-size_t	Response::getOffset() const
-{
-	return _offset;
 }
 
 /* RESET */

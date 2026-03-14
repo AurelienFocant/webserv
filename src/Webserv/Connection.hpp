@@ -42,17 +42,15 @@ class Connection
 	//Copy constructor private for testing
 		Connection	( const Connection& src );
 
-		int					_fd;
-		const int			_epoll_fd;
-		struct epoll_event	_event;
+		int						_fd;
+		const int				_epoll_fd;
+		struct epoll_event		_event;
 
-		const	std::time_t	_first_conn;
-				std::time_t	_last_conn;
-		//if cgi
+		const	std::time_t		_first_conn;
+				std::time_t		_last_conn;
 
 	public:
 		bool			conn_closed;
-		//VirtualServer	virtual_server; // Remove and keep only the one in Request Handler? 
 		RequestHandler	request_handler;
 
 		bool	hasTimedOut(void);
