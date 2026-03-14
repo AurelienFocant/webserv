@@ -18,6 +18,7 @@ struct PathContext
 	std::string				cgi_exec;
 	const Location*			matched_location;
 	t_extension				matched_extension;
+	std::string				location_name;
 	std::string				ext_str;
 	bool					is_directory;
 	bool					is_cgi;

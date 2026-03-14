@@ -88,39 +88,38 @@ namespace method
 		return (false);
 	}
 
-	// ???????
 	bool	processPost(PathContext& ctx, const Request& req, Response& resp)
 	{
-		if (!upload::hasContentTypeHeader(req)) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
+		if (upload::isMultiformData(req))
+		{
+			if (!upload::hasContentTypeHeader(req)) {
+				resp.setStatusCode(BAD_REQUEST);	return (false);
+			}
+
+			std::string boundary = upload::extractBoundary(req);
+			if (boundary.empty()) {
+				resp.setStatusCode(BAD_REQUEST);	return (false);
+			}
+
+			std::string filename = upload::extractFilename(req, boundary);
+			if (filename.empty()) {
+				resp.setStatusCode(BAD_REQUEST);	return (false);
+			}
+
+			filename = upload::verifyFile(ctx, filename);
+			if (filename.empty()) {
+				resp.setStatusCode(FORBIDDEN);		return (false);
+			}
+
+			if (!upload::saveDataToFile(req, filename)) {
+				resp.setStatusCode(INTERNAL_SERVER_ERROR);	return (false);
+			}
+
+			resp.setStatusCode(CREATED);
+			return (true);
 		}
 
-		if (!upload::isMultiformData(req)) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
-		}
-
-		std::string boundary = upload::extractBoundary(req);
-		if (boundary.empty()) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
-		}
-
-		std::string filename = upload::extractFilename(req, boundary);
-		if (filename.empty()) {
-			resp.setStatusCode(BAD_REQUEST);	return (false);
-		}
-
-		filename = upload::verifyFile(ctx, filename);
-		if (filename.empty()) {
-			resp.setStatusCode(FORBIDDEN);		return (false);
-		}
-
-		if (!upload::saveDataToFile(req, filename)) {
-			resp.setStatusCode(INTERNAL_SERVER_ERROR);	return (false);
-		};
-
-		resp.setStatusCode(CREATED);
-		resp.setHeader("Content-Length", "0");
-		resp.setHttpVersion(req.getHttpVersion());
+		resp.setStatusCode(OK);
 		return (true);
 	}
 
@@ -188,11 +187,11 @@ namespace upload
 {
 	bool	hasContentTypeHeader(const Request& req)
 	{
-		if (req.getContentLength() != std::string::npos) {
-			//if (!req.getHeaderValues("Content-Type")[0].empty())
+		if (req.getHeaderValues("Content-Type").size()) {
+			if (!req.getHeaderValues("Content-Type")[0].empty())
 				return (true);
 		}
-		return (false);
+		return false;
 	}
 
 	bool	isMultiformData(const Request& req)

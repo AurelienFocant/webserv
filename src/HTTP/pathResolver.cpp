@@ -46,7 +46,6 @@ namespace path
 	void	matchLocation(PathContext& ctx, const VirtualServer* server)
 	{
 		std::string		ext;
-		std::string		last_char;
 		size_t			longest_match = 0;
 
 		for (std::map<std::string, Location>::const_iterator it = server->getLocations().begin(); it != server->getLocations().end(); it++)
@@ -58,7 +57,7 @@ namespace path
 				route_path = route_path.substr(0,route_path.size() -1);
 
 			//Check if the requested path match an extension or begin with a Location name
-			if (route_path.substr(0,route_path.size() -1) == "$")
+			if (route_path[route_path.size() -1] == '$')
 			{
 				ext = route_path.substr(0, route_path.size() -1);
 				size_t start = ctx.request_path.find(ext);
@@ -71,9 +70,8 @@ namespace path
 						{
 							ctx.matched_extension = extensionFromString(ext);
 							ctx.ext_str = ext;
-							if (!location->getCGIExec().empty())
-								ctx.cgi_exec = location->getCGIExec();
-							//else if (idem pour cgi_on)
+							ctx.cgi_exec = location->getCGIExec();
+							ctx.is_cgi = location->getCGI();
 						}
 						if (!ctx.matched_location)
 							ctx.matched_location = location;
@@ -92,6 +90,7 @@ namespace path
 					{
 						longest_match = route_path.size();
 						ctx.matched_location = location;
+						ctx.location_name = route_path;;
 					}
 				}
 			}
@@ -136,8 +135,8 @@ namespace path
 				return false;
 			if (!ctx.matched_location->getAlias().empty())
 			{
-				std::string	location_path	= ctx.matched_location->getName();
-				std::string	remaining_path	= ctx.request_path.substr(location_path.size());
+				//std::string	location_path	= ctx.matched_location->getName();
+				std::string	remaining_path	= ctx.request_path.substr(ctx.location_name.size());
 				ctx.resolved_path = ctx.matched_location->getAlias() + remaining_path;
 			}
 			else 
@@ -218,7 +217,7 @@ namespace path
 	bool	normalizePath(PathContext& ctx, Response& resp)
 	{
 		std::string cage_root = ctx.matched_location->getName() == "MAIN" || ctx.matched_extension != NO_EXT 
-			? "" : ctx.matched_location->getName();
+			? "" : ctx.location_name;
 
 		std::string	decoded_path;
 
