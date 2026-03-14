@@ -179,6 +179,14 @@ namespace path
 		if (ctx.is_directory && !hasTrailingSlash(ctx, resp))
 			return false;
 
+		if (!ctx.is_directory && !ctx.is_cgi)
+		{
+			char buf[64];
+			struct tm *tm_info = gmtime(&statBuf.st_mtime);
+			strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
+			resp.setHeader("Last-Modified", buf); 
+		}
+
 		return true;
 	}
 

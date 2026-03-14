@@ -56,7 +56,9 @@ void	Connection::sendResponse()
 
 		if (request_handler._response.isDone()) {
 			std::cout << "Final offset: " << request_handler._response._offset << std::endl;
-			std::cerr << "[sendResponse] LAST SEND - Response complete!\n" << std::endl;
+			std::cerr << "[sendResponse] LAST SEND - Response complete!" << std::endl;
+			//std::cerr << "///////////////////////////////////////////" << std::endl;
+			std::cerr << "******************************************* END" << std::endl;
 		}
 	}
 	else if (bytes_sent < 0)

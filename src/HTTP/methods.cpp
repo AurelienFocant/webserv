@@ -75,8 +75,8 @@ namespace method
 		if (!resp::loadBody(resp, ctx.resolved_path))
 			return false;
 		
-		if (resp.getMethod() == NOT_SET)
-			resp.setMethod(GET);
+/* 		if (resp.getMethod() == NOT_SET)
+			resp.setMethod(GET); */
 
 		return true;	
 	}
