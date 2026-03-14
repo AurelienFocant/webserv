@@ -3,7 +3,6 @@
 #include "ConfigBuilder.hpp"
 #include "RequestHandler.hpp"
 
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -65,22 +64,6 @@ void	Webserv::readConfig()
 	_parseConfig();
 }
 
-
-// Utils
-std::string	_receiveLoop(int fd)
-{
-	// TO BE REDONE !! //
-
-	int		bytes_read; 
-	char	buf[1024];
-	std::string	s;
-
-	while ((bytes_read = recv(fd, &buf, 1024, 0)) > 0) {
-		s.append(buf, bytes_read);
-	}
-	return (s);
-}
-
 static	bool	_isListenSocket(Connection const& conn)
 {
 		if (conn.getFirstConnTime() == LISTEN_SOCK)
@@ -127,10 +110,10 @@ void	Webserv::_closeStaleCgi(void)
 			if (!waitpid(conn.child_pid, NULL, WNOHANG)) {
 				if (!kill(conn.child_pid, SIGKILL))
 					perror("Kill child:");
-				conn.request_handler.requestIsComplete();
-				conn.request_handler._response.setState(Response::READY);
-				conn.request_handler._response.setStatusCode(GATEWAY_TIMEOUT);
-				resp::prepareResponse(conn.request_handler._response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+				conn.request_handler.setRequestToComplete();
+				conn.request_handler.getResponse().setState(Response::READY);
+				conn.request_handler.getResponse().setStatusCode(GATEWAY_TIMEOUT);
+				resp::prepareResponse(conn.request_handler.getResponse(), conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 			}
 	}
 	return ;
@@ -316,6 +299,9 @@ bool	Webserv::listenHandler(Connection & conn)
 
 bool	Webserv::clientInHandler(Connection & conn)
 {
+	RequestHandler& reqHandler = conn.request_handler;
+	const Request& request = conn.request_handler.getRequest();
+	
 	if (conn.getEvent().events & EPOLLIN) {
 
 		std::string request_str = conn.receive();
@@ -323,24 +309,25 @@ bool	Webserv::clientInHandler(Connection & conn)
 			return (false);
 		}
 
-		conn.request_handler.processRequest(request_str);
+		reqHandler.processRequest(request_str);
 
-		if (conn.request_handler.getRequest().getState() > PARSED && conn.request_handler.getVirtualServer() == NULL)
+		if (request.getState() > PARSED && reqHandler.getVirtualServer() == NULL)
 		{
-			conn.request_handler.setVirtualServer(_resolveVirtualServer(conn));
-			conn.request_handler.findLocation();
+			reqHandler.setVirtualServer(_resolveVirtualServer(conn));
+			reqHandler.findLocation();
 		}
 
-		if (conn.request_handler.getVirtualServer() != NULL)
+		if (reqHandler.getVirtualServer() != NULL)
 		{
-			conn.request_handler.setRoot(conn.request_handler.getVirtualServer()->getRoot());
-			if (!conn.request_handler.isAllowedMethod())
-				conn.request_handler._request.setComplete(true);
-			if (!conn.request_handler.getRequest().isCompleted())
-				conn.request_handler.processBody();
+			
+			reqHandler.setRoot(reqHandler.getVirtualServer()->getRoot());
+			if (!reqHandler.isAllowedMethod())
+				reqHandler.setRequestToComplete();
+			if (!request.isCompleted())
+				reqHandler.processBody();
 		}
 
-		if (conn.request_handler.getRequest().isCompleted()) {
+		if (request.isCompleted()) {
 			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
 		
@@ -352,42 +339,37 @@ bool	Webserv::clientInHandler(Connection & conn)
 
 bool	Webserv::clientOutHandler(Connection & conn)
 {
+	RequestHandler& reqHandler = conn.request_handler;
+	Response& response = conn.request_handler.getResponse();
+	
 	if (conn.getEvent().events & EPOLLOUT) {
-		if (conn.request_handler.getResponse().isDefault()) {
-			conn.request_handler.handleRequest();
+		if (response.isDefault()) {
+			reqHandler.handleRequest();
 
-			//check status to do ?
-			if (conn.request_handler.getResponse().isCGI && (conn.request_handler.getResponse().getStatusCode() == OK
-				|| conn.request_handler.getResponse().getStatusCode() == CREATED)) {
-				_startCGIresponse(conn.request_handler, conn);
+			if (reqHandler.validCgiRequest()) {
+				if (!_startCGIresponse(conn.request_handler, conn))
+				{
+					const VirtualServer* server = conn.request_handler.getVirtualServer();
+					const Request& request = conn.request_handler.getRequest();
+					response.setStatusCode(INTERNAL_SERVER_ERROR);
+					resp::prepareResponse(response, request, server->getErrorPages());
+				}
 			}
 		}
-		
-		std::string body = conn.request_handler._response.getBody();
 
-		if (conn.request_handler.getResponse().getState() != Response::PROCESSING_CGI) {
-/* 			if (conn.request_handler._response.getState() == Response::READY) {
-				std::cerr << "[clientOut] Formatting response, body size = " 
-				<< body.size() << std::endl;
-				std::cout << "CGI Response 1000 first: " << body.substr(0, 1000) << std::endl;
-				if (body.size() > 100) {
-				std::cout << "CGI Response last 100: " 
-					<< body.substr(body.size() - 100, 100) << std::endl;
-				}
-				std::cout << "Body size: " << body.size() << std::endl;
-				} */
-			conn.request_handler._response.formatResponse();
+		if (response.getState() != Response::PROCESSING_CGI) {
+			response.formatResponse();
 			conn.sendResponse();
 		}
 
-		if (conn.request_handler.getResponse().isDone()) {
-			if (conn.request_handler.getResponse().getHeader("Connection") == "close") // || !keep-alive -> HTTP/1.0
+		if (response.isDone()) {
+			if (response.getHeader("Connection") == "close")
 			{
 				conn.conn_closed = true;
 				return (false);
 			}
 
-			conn.request_handler.clean();
+			reqHandler.clean();
 
 			if (!_addFdToEpoll(conn.getFd(), EPOLLIN | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
@@ -401,32 +383,28 @@ bool	Webserv::clientOutHandler(Connection & conn)
 
 
 // CGI HANDLERS
-bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
+bool	Webserv::_startCGIresponse(RequestHandler& reqHandler, Connection& conn)
 {
+	Response& response = reqHandler.getResponse();
+
 	if (!_addFdToEpoll(conn.getFd(), 0, EPOLL_CTL_MOD))
 		conn.conn_closed = true;
 	char **env = cgi::buildCgiEnv(reqHandler);
 	if (!env)
 		return (false);
 	if (!cgi::execute(reqHandler, conn, env))
-		return (false); // check what happend
-						//add CGI fd to epoll via conn
+		return (false);
 
+	///////ADD PIPES TO EPOLL + MAP
 	if (!_addFdToEpoll(conn.cgi_fd[1], EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 		close(conn.cgi_fd[0]);
 		close(conn.cgi_fd[1]);
 		return (false);
-		// send 500 server error ??
 	}
 
-
-	//_connections[clientSocket] = Connection(clientSocket, _epoll_fd, &Webserv::clientHandler);
 	t_info	info(conn, &Webserv::cgiInHandler);
-	//			info.connection = conn;
-	//			info.handler = &Webserv::cgiIn;
 	_connections.insert(std::make_pair(conn.cgi_fd[1], info));
 
-	///////TEST AJOUTE LES 2 PIPES A EPOLL
 	if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP, EPOLL_CTL_ADD)) {
 		std::cerr << "[ERROR] Cannot add CGI stdout to epoll" << std::endl;
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
@@ -440,7 +418,7 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 	_connections.insert(std::make_pair(conn.cgi_fd[0], info_out));
 	//////////////////////////////////////////
 
-	conn.request_handler._response.setState(Response::PROCESSING_CGI);
+	response.setState(Response::PROCESSING_CGI);
 	conn.cgi_timeout = std::time(NULL);
 	return (true);
 }
@@ -448,29 +426,19 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 bool	Webserv::cgiInHandler(Connection& conn)
 {
 	int bytes_sent = 0;
+
 	conn.sendCgiContent(bytes_sent);
 	if (bytes_sent < 0) {
 		//Error do something;
 		return (false);
 	}
-	
+
 	if (conn.cgi_stdin_offset == conn.request_handler.getRequest().getContentLength()) {
 		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[1], NULL);
 		_connections.erase(conn.cgi_fd[1]);
 		close(conn.cgi_fd[1]);
 		conn.cgi_fd[1] = -1;
 		conn.cgi_stdin_offset = 0;
-
-/* 		if (!_addFdToEpoll(conn.cgi_fd[0], EPOLLIN | EPOLLHUP | EPOLLRDHUP, EPOLL_CTL_ADD)) {
-			close(conn.cgi_fd[0]);
-			close(conn.cgi_fd[1]);
-			return (false);
-		};
-
-		t_info	info(conn, &Webserv::cgiOutHandler);
-		info.connection.setLastConnTime(std::time(NULL));
-		_connections.insert(std::make_pair(conn.cgi_fd[0], info)); */
-		conn.request_handler._response._offset = 0;
 	}
 
 	conn.cgi_timeout = std::time(NULL);
@@ -479,7 +447,9 @@ bool	Webserv::cgiInHandler(Connection& conn)
 
 bool Webserv::cgiOutHandler(Connection& conn)
 {
-    Response &response = conn.request_handler._response;
+	Response& response = conn.request_handler.getResponse();
+	const Request& request = conn.request_handler.getRequest();
+
     char buffer[32000];
     memset(buffer, 0, sizeof(buffer));
 
@@ -499,58 +469,16 @@ bool Webserv::cgiOutHandler(Connection& conn)
 
         int status;
         if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
-            kill(conn.child_pid, SIGKILL);
-			perror("Kill child:");
+            if (!kill(conn.child_pid, SIGKILL))
+				perror("Kill child:");
         }
         
-	// Extract headers
-        size_t end = response.getBody().find("\r\n\r\n");
-        bool eof = true;
-        if (end == std::string::npos) {
-            end = response.getBody().find("\n\n");
-            eof = false;
-        }
-        
-        if (end == std::string::npos) {
-            response.setStatusCode(INTERNAL_SERVER_ERROR);
-            return false;
-        }
-
-        std::string headers_str = response.getBody().substr(0, end);
-        size_t body_start = end + (eof ? 4 : 2);
-        std::string body = response.getBody().substr(body_start);
-
-        std::stringstream ss(headers_str);
-        std::string line;
-        while (std::getline(ss, line)) {
-            if (line.empty() || line == "\r")
-                continue;
-            
-            if (!line.empty() && line[line.size() - 1] == '\r')
-                line = line.substr(0, line.size() - 1);
-            
-            size_t colon = line.find(":");
-            if (colon == std::string::npos)
-                continue;
-            
-            std::string key = line.substr(0, colon);
-            std::string value = line.substr(colon + 2);
-
-			if (key == "Status") {
-				size_t space = value.find(' ');
-				std::string code_str = (space != std::string::npos) ? value.substr(0, space) : value;
-				int status_code = atoi(code_str.c_str());
-				response.setStatusCode(status_code);
-			}
-			else {
-           		response.setHeader(key, value);
-        	}
-	}
-
-        response.setBody(body);
-        
-        conn.request_handler.requestIsComplete();
-        resp::prepareResponse(response, conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+		if (!cgi::parseOutput(response))
+		{
+			response.setStatusCode(INTERNAL_SERVER_ERROR);
+			return false;
+		}
+        resp::prepareResponse(response, request, conn.request_handler.getVirtualServer()->getErrorPages());
         response.setState(Response::READY);
     }
     else {

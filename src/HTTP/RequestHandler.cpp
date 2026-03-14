@@ -7,10 +7,10 @@
 /* ////////////REQUEST HANDLER////////////////// */
 
 RequestHandler::RequestHandler() 
-	: _server(NULL)
-	, _ctx()
-	, _request()
+	: _request()
 	, _response()
+	, _server(NULL)
+	, _ctx()
 {}
 
 RequestHandler::~RequestHandler() {}
@@ -29,15 +29,10 @@ void	RequestHandler::processBody()
 
 void	RequestHandler::handleRequest()
 {
-	/* DEBUG */
 	std::cout << "[resolvePath] Request path: " << _ctx.request_path << std::endl;
 
-	std::cout << "[resolvePath] LOCATION NAME: " << _ctx.matched_location->getName() << std::endl;
-	const std::set<std::string>& methods = _ctx.matched_location->getAllowedMethods();
-	for (std::set<std::string>::const_iterator it = methods.begin(); it != methods.end(); ++it)
-		std::cerr << "[resolvePath] ALLOWED: " << *it << std::endl;
-	/* //////////////////////////// */
 	_response.setMethod(_request.getMethod());
+
 	if (_request.getStatusCode() != OK)
 		_response.setStatusCode(_request.getStatusCode());
 
@@ -45,13 +40,12 @@ void	RequestHandler::handleRequest()
 			method::dispatch(_ctx, _request, _response);
 
 	else if (_ctx.is_cgi)
-	{
-		_response.isCGI = true;
 		return;
-	}
 
 	resp::prepareResponse(_response, _request, _server->getErrorPages());
 }
+
+/* Wrappers */
 
 void	RequestHandler::findLocation()
 {
@@ -65,15 +59,23 @@ bool	RequestHandler::isAllowedMethod()
 	return (method::isAllowed(_ctx, _request, _response));
 }
 
-void	RequestHandler::requestIsComplete()
+void	RequestHandler::setRequestToComplete()
 {
 	_request.setComplete(true);
+}
+
+bool	RequestHandler::validCgiRequest()
+{
+	return _ctx.is_cgi && (_response.getStatusCode() == OK
+		|| _response.getStatusCode() == CREATED);
 }
 
 void	RequestHandler::resetPathContext()
 {
 	_ctx = PathContext();
 }
+
+/* Clean */
 
 void	RequestHandler::clean()
 {
@@ -90,6 +92,11 @@ const Request&	RequestHandler::getRequest() const
 }
 
 const Response&	RequestHandler::getResponse() const
+{
+	return (_response);
+}
+
+Response&	RequestHandler::getResponse()
 {
 	return (_response);
 }

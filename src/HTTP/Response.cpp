@@ -1,11 +1,10 @@
 #include "Response.hpp"
 	
 Response::Response()
-: isCGI(false)
-, _offset(0)
-, _state(DEFAULT)
+: _state(DEFAULT)
 , _status_code(OK)
 , _method(NOT_SET)
+, _offset(0)
 {}
 
 Response::~Response() {}
@@ -165,6 +164,11 @@ size_t	Response::getDataSize() const
 	return _data.size();
 }
 
+size_t	Response::getOffset() const
+{
+	return _offset;
+}
+
 /* RESET */
 
 void	Response::cleanResponse()
@@ -176,7 +180,6 @@ void	Response::cleanResponse()
 	_headers.clear();
 	_body.clear();
 	_data.clear();
-	isCGI = false;
 	_offset = 0;
 }
 

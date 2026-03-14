@@ -27,37 +27,34 @@ std::string	Connection::receive()
 
 void	Connection::sendResponse()
 {
+	Response& response = request_handler.getResponse();
+
 	const char 		*data;
 	size_t		to_send = 0;
 
-	if (request_handler._response.getState() != Response::SENDING)
+	if (response.getState() != Response::SENDING)
 		return;
 
-	data = request_handler._response.getDataToSend(to_send);
+	data = response.getDataToSend(to_send);
 
-	if (data && request_handler._response._offset == 0) {
+	if (data && response.getOffset()  == 0) {
 		std::stringstream	stream(data);
 		char	buff[256];
 		stream.getline(buff, 256);
 		std::cerr << "[Status line]: " << buff << std::endl;
 	}
 
-	if (to_send > request_handler._response._offset)
-		std::cout << "left to send: " << to_send - request_handler._response._offset << " / " << request_handler._response.getDataSize() << std::endl;
-
-/* 	if (to_send > MAX_CHUNK_SIZE)
-		to_send = MAX_CHUNK_SIZE; */
+	if (to_send > response.getOffset() )
+		std::cout << "left to send: " << to_send - response.getOffset()  << " / " << response.getDataSize() << std::endl;
 
 	ssize_t bytes_sent = send(_fd, data, to_send, MSG_NOSIGNAL);
-
 	if (bytes_sent > 0)
 	{
-		request_handler._response.updateBytesSend(bytes_sent);
+		response.updateBytesSend(bytes_sent);
 
-		if (request_handler._response.isDone()) {
-			std::cout << "Final offset: " << request_handler._response._offset << std::endl;
+		if (response.isDone()) {
+			std::cout << "Final offset: " << response.getOffset()  << std::endl;
 			std::cerr << "[sendResponse] LAST SEND - Response complete!" << std::endl;
-			//std::cerr << "///////////////////////////////////////////" << std::endl;
 			std::cerr << "******************************************* END" << std::endl;
 		}
 	}
@@ -68,9 +65,12 @@ void	Connection::sendResponse()
 void	Connection::sendCgiContent(int& bytes_sent)
 {
 	const std::string& content = request_handler.getRequest().getBody();
+
 	if (content.size() <= cgi_stdin_offset)
 		return ;
+
 	bytes_sent = write(cgi_fd[1], content.c_str() + cgi_stdin_offset, content.size() - cgi_stdin_offset);
+	
 	if (bytes_sent > 0)
 		cgi_stdin_offset += bytes_sent;
 	return ;

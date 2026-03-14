@@ -1,44 +1,6 @@
 #include "cgi.hpp"
 
-static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect) ;
-
-bool	cgi::execute2(const RequestHandler& handler, Connection& conn, char** env)
-{
-	 //size must depend of number of argument and if an interpreter is needed ?
-	char* argv[3];
-	//Create argv for child exec
-	argv[2] = NULL;
-	try {
-		argv[0] = convertStringToChar(findInterpreter(handler.getExtension()));
-		argv[1] = convertStringToChar(handler.getResolvedPath()); //->maybe do one function that initialize whole argv based on file_to_execute
-	}
-	catch (std::exception& e) {
-		delete[](env);
-		//setup Response status code to Internal_server_error: here or up the stack
-		std::cerr << "Fatal error; " << e.what() << std::endl;
-		return (false); //Continue or crash the program ?
-	}
-
-	if (!launchCgi(conn, argv, env)) {
-		delete[](env);
-		//some errors happened, setup response code accordingly
-		return (false);
-	}
-
-	delete[](env);
-
-	if (fcntl(conn.cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
-		close(conn.cgi_fd[0]);
-		close(conn.cgi_fd[1]);
-		return (false);
-	}
-	if (fcntl(conn.cgi_fd[0], F_SETFL, O_NONBLOCK) < 0) {
-		close(conn.cgi_fd[0]);
-		close(conn.cgi_fd[1]);
-		return (false);
-	}
-	return (true);
-}
+static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect);
 
 bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 {
@@ -55,7 +17,6 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 		argv[0] = strdup(handler.getResolvedPath().c_str());
 		argv[1] = strdup(handler.getResolvedPath().c_str());
 		argv[2] = NULL;
-
 	}
 
 	if (!argv[0] || !argv[1])
@@ -225,4 +186,53 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 	conn.child_pid = pid;
 	conn.cgi_timeout = std::time(NULL);
 	return (true);
+}
+
+bool	cgi::parseOutput(Response& response)
+{
+	size_t	end = response.getBody().find("\r\n\r\n");
+	int 	separator_len = 4;
+
+	if (end == std::string::npos) {
+		end = response.getBody().find("\n\n");
+		separator_len = 2;
+	}
+	
+	if (end == std::string::npos)
+		return false;
+
+	std::string	headers_str = response.getBody().substr(0, end);
+	size_t 		body_start = end + separator_len;
+	std::string	body = response.getBody().substr(body_start);
+
+	std::stringstream ss(headers_str);
+	std::string line;
+	while (std::getline(ss, line)) {
+		if (line.empty() || line == "\r")
+			continue;
+		
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line = line.substr(0, line.size() - 1);
+		
+		size_t colon = line.find(":");
+		if (colon == std::string::npos)
+			continue;
+		
+		std::string key = line.substr(0, colon);
+		std::string value = line.substr(colon + 1);
+		while (!value.empty() && value[0] == ' ')
+			value.erase(0, 1);
+
+		if (key == "Status") {
+			size_t space = value.find(' ');
+			std::string code_str = (space != std::string::npos) ? value.substr(0, space) : value;
+			int status_code = atoi(code_str.c_str());
+			response.setStatusCode(status_code);
+		}
+		else {
+			response.setHeader(key, value);
+		}
+	}
+	response.setBody(body);
+	return true;
 }

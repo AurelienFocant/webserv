@@ -33,8 +33,6 @@ class	Response
 
 	/* Public Attributes */
 
-	bool				isCGI;
-	size_t				_offset;
 
 	/*Publics Methods*/
 
@@ -58,7 +56,7 @@ class	Response
 	void				setHeader(const std::string& key, const std::string& value);
 	void				setBody(const std::string& content);
 	void				addCgiBody(char* content, size_t bytes_read);
-	void				setBodySize(int size);
+	void				setBodySize(size_t size);
 
 	/*Getters*/
 	int					getState() const;
@@ -68,6 +66,7 @@ class	Response
 	std::string			getHeader(const std::string& key) const;
 	std::string			getBody() const;
 	size_t				getDataSize() const;
+	size_t				getOffset() const;
 
 	private:
 
@@ -75,13 +74,13 @@ class	Response
 
 	int									_state;
 	int									_status_code;
-	bool								_isCGI;
 	t_method							_method;
 	std::string							_http_version;
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
-
 	std::string							_data;
+	size_t								_offset;
+
 
 	/* Private Methods */
 

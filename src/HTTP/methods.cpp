@@ -18,9 +18,6 @@ namespace method
 {
 	bool	dispatch(PathContext& ctx, Request& req, Response& resp)
 	{
-	/* 		if (resp.isCGI)
-			return (true); */
-
 		switch(req.getMethod())
 		{
 			case GET:

@@ -25,6 +25,8 @@ class RequestHandler
 	private:
 
 	/*PRIVATE ATTRIBUTES */
+	Request					_request;
+	Response				_response;
 	const VirtualServer*	_server;
 	PathContext				_ctx;
 
@@ -38,24 +40,21 @@ class RequestHandler
 
 	RequestHandler&	operator=(const RequestHandler& rhs);
 
-	/* Public Attributes */
-	Request					_request;
-	Response				_response;
-
-
 	/* Public methods*/
 	void					processRequest(const std::string& inpput);
 	void					processBody();
 	void					handleRequest();
 	void					findLocation();
 	bool					isAllowedMethod();
+	void					setRequestToComplete();
+	bool					validCgiRequest();
 	void					resetPathContext();
-	void					requestIsComplete();
 	void 					clean();
 
 	/* Getters */
 	const Request&			getRequest() const;
 	const Response&			getResponse() const;
+	Response&				getResponse();
 	const VirtualServer*	getVirtualServer() const;
 
 	/* CGI Getters */
