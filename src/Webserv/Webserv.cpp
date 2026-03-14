@@ -199,7 +199,7 @@ void	Webserv::initWebServer()
 		ports.push_back(port);
 
 		int	listenSocket;
-		if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0)
+		if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0)) < 0)
 			throw (std::runtime_error("listen socket opening failed"));
 
 		int	enable = 1;
@@ -221,17 +221,14 @@ void	Webserv::initWebServer()
 			throw (std::runtime_error("listen failed"));
 		// ?? listen options ?
 
-
 		Connection&	new_connection = *(new Connection(listenSocket, _epoll_fd, LISTEN_SOCK));
 		t_info	info(new_connection, &Webserv::listenHandler);
 		_connections.insert(std::make_pair(listenSocket, info));
-
 
 		struct epoll_event	ev_hints;
 		ev_hints.events = EPOLLIN;
 		ev_hints.data.fd = listenSocket;
 		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
-
 
 		// signal(SIGINT, sigintHandler);
 		signal(SIGPIPE, SIG_IGN);
@@ -298,7 +295,7 @@ bool	Webserv::listenHandler(Connection & conn)
 	if (clientSocket < 0)
 		return (false);
 
-	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) < 0) {
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | SOCK_CLOEXEC) < 0) {
 		close(clientSocket);
 		return (false);
 	}
