@@ -27,7 +27,7 @@ namespace resp
 
 		response.setHttpVersion(request.getHttpVersion());
 		response.setHeader("Date", httpUtils::getTime());
-		//response.setHeader("Server", "webservMeBaby;")
+		response.setHeader("Server", "webservMeBaby");
 
 		std::vector<std::string> header_values = request.getHeaderValues("connection");
 		std::string connection;

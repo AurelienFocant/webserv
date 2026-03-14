@@ -306,7 +306,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 	if (_content_length > 0) {
 		//check for max_body size
 		size_t	before_len = _body.size();
-		if (before_len + _content_length > max_body) {
+		if (before_len + _content_length - 2 > max_body) { //! Fix provisoire
 			_progress = DONE;
 			_complete = true;
 			_status_code = REQUEST_ENTITY_TOO_LARGE;
@@ -338,7 +338,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 
 bool	Request::bodyHandlerContentLength(unsigned int max_body) {
 	//check for max_body size
-	if (max_body < _content_length) {
+	if (_content_length > max_body) {
 		_progress = DONE;
 		_complete = true;
 		_status_code = REQUEST_ENTITY_TOO_LARGE;

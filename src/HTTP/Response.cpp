@@ -19,14 +19,17 @@ void	Response::formatResponse()
 
 	_data = buildHttpResponse();
 
+	std::cerr << "-------------------------------------------" << std::endl;
 	std::cerr << "[formatResponse] Headers size = " << (_data.size()) << std::endl;
 	std::cerr << "[formatResponse] Header = " << _data << std::endl;
+	std::cerr << "-------------------------------------------" << std::endl;
 
 	if (_method != HEAD)
 		_data += _body;
 	
 	std::cerr << "[formatResponse] Body size = " << _body.size() << std::endl;
 	std::cerr << "[formatResponse] Total _data size = " << _data.size() << std::endl;
+	std::cerr << "-------------------------------------------" << std::endl;
 
 	_offset = 0;
 	_state = SENDING;

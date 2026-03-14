@@ -81,4 +81,17 @@ content returned: NOOOOO
 
 17. Test POST http://localhost:7070/post_body with a size of 0 -> 200 OK small adaptation to handle POST non CGI/non multipart + normalize location names ('/') and ignore trailing slash detection for POST
 
-18. Test POST http://localhost:7070/post_body with a size of 100
+18. Test POST http://localhost:7070/post_body with a size of 100 -> 200 OK bodyHandlerTransferEncoding why _content_length + 2??? (hardcode fix: if (before_len + _content_length - 2 > max_body))
+
+19. Test POST http://localhost:7070/post_body with a size of 200
+
+20. Test POST http://localhost:7070/post_body with a size of 101
+
+21. Test multiple workers(5) doing multiple times(15): GET on /
+
+22. Test multiple workers(20) doing multiple times(5000): GET on /
+
+23. Test multiple workers(128) doing multiple times(50): GET on /directory/nop
+
+24. Test multiple workers(20) doing multiple times(5): Post on /directory/youpi.bla with size 100000000
+

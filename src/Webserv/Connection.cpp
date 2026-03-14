@@ -48,18 +48,18 @@ void	Connection::sendResponse()
 /* 	if (to_send > MAX_CHUNK_SIZE)
 		to_send = MAX_CHUNK_SIZE; */
 
-	ssize_t bytesSent = send(_fd, data, to_send, MSG_NOSIGNAL);
+	ssize_t bytes_sent = send(_fd, data, to_send, MSG_NOSIGNAL);
 
-	if (bytesSent > 0)
+	if (bytes_sent > 0)
 	{
-		request_handler._response.updateBytesSend(bytesSent);
+		request_handler._response.updateBytesSend(bytes_sent);
 
 		if (request_handler._response.isDone()) {
 			std::cout << "Final offset: " << request_handler._response._offset << std::endl;
 			std::cerr << "[sendResponse] LAST SEND - Response complete!\n" << std::endl;
 		}
 	}
-	else if (bytesSent < 0)
+	else if (bytes_sent < 0)
 		return;
 }
 

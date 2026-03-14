@@ -450,9 +450,9 @@ bool	Webserv::_startCGIresponse(RequestHandler & reqHandler, Connection & conn)
 
 bool	Webserv::cgiInHandler(Connection& conn)
 {
-	int bytes_read = 0;
-	conn.sendCgiContent(bytes_read);
-	if (bytes_read < 0) {
+	int bytes_sent = 0;
+	conn.sendCgiContent(bytes_sent);
+	if (bytes_sent < 0) {
 		//Error do something;
 		return (false);
 	}
