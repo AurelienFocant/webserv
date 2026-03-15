@@ -17,11 +17,11 @@
 
 int g_signum;
 
-/*static	void sigintHandler(int num)
+static	void sigintHandler(int num)
 {
 	g_signum = num;
 }
-*/
+
 // Config parsing and reading
 void	Webserv::_openConfig(void)
 {
@@ -213,7 +213,7 @@ void	Webserv::initWebServer()
 		ev_hints.data.fd = listenSocket;
 		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
 
-		// signal(SIGINT, sigintHandler);
+		signal(SIGINT, sigintHandler);
 		signal(SIGPIPE, SIG_IGN);
 	}
 }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>403 // FORBIDDEN</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#060810;--yellow:#f5c518;--pink:#ff2d6b;--muted:#4a6080;--dim:#1e2a3a;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);font-family:'Share Tech Mono',monospace;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:40px;}
+  body::before{content:'';position:fixed;inset:0;
+    background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+    pointer-events:none;}
+  .code{font-family:'Orbitron',monospace;font-size:clamp(80px,15vw,160px);
+    font-weight:900;color:var(--yellow);text-shadow:0 0 40px var(--yellow);line-height:1;margin-bottom:16px;}
+  .ascii{font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:24px;}
+  .msg{font-size:14px;color:var(--yellow);letter-spacing:3px;margin-bottom:8px;}
+  .sub{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:32px;}
+  a{display:inline-block;padding:10px 24px;border:1px solid var(--yellow);
+    color:var(--yellow);text-decoration:none;font-size:11px;letter-spacing:2px;transition:all .3s;}
+  a:hover{background:rgba(245,197,24,0.08);}
+</style>
+</head>
+<body>
+<div class="code">403</div>
+<pre class="ascii">
+  /\_/\
+ ( >.< )   paws off — access denied
+  > 🔒 <
+</pre>
+<div class="msg">FORBIDDEN</div>
+<div class="sub">You don't have permission to access this resource.</div>
+<a href="/">← RETURN HOME</a>
+</body>
+</html>

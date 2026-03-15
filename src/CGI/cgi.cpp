@@ -97,7 +97,7 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 	if (!handler.getCGIExec().empty())
 	{
 		vect.push_back("PATH_INFO=" + handler.getPathInfo());
-		vect.push_back("PATH_TRANSLATED=" + handler.getResolvedPath());
+		vect.push_back("PATH_TRANSLATED=" + handler.getCGIExec());
 	}
 	else
 	{
