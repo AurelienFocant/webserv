@@ -1,0 +1,43 @@
+body {
+	margin:0;
+	font-family: Georgia, serif;
+	font-size: large;
+	background: radial-gradient(circle at 50% 20%, #ff9266 0%, #ff5a2f 40%, #e6452d 100%);
+	padding:40px;
+  }
+  
+  h1 {
+	font-family: Arial, sans-serif;
+	font-size: 30px;
+	color:#5d4650;
+	text-transform:uppercase;
+	letter-spacing:.13em;
+  }
+  
+  pre {
+	margin-top:40px;
+	margin-left:500px;
+	margin-right:500px;
+	display:flex;
+	flex-direction:column;
+	gap:20px;
+  }
+  
+  a {
+	padding:10px 14px;
+	border-radius:12px;
+	background:rgba(255,255,255,0.7);
+	text-decoration:none;
+	color:#154875;
+	font-family: 'Courier New', Courier, monospace;
+	font-weight:bold;
+	font-size: 15px;
+	text-align:center;
+  }
+  
+  a:hover {
+	background:#ff4fa3;
+	color:white;
+  }
+  
+  

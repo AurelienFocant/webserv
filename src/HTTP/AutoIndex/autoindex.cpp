@@ -73,7 +73,12 @@ std::string	addAutoindexHtml(std::string const& path, std::string const& body)
 {
 	HtmlBuilder html(body);
 	HtmlBuilder	title("Index of " + path + '\n');
+	
+	HtmlBuilder css("<link rel=\"stylesheet\" href=\"/css/autoindex.css\">\n");
 	HtmlBuilder header = title;
+	header + css;
+	header.Tag("head");
+
 	title.Tag("title").Tag("head");
 	header.Tag("h1");
 
@@ -81,7 +86,6 @@ std::string	addAutoindexHtml(std::string const& path, std::string const& body)
 		.Tag("hr");
 
 	html = header + html;
-
 	html.Tag("body");
 
 	html = title + html;
