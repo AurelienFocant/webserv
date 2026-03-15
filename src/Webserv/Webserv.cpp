@@ -74,41 +74,25 @@ static	bool	_isListenSocket(Connection const& conn)
 void	Webserv::_closeConnection(Connection & conn)
 {
 	int	fd = conn.getFd();
+	Connection* ptr = &conn;
 
 	epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	_connections.erase(fd);
 	close(fd);
+
+	delete(ptr);
 }
 
 void	Webserv::_closeStaleConnections(void)
 {
 	std::map<int, t_info>::iterator	it;
-
 	for (it = _connections.begin(); it != _connections.end(); it++) {
 		Connection& conn = it->second.connection;
 
 		if (_isListenSocket(conn))
 			continue ;
-		if (conn.conn_closed) {
-			--it;
-			_closeConnection(conn);
-		}
-		// what about if its the very first connection and doesnt have any virtual server ?
-		// if (conn.hasTimedOut())
-		// 	return (_closeConnection(conn));
-	}
-}
 
-void	Webserv::_closeStaleCgi(void)
-{
-	std::map<int, t_info>::iterator	it;
-
-	for (it = _connections.begin(); it != _connections.end(); it++) {
-		Connection& conn = it->second.connection;
-
-		if (_isListenSocket(conn))
-			continue ;
-		if (conn.hasCgiTimedOut())
+		if (conn.hasCgiTimedOut()) {
 			if (!waitpid(conn.child_pid, NULL, WNOHANG)) {
 				if (!kill(conn.child_pid, SIGKILL))
 					perror("Kill child:");
@@ -117,8 +101,16 @@ void	Webserv::_closeStaleCgi(void)
 				conn.request_handler.getResponse().setStatusCode(GATEWAY_TIMEOUT);
 				resp::prepareResponse(conn.request_handler.getResponse(), conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
 			}
+		}
+
+		if (conn.conn_closed) {
+			--it;
+			_closeConnection(conn);
+		}
+		// what about if its the very first connection and doesnt have any virtual server ?
+		// if (conn.hasTimedOut())
+		// 	return (_closeConnection(conn));
 	}
-	return ;
 }
 
 const VirtualServer&	Webserv::_resolveVirtualServer(const Connection& conn)
@@ -269,8 +261,6 @@ void	Webserv::run()
 		}
 
 		_closeStaleConnections();
-		_closeStaleCgi();
-		//usleep(100);--> cheat ?
 	}
 }
 
@@ -531,7 +521,11 @@ Webserv&	Webserv::operator=( const Webserv& rhs )
 Webserv::~Webserv( void )
 {
 	for (std::map<int, t_info>::iterator it = _connections.begin(); it != _connections.end(); ++it) {
-		delete (&(it->second.connection));
+		Connection  &conn = it->second.connection;
+		if (conn.getFd() != -1)
+			close(conn.getFd());
+		delete (&(conn));
 	}
+	close(_epoll_fd);
 	std::cout << "Webserv Object Destroyed" << std::endl;
 }

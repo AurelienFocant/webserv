@@ -108,7 +108,7 @@ vgdb:
 	valgrind --vgdb-error=0 --vgdb=full --leak-check=full --show-leak-kinds=all ./$(NAME)
 
 leak: all
-	valgrind --leak-check=full --show-leak-kinds=all ./hugeRT worlds/invalid.rt
+	valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./$(NAME)
 
 test: all
 	@. unit_tests/tests.sh

@@ -2,6 +2,17 @@
 
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect);
 
+void	deleteEnv(char **env)
+{
+	char **ptr = env;
+	while (*env) {
+		delete[](*env);
+		env++;
+	}
+	delete[](ptr);
+
+}
+
 bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 {
 	char* argv[3];
@@ -21,12 +32,14 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 
 	if (!argv[0] || !argv[1])
 	{
-		delete[](env);
+		deleteEnv(env);
+		// delete[](env);
 		return (false);
 	}
 
 	if (!launchCgi(conn, argv, env)) {
-		delete[](env);
+		deleteEnv(env);
+		// delete[](env);
 		return (false);
 	}
 
@@ -35,7 +48,8 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 	free(argv[1]);
 	argv[1] = NULL;
 
-	delete[](env);
+	deleteEnv(env);
+	// delete[](env);
 
 	if (fcntl(conn.cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
 		close(conn.cgi_fd[0]);
