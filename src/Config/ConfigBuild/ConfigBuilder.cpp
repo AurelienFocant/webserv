@@ -265,7 +265,7 @@ void ConfigBuilder::_handleAllowedMethods(const DirectiveNode& d)
 		if (allowed_methods.find(method) != allowed_methods.end())
 			_error(d.line, "duplicate method");
 
-		if (method == "GET" || method == "POST" || method == "DELETE")
+		if (method == "GET" || method == "POST" || method == "DELETE" || method == "HEAD")
 			allowed_methods.insert(method);
 		else
 			_error(d.line, "invalid method!");
