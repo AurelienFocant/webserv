@@ -89,8 +89,10 @@ void	Webserv::_closeStaleConnections(void)
 
 		if (_isListenSocket(conn))
 			continue ;
-		if (conn.conn_closed)
-			return (_closeConnection(conn));
+		if (conn.conn_closed) {
+			--it;
+			_closeConnection(conn);
+		}
 		// what about if its the very first connection and doesnt have any virtual server ?
 		// if (conn.hasTimedOut())
 		// 	return (_closeConnection(conn));
@@ -140,7 +142,7 @@ const VirtualServer&	Webserv::_resolveVirtualServer(const Connection& conn)
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
 		if (_servers[i].getPort() == port && _servers[i].getServName() == host)
-				return _servers[i];
+			return _servers[i];
 	}
 
 	for (size_t i = 0; i < _servers.size(); i++)
@@ -220,20 +222,20 @@ void	Webserv::initWebServer()
 
 bool	Webserv::_checkForRdHup(Connection & conn)
 {
-			if (conn.getEvent().events & EPOLLRDHUP) {
-				conn.conn_closed = true;
-				return (false);
-			}
+	if (conn.getEvent().events & EPOLLRDHUP) {
+		conn.conn_closed = true;
+		return (false);
+	}
 
-			if (conn.getEvent().events & EPOLLERR || conn.getEvent().events & EPOLLHUP) {
-				if (conn.getEvent().data.fd == conn.getFd()) {
-					std::cout << "[Error] HUP or ERR" <<std::endl; 
-					conn.conn_closed = true;
-				}
-				return (false);
-			}
+	if (conn.getEvent().events & EPOLLERR || conn.getEvent().events & EPOLLHUP) {
+		if (conn.getEvent().data.fd == conn.getFd()) {
+			std::cout << "[Error] HUP or ERR" <<std::endl; 
+			conn.conn_closed = true;
+		}
+		return (false);
+	}
 
-			return (true);
+	return (true);
 }
 
 // Main loop
@@ -301,7 +303,7 @@ bool	Webserv::clientInHandler(Connection & conn)
 {
 	RequestHandler& reqHandler = conn.request_handler;
 	const Request& request = conn.request_handler.getRequest();
-	
+
 	if (conn.getEvent().events & EPOLLIN) {
 
 		std::string request_str = conn.receive();
@@ -319,7 +321,7 @@ bool	Webserv::clientInHandler(Connection & conn)
 
 		if (reqHandler.getVirtualServer() != NULL)
 		{
-			
+
 			reqHandler.setRoot(reqHandler.getVirtualServer()->getRoot());
 			if (!reqHandler.isAllowedMethod())
 				reqHandler.setRequestToComplete();
@@ -330,7 +332,7 @@ bool	Webserv::clientInHandler(Connection & conn)
 		if (request.isCompleted()) {
 			if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
 				conn.conn_closed = true;
-		
+
 			_connections.find(conn.getFd())->second.handler = &Webserv::clientOutHandler;
 		}
 	}
@@ -341,7 +343,7 @@ bool	Webserv::clientOutHandler(Connection & conn)
 {
 	RequestHandler& reqHandler = conn.request_handler;
 	Response& response = conn.request_handler.getResponse();
-	
+
 	if (conn.getEvent().events & EPOLLOUT) {
 		if (response.isDefault()) {
 			reqHandler.handleRequest();
@@ -450,42 +452,42 @@ bool Webserv::cgiOutHandler(Connection& conn)
 	Response& response = conn.request_handler.getResponse();
 	const Request& request = conn.request_handler.getRequest();
 
-    char buffer[32000];
-    memset(buffer, 0, sizeof(buffer));
+	char buffer[32000];
+	memset(buffer, 0, sizeof(buffer));
 
-    ssize_t bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer));
+	ssize_t bytes_read = read(conn.cgi_fd[0], buffer, sizeof(buffer));
 
-    if (bytes_read < 0) {
-        return true;
-    }
-    else if (bytes_read == 0) {
-        
+	if (bytes_read < 0) {
+		return true;
+	}
+	else if (bytes_read == 0) {
+
 		if (!_addFdToEpoll(conn.getFd(), EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_MOD))
 			conn.conn_closed = true;
 
-        epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
-        _connections.erase(conn.cgi_fd[0]);
-        close(conn.cgi_fd[0]);
+		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, conn.cgi_fd[0], NULL);
+		_connections.erase(conn.cgi_fd[0]);
+		close(conn.cgi_fd[0]);
 
-        int status;
-        if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
-            if (!kill(conn.child_pid, SIGKILL))
+		int status;
+		if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
+			if (!kill(conn.child_pid, SIGKILL))
 				perror("Kill child:");
-        }
-        
+		}
+
 		if (!cgi::parseOutput(response))
 		{
 			response.setStatusCode(INTERNAL_SERVER_ERROR);
 			return false;
 		}
-        resp::prepareResponse(response, request, conn.request_handler.getVirtualServer()->getErrorPages());
-        response.setState(Response::READY);
-    }
-    else {
-        response.addCgiBody(buffer, bytes_read);
-        conn.cgi_timeout = std::time(NULL);
-    }
-    return true;
+		resp::prepareResponse(response, request, conn.request_handler.getVirtualServer()->getErrorPages());
+		response.setState(Response::READY);
+	}
+	else {
+		response.addCgiBody(buffer, bytes_read);
+		conn.cgi_timeout = std::time(NULL);
+	}
+	return true;
 }
 
 // Getters
