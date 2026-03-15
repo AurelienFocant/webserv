@@ -86,26 +86,31 @@ namespace method
 		if (upload::isMultiformData(req))
 		{
 			if (!upload::hasContentTypeHeader(req)) {
-				resp.setStatusCode(BAD_REQUEST);	return (false);
+				resp.setStatusCode(BAD_REQUEST);
+				return (false);
 			}
 
 			std::string boundary = upload::extractBoundary(req);
 			if (boundary.empty()) {
-				resp.setStatusCode(BAD_REQUEST);	return (false);
+				resp.setStatusCode(BAD_REQUEST);
+				return (false);
 			}
 
 			std::string filename = upload::extractFilename(req, boundary);
 			if (filename.empty()) {
-				resp.setStatusCode(BAD_REQUEST);	return (false);
+				resp.setStatusCode(BAD_REQUEST);
+				return (false);
 			}
 
 			filename = upload::verifyFile(ctx, filename);
 			if (filename.empty()) {
-				resp.setStatusCode(FORBIDDEN);		return (false);
+				resp.setStatusCode(FORBIDDEN);
+				return (false);
 			}
 
-			if (!upload::saveDataToFile(req, filename)) {
-				resp.setStatusCode(INTERNAL_SERVER_ERROR);	return (false);
+			if (!upload::saveDataToFile(req, filename, boundary)) {
+				resp.setStatusCode(INTERNAL_SERVER_ERROR);
+				return (false);
 			}
 
 			resp.setStatusCode(CREATED);
@@ -206,7 +211,7 @@ namespace upload
 		std::string	header = req.getHeaderValues("Content-Type")[0];
 		if ((pos = header.find(boundary_str)) != std::string::npos) {
 			std::string res = header.substr(pos + boundary_str.size());
-			return (res);
+			return ("--" + res);
 		}
 		return ("");
 	}
@@ -217,22 +222,22 @@ namespace upload
 		size_t end_of_filename;
 		std::string body = req.getBody();
 
-		if (!body.find(boundary))
-			return "";
+		if (body.find(boundary) == std::string::npos)
+			return ("");
 
 		std::string file("filename=");
 		start_of_filename = body.find(file);
 		if (start_of_filename == std::string::npos)
-			return "";
+			return ("");
 
 		start_of_filename += file.size();
 		end_of_filename = body.find("\r\n", start_of_filename);
 		if (end_of_filename == std::string::npos)
-			return "";
+			return ("");
 
 		if (body[start_of_filename] == '"') {
 			if (body[end_of_filename - 1] != '"')
-				return "";
+				return ("");
 			start_of_filename++;
 			end_of_filename--;
 		}
@@ -266,25 +271,33 @@ namespace upload
 		return (filename);
 	}
 
-	bool	saveDataToFile(const Request& req, std::string filename)
+	bool	saveDataToFile(const Request& req, std::string filename, std::string boundary)
 	{
 		std::string body = req.getBody();
+		if (body.find(boundary) != 0)
+			return (false);
 
+		body = body.substr(body.find("filename"));
 		size_t end_of_header = body.find("\r\n\r\n");
 		if (end_of_header == std::string::npos)
 			return (false);
-		end_of_header += 4;
+		end_of_header += 4;	//\r\n\r\n
+		body = body.substr(end_of_header);
+
+		size_t next_boundary = body.find(boundary);
+		body = body.substr(0, next_boundary - 2);	//\r\n
 
 		int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0664);
 		if (fd < 0)
 			return (false);
 
-		std::string s_buffer = body.substr(end_of_header);
 
+		size_t size = body.size();
 		int bytes_sent = 0;
 		int start = 0;
-		while ((bytes_sent = write(fd, &(s_buffer.c_str()[start]), 4000)) > 0) {
+		while ((bytes_sent = write(fd, &(body.c_str()[start]), size)) > 0) {
 			start += bytes_sent;
+			size -= bytes_sent;
 		}
 		close(fd);
 		return (true);

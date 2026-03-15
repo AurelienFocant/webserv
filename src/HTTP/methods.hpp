@@ -29,7 +29,7 @@ namespace upload
 	std::string		extractBoundary(const Request& req);
 	std::string		extractFilename(const Request& req, std::string boundary);
 	std::string		verifyFile(const PathContext& ctx, std::string filename);
-	bool			saveDataToFile(const Request& req, std::string filename);
+	bool			saveDataToFile(const Request& req, std::string filename, std::string boundary);
 }
 
 #endif
