@@ -6,9 +6,30 @@
 
 #include <sstream>
 #include <fstream>
+#include <fcntl.h>
 
 namespace resp
 {
+	std::string	hardcode500Error(void)
+	{
+		return ("\
+				<!DOCTYPE html>\n\
+				<html lang=\"en\">\n\
+				<head>\n\
+				<meta charset=\"UTF-8\">\n\
+				<title>500 - Internal Server Error</title>\n\
+				</head>\n\
+				<body>\n\
+				<div class=\"container\">\n\
+				<h1>WebServ 500</h1>\n\
+				<p>Who changed the permissions of my file ?</p>\n\
+				<a href=\"/\">Back to Home</a>\n\
+				</div>\n\
+				</body>\n\
+				</html>\n\
+				");
+	}
+
 	void	prepareResponse(Response& response, const Request& request, const std::map<int, std::string>& error_pages)
 	{
 		int status_code = response.getStatusCode();
@@ -18,8 +39,7 @@ namespace resp
 			std::string body;
 			if (!resp::loadErrorPage(status_code, error_pages, body))
 			{
-				// do stuff;c
-				// 500 error?
+				body = hardcode500Error();
 			}
 			response.setBody(body);
 			response.setHeader("Content-Type", "text/html");
@@ -66,7 +86,7 @@ namespace resp
 
 		body = ss.str();
 		return true;
-}
+	}
 
 	bool	loadErrorPage(int status_code, const std::map<int, std::string>& error_pages, std::string& body)
 	{
@@ -77,11 +97,15 @@ namespace resp
 		if (it == error_pages.end())
 			return false;
 
-		// ADD check if absolute path or string to concatene
-/* 		std::string error_path;
-		retrieve _root from RH
-		it->second[0] == '/' ? error_path = it->second : error_path = root + it->second; */
-
+		int fd = open(it->second.c_str(), O_RDONLY);
+		if (fd == -1) {
+			status_code = INTERNAL_SERVER_ERROR;
+			it = error_pages.find(INTERNAL_SERVER_ERROR);
+			fd = open(it->second.c_str(), O_RDONLY);
+			if (fd == -1)
+				return (false);
+		}
+		close(fd);
 		loadFileToString(it->second, body);
 		return true;
 	}
@@ -90,7 +114,7 @@ namespace resp
 	{
 		std::string allow_header;
 		for (std::set<std::string>::const_iterator it = allowed_methods.begin();
-			it != allowed_methods.end(); it++)
+				it != allowed_methods.end(); it++)
 		{
 			if (it != allowed_methods.begin())
 				allow_header += ", ";
