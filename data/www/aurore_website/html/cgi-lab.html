@@ -280,14 +280,13 @@
   <div class="container">
     <div class="topbar">
       <a class="back-link" href="/">← Back to index</a>
-      <div class="mini-badge">CGI / POST / GET </div>
+      <div class="mini-badge">CGI / POST </div>
     </div>
 
     <section class="hero">
       <h1>CGI Lab</h1>
       <p class="subtitle">
-        Demos CGI : un formulaire POST qui envoie des données au script Python,
-        et un GET CGI qui utilise une query string pour générer une réponse dynamique.
+        Demos CGI : un formulaire POST qui envoie des données au script Python pour générer une réponse dynamique.
       </p>
     </section>
 
@@ -296,18 +295,17 @@
         <div>
           <h2 class="panel-title">CGI Test Area</h2>
           <p class="panel-note">
-            Teste ici les deux flux : <strong>POST CGI</strong> et <strong>GET CGI</strong>.
+            Test: <strong>POST CGI</strong>
           </p>
         </div>
-        <div class="chip">POST + GET</div>
       </div>
 
       <div class="demo-grid">
         <div class="demo-card">
           <strong>POST CGI — Compliment Generator</strong>
-          <p>Envoie un POST à <code>/cgi-bin/compliment.py</code>.</p>
+          <p>Envoie un POST à <code>/test.wow</code>.</p>
 
-          <form class="mini-form" action="/cgi-bin/compliment.py" method="POST">
+          <form class="mini-form" action="/test.wow" method="POST">
             <input name="name" placeholder="Your name" required>
             <select name="mood">
               <option value="curious">Curious</option>
@@ -318,23 +316,6 @@
             <button class="submit-btn" type="submit">Launch POST CGI</button>
           </form>
         </div>
-
-        <div class="demo-card">
-          <strong>GET CGI — Query Demo</strong>
-          <p>Envoie un GET à <code>/test.wow?name=...&amp;mode=...&amp;message=...</code>.</p>
-
-          <form class="mini-form" action="/test.wow" method="GET">
-            <input name="name" placeholder="Your name" required>
-            <input name="mode" placeholder="Mode (cyber / retro)">
-            <input name="message" placeholder="Short message">
-            <button class="submit-btn" type="submit">Launch GET CGI</button>
-          </form>
-        </div>
-      </div>
-
-      <div class="secondary-actions">
-        <a class="secondary-btn" href="/">Return Home</a>
-      </div>
     </section>
   </div>
 </body>

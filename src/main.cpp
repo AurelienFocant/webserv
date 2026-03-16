@@ -26,7 +26,6 @@ int	main(int ac, char **av)
 		return (1);
 	}
 
-
 	Webserv	webserv(av[1]);
 	try {
 		webserv.readConfig();

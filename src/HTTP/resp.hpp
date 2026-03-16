@@ -1,6 +1,8 @@
 #ifndef RESP_HPP
 #define RESP_HPP
 
+#include "SessionManager.hpp"
+
 #include <string>
 #include <map>
 #include <set>
@@ -16,6 +18,8 @@ namespace resp
 	bool 			loadFileToString(const std::string& path, std::string& result);
 	bool			loadErrorPage(RequestHandler &reqHandler, int status_code, const std::map<int, std::string>& error_pages, std::string& result);
 	std::string		buildAllowHeader(const std::set<std::string>& allowed_methods);
+	std::string		extractCookie(const Request& request, const std::string& id);
+	void			handleSession(const Request& request, Response& response);
 }
 
 #endif

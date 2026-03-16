@@ -320,7 +320,7 @@ void ConfigBuilder::_handleErrorPages(const DirectiveNode& d)
 		if (ss >> n && ss >> c)
 			_error(d.line, "Only numerical codes allowed after error_page directive");
 
-		_getCurrentCtxt().setErrorPage(n, *(d.args.end()));
+		_getCurrentCtxt().setErrorPage(n, *(d.args.end() -1));
 	}
 }
 

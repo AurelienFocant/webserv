@@ -2,6 +2,7 @@
 #include "Response.hpp"
 #include "RequestHandler.hpp"
 #include "VirtualServer.hpp"
+#include "SessionManager.hpp"
 #include "../Utils/httpUtils.hpp"
 #include "../Utils/fileSystem.hpp"
 
@@ -134,5 +135,60 @@ namespace resp
 			allow_header += *it;
 		}
 		return allow_header;
+	}
+
+	std::string	extractCookie(const Request& request, const std::string& cookie_name)
+	{
+		std::vector<std::string> cookie = request.getHeaderValues("Cookie");
+		if (cookie.empty() || cookie[0].empty())
+			return "";
+		
+		size_t pos = cookie[0].find(cookie_name + "=");
+		if (pos == std::string::npos)
+			return "";
+
+		pos += cookie_name.size() + 1;
+		size_t end = cookie[0].find(";", pos);
+	/* 	if (end == std::string::npos)
+			return cookie[0].substr(pos);
+		return cookie[0].substr(pos, end - pos); */
+
+		std::string result = (end == std::string::npos)
+			? cookie[0].substr(pos) 
+			: cookie[0].substr(pos, end - pos);
+
+		// trim \r, \n, espaces
+		size_t last = result.find_last_not_of(" \r\n\t");
+		if (last != std::string::npos)
+			result = result.substr(0, last + 1);
+		
+		return result;
+	}
+
+void	handleSession(const Request& request, Response& response)
+	{
+		SessionManager& manager = SessionManager::createManager();
+
+		std::string id = extractCookie(request, "sessionId");
+		std::string	client_id = manager.handleId(id);
+
+		if (client_id == id)
+		{
+			if (std::difftime(std::time(NULL), manager.getCookie(id).created_at) > session_lifetime)
+			{
+/* 					char buf[64];
+				std::time_t expired = manager.getCookie(id).expired;
+				std::tm *tm = std::gmtime(&expired);
+				strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm);
+
+				std::string cookie = "sessionId= ; Path=/; expires=" + std::string(buf);
+				response.setHeader("Set-Cookie", cookie); */
+				manager.deleteCookie(id);
+				//response.setHeader("Set-Cookie", "sessionId=" + client_id + "; Path=/ ; SameSite=Lax");
+				client_id = manager.handleId("");
+			}
+		}
+		response.setHeader("Set-Cookie", "sessionId=" + client_id + "; Path=/; SameSite=Lax");
+		manager.incrementValue(client_id, response);
 	}
 }

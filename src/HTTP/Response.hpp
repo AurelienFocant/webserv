@@ -57,6 +57,7 @@ class	Response
 	void				setBody(const std::string& content);
 	void				addCgiBody(char* content, size_t bytes_read);
 	void				setBodySize(size_t size);
+	void				setCountSession(int session_id);
 
 	/*Getters*/
 	int					getState() const;
@@ -67,6 +68,7 @@ class	Response
 	std::string			getBody() const;
 	size_t				getDataSize() const;
 	size_t				getOffset() const;
+	int					getCounterSession() const;
 
 	private:
 
@@ -80,6 +82,8 @@ class	Response
 	std::string							_body;
 	std::string							_data;
 	size_t								_offset;
+
+	int									_count_session;
 
 
 	/* Private Methods */

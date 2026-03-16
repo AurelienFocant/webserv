@@ -93,6 +93,13 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 		header += "CONTENT_LENGTH=" + stream.str();
 		vect.push_back(header);
 	}
+
+
+	std::stringstream ss;
+	ss << handler.getResponse().getCounterSession();
+	vect.push_back("SESSION_VISITS=" + ss.str());
+
+
 	char **c_enc = new char*[vect.size() + 1];
 	c_enc[vect.size()] = NULL;
 	for (size_t i = 0; i < vect.size(); ++i) {

@@ -5,6 +5,7 @@ Response::Response()
 , _status_code(OK)
 , _method(NOT_SET)
 , _offset(0)
+, _count_session(0)
 {}
 
 Response::~Response() {}
@@ -18,17 +19,17 @@ void	Response::formatResponse()
 
 	_data = buildHttpResponse();
 
-	std::cerr << "-------------------------------------------" << std::endl;
+/* 	std::cerr << "-------------------------------------------" << std::endl;
 	std::cerr << "[formatResponse] Headers size = " << (_data.size()) << std::endl;
 	std::cerr << "[formatResponse] Header = " << _data << std::endl;
-	std::cerr << "-------------------------------------------" << std::endl;
+	std::cerr << "-------------------------------------------" << std::endl; */
 
 	if (_method != HEAD)
 		_data += _body;
 	
-	std::cerr << "[formatResponse] Body size = " << _body.size() << std::endl;
+/* 	std::cerr << "[formatResponse] Body size = " << _body.size() << std::endl;
 	std::cerr << "[formatResponse] Total _data size = " << _data.size() << std::endl;
-	std::cerr << "-------------------------------------------" << std::endl;
+	std::cerr << "-------------------------------------------" << std::endl; */
 
 	_offset = 0;
 	_state = SENDING;
@@ -128,6 +129,10 @@ size_t	Response::getOffset() const
 	return _offset;
 }
 
+int	Response::getCounterSession() const
+{
+	return _count_session;
+}
 
 /* SETTERS */
 
@@ -165,6 +170,11 @@ std::string	Response::getBody() const
 void	Response::setBody(const std::string& content)
 {
 	_body = content;
+}
+
+void	Response::setCountSession(int count)
+{
+	_count_session = count;
 }
 
 void	Response::addCgiBody(char* content, size_t bytes_read)

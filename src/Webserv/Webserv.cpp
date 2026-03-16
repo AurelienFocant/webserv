@@ -2,6 +2,7 @@
 #include "ConfigParser.hpp"
 #include "ConfigBuilder.hpp"
 #include "RequestHandler.hpp"
+#include "SessionManager.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -94,7 +95,7 @@ void	Webserv::_closeStaleConnections(void)
 
 		if (conn.hasCgiTimedOut()) {
 			if (!waitpid(conn.child_pid, NULL, WNOHANG)) {
-				if (!kill(conn.child_pid, SIGKILL))
+				if (kill(conn.child_pid, SIGKILL))
 					perror("Kill child:");
 				conn.request_handler.setRequestToComplete();
 				conn.request_handler.getResponse().setState(Response::READY);
@@ -206,7 +207,7 @@ void	Webserv::initWebServer()
 		ev_hints.events = EPOLLIN;
 		ev_hints.data.fd = listenSocket;
 		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
-
+		
 		signal(SIGINT, sigintHandler);
 		signal(SIGPIPE, SIG_IGN);
 	}
@@ -339,6 +340,7 @@ bool	Webserv::clientOutHandler(Connection & conn)
 			reqHandler.handleRequest();
 
 			if (reqHandler.validCgiRequest()) {
+				resp::handleSession(request, response);
 				if (!_startCGIresponse(conn.request_handler, conn))
 				{
 					response.setStatusCode(INTERNAL_SERVER_ERROR);
@@ -458,7 +460,7 @@ bool Webserv::cgiOutHandler(Connection& conn)
 
 		int status;
 		if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
-			if (!kill(conn.child_pid, SIGKILL))
+			if (kill(conn.child_pid, SIGKILL))
 				perror("Kill child:");
 		}
 
