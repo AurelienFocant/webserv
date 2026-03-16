@@ -51,12 +51,13 @@ namespace resp
 				std::tm *tm = std::gmtime(&expired);
 				strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm);
 
-				response.setHeader("Set-Cookie", "sessionId= ; Path=/; expires=" + std::string(buf));
+				std::string cookie = "sessionId= ; Path=/; expires=" + std::string(buf);
+				response.setHeader("Set-Cookie", cookie);
 				std::cout << "COOKIE EXPIRED: " << response.getHeader("Set-Cookie") << std::endl;
 				manager.deleteCookie(id);
 			}
 			else
-				response.setHeader("Cookie", "sessionId=" + client_id);
+				response.setHeader("Set-Cookie", "sessionId=" + client_id);
 			manager.incrementValue(client_id, response);
 		}
 
