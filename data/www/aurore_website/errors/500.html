@@ -1,37 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+
 <meta charset="UTF-8">
-<title>500 // INTERNAL SERVER ERROR</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@900&display=swap" rel="stylesheet">
-<style>
-  :root{--bg:#060810;--pink:#ff2d6b;--muted:#4a6080;}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);font-family:'Share Tech Mono',monospace;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;text-align:center;padding:40px;}
-  body::before{content:'';position:fixed;inset:0;
-    background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
-    pointer-events:none;}
-  .code{font-family:'Orbitron',monospace;font-size:clamp(60px,12vw,140px);
-    font-weight:900;color:var(--pink);text-shadow:0 0 40px var(--pink);line-height:1;margin-bottom:16px;}
-  .ascii{font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:24px;}
-  .msg{font-size:14px;color:var(--pink);letter-spacing:3px;margin-bottom:8px;}
-  .sub{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:32px;}
-  a{display:inline-block;padding:10px 24px;border:1px solid var(--pink);
-    color:var(--pink);text-decoration:none;font-size:11px;letter-spacing:2px;transition:all .3s;}
-  a:hover{background:rgba(255,45,107,0.08);}
-</style>
+<title>500 Internal Server Error</title>
+
+<link rel="stylesheet" href="../css/error.css">
+
 </head>
+
 <body>
-<div class="code">500</div>
-<pre class="ascii">
-  /\_/\
- ( @.@ )   something went terribly wrong
-  > 💥 <
-</pre>
-<div class="msg">INTERNAL SERVER ERROR</div>
-<div class="sub">The server encountered an unexpected condition.</div>
-<a href="/">← RETURN HOME</a>
+
+<div class="panel">
+
+  <h1 class="code">400</h1>
+  
+  <div class="emoji">🫩</div>
+  
+  <h2 class="title">Internal Server Error</h2>
+
+<p class="message">
+Something went wrong inside the server.
+The request could not be completed.
+</p>
+
+<a class="home" href="/">Return Home</a>
+
+</div>
+
 </body>
 </html>
