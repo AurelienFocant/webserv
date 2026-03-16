@@ -47,9 +47,10 @@ bool	SessionManager::exists(const std::string& id) const
 
 void	SessionManager::incrementValue(const std::string& id, Response& response)
 {
+	if (_sessions.find(id) == _sessions.end())
+		return;
 	_sessions[id].count += 1;
-	response.setCounterSession(_sessions[id].count);
-
+	response.setCountSession(_sessions[id].count);
 }
 
 int		SessionManager::getValue(const std::string& id) const

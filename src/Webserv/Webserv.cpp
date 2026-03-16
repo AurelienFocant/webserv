@@ -334,16 +334,17 @@ bool	Webserv::clientOutHandler(Connection & conn)
 {
 	RequestHandler& reqHandler = conn.request_handler;
 	Response& response = conn.request_handler.getResponse();
+	const Request& request = conn.request_handler.getRequest();
 
 	if (conn.getEvent().events & EPOLLOUT) {
 		if (response.isDefault()) {
 			reqHandler.handleRequest();
 
 			if (reqHandler.validCgiRequest()) {
+				resp::handleSession(request, response);
 				if (!_startCGIresponse(conn.request_handler, conn))
 				{
 					const VirtualServer* server = conn.request_handler.getVirtualServer();
-					const Request& request = conn.request_handler.getRequest();
 					response.setStatusCode(INTERNAL_SERVER_ERROR);
 					resp::prepareResponse(response, request, server->getErrorPages());
 				}

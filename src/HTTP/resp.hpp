@@ -18,6 +18,7 @@ namespace resp
 	bool			loadErrorPage(int status_code, const std::map<int, std::string>& error_pages, std::string& result);
 	std::string		buildAllowHeader(const std::set<std::string>& allowed_methods);
 	std::string		extractCookie(const Request& request, const std::string& id);
+	void			handleSession(const Request& request, Response& response);
 }
 
 #endif

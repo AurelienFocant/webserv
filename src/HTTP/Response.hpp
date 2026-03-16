@@ -57,7 +57,7 @@ class	Response
 	void				setBody(const std::string& content);
 	void				addCgiBody(char* content, size_t bytes_read);
 	void				setBodySize(size_t size);
-	void				setCounterSession(int session_id);
+	void				setCountSession(int session_id);
 
 	/*Getters*/
 	int					getState() const;
