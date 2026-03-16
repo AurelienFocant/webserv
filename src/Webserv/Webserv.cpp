@@ -95,7 +95,7 @@ void	Webserv::_closeStaleConnections(void)
 
 		if (conn.hasCgiTimedOut()) {
 			if (!waitpid(conn.child_pid, NULL, WNOHANG)) {
-				if (!kill(conn.child_pid, SIGKILL))
+				if (kill(conn.child_pid, SIGKILL))
 					perror("Kill child:");
 				conn.request_handler.setRequestToComplete();
 				conn.request_handler.getResponse().setState(Response::READY);
@@ -463,7 +463,7 @@ bool Webserv::cgiOutHandler(Connection& conn)
 
 		int status;
 		if (waitpid(conn.child_pid, &status, WNOHANG) == 0) {
-			if (!kill(conn.child_pid, SIGKILL))
+			if (kill(conn.child_pid, SIGKILL))
 				perror("Kill child:");
 		}
 
