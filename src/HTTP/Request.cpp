@@ -21,7 +21,6 @@ Request::Request() : HTTPTokenizer()
 
 Request::Request(const Request& src)
 	: HTTPTokenizer(src)
-	, _full_input(src._full_input)
 	, _progress(src._progress)
 	, _complete(src._complete)
 	, _status_code(src._status_code)
@@ -45,10 +44,6 @@ Request::Request(std::string const& request) : HTTPTokenizer(request)
 }
 
 bool	Request::cleanRequest() {
-	//debug
-	_full_input.clear();
-	_full_input.reserve(0);
-
 	//Request State
 	_progress = START;
 	_complete = false;
@@ -313,7 +308,7 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 	if (_content_length > 0) {
 		//check for max_body size
 		size_t	before_len = _body.size();
-		if (before_len + _content_length - 2 > max_body) { //! Fix provisoire
+		if (before_len + _content_length - 2 > max_body) {
 			_progress = DONE;
 			_complete = true;
 			_status_code = REQUEST_ENTITY_TOO_LARGE;
@@ -506,7 +501,7 @@ bool	Request::detectImportantValue(std::string& argument, std::string value) {
 				return (false);
 			}
 			else if (value != "chunked") {
-				_status_code = NOT_IMPLEMENTED; //FIND CORRECT ERROR
+				_status_code = NOT_IMPLEMENTED;
 				return (false);
 			}
 			else {
@@ -588,7 +583,6 @@ void	Request::setStatusCode(t_HttpCode status_code)
 }
 
 bool	Request::addInput(const std::string& input) {
-	_full_input += input;
 	HTTPTokenizer::addInput(input);
 	return (true);
 }
