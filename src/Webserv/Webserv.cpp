@@ -99,7 +99,7 @@ void	Webserv::_closeStaleConnections(void)
 				conn.request_handler.setRequestToComplete();
 				conn.request_handler.getResponse().setState(Response::READY);
 				conn.request_handler.getResponse().setStatusCode(GATEWAY_TIMEOUT);
-				resp::prepareResponse(conn.request_handler.getResponse(), conn.request_handler.getRequest(), conn.request_handler.getVirtualServer()->getErrorPages());
+				resp::prepareResponse(conn.request_handler);
 			}
 		}
 
@@ -332,7 +332,7 @@ bool	Webserv::clientInHandler(Connection & conn)
 bool	Webserv::clientOutHandler(Connection & conn)
 {
 	RequestHandler& reqHandler = conn.request_handler;
-	Response& response = conn.request_handler.getResponse();
+	Response& response = reqHandler.getResponse();
 
 	if (conn.getEvent().events & EPOLLOUT) {
 		if (response.isDefault()) {
@@ -341,10 +341,8 @@ bool	Webserv::clientOutHandler(Connection & conn)
 			if (reqHandler.validCgiRequest()) {
 				if (!_startCGIresponse(conn.request_handler, conn))
 				{
-					const VirtualServer* server = conn.request_handler.getVirtualServer();
-					const Request& request = conn.request_handler.getRequest();
 					response.setStatusCode(INTERNAL_SERVER_ERROR);
-					resp::prepareResponse(response, request, server->getErrorPages());
+					resp::prepareResponse(reqHandler);
 				}
 			}
 		}
@@ -440,7 +438,6 @@ bool	Webserv::cgiInHandler(Connection& conn)
 bool Webserv::cgiOutHandler(Connection& conn)
 {
 	Response& response = conn.request_handler.getResponse();
-	const Request& request = conn.request_handler.getRequest();
 
 	char buffer[32000];
 	memset(buffer, 0, sizeof(buffer));
@@ -470,7 +467,7 @@ bool Webserv::cgiOutHandler(Connection& conn)
 			response.setStatusCode(INTERNAL_SERVER_ERROR);
 			return false;
 		}
-		resp::prepareResponse(response, request, conn.request_handler.getVirtualServer()->getErrorPages());
+		resp::prepareResponse(conn.request_handler);
 		response.setState(Response::READY);
 	}
 	else {

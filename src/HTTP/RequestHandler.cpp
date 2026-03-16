@@ -42,7 +42,7 @@ void	RequestHandler::handleRequest()
 	else if (_ctx.is_cgi)
 		return;
 
-	resp::prepareResponse(_response, _request, _server->getErrorPages());
+	resp::prepareResponse(*this);
 }
 
 /* Wrappers */

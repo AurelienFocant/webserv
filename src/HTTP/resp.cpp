@@ -1,6 +1,7 @@
 #include "resp.hpp"
 #include "Response.hpp"
-#include "Request.hpp"
+#include "RequestHandler.hpp"
+#include "VirtualServer.hpp"
 #include "../Utils/httpUtils.hpp"
 #include "../Utils/fileSystem.hpp"
 
@@ -30,21 +31,23 @@ namespace resp
 				");
 	}
 
-	void	prepareResponse(Response& response, const Request& request, const std::map<int, std::string>& error_pages)
+	void	prepareResponse(RequestHandler & reqHandler)
 	{
-		int status_code = response.getStatusCode();
-
+		Response& response = reqHandler.getResponse();
 		if (response.getStatusCode() >= 400 && response.getStatusCode() != METHOD_NOT_ALLOWED)
 		{
+			int status_code = response.getStatusCode();
+			const std::map<int, std::string> error_pages = reqHandler.getVirtualServer()->getErrorPages();
 			std::string body;
-			if (!resp::loadErrorPage(status_code, error_pages, body))
-			{
+
+			if (!resp::loadErrorPage(reqHandler, status_code, error_pages, body)) {
 				body = hardcode500Error();
 			}
 			response.setBody(body);
 			response.setHeader("Content-Type", "text/html");
 		}
 
+		const Request& request = reqHandler.getRequest();
 		response.setHttpVersion(request.getHttpVersion());
 		response.setHeader("Date", httpUtils::getTime());
 		response.setHeader("Server", "webservMeBaby");
@@ -88,7 +91,7 @@ namespace resp
 		return true;
 	}
 
-	bool	loadErrorPage(int status_code, const std::map<int, std::string>& error_pages, std::string& body)
+	bool	loadErrorPage(RequestHandler &reqHandler, int status_code, const std::map<int, std::string>& error_pages, std::string& body)
 	{
 		if (status_code == METHOD_NOT_ALLOWED)
 			return true ;
@@ -96,8 +99,18 @@ namespace resp
 		std::map<int, std::string>::const_iterator it = error_pages.find(status_code);
 		if (it == error_pages.end())
 			return false;
+		std::string error_page = it->second;
 
-		int fd = open(it->second.c_str(), O_RDONLY);
+		if (error_page.find("./") != 0)
+		{
+			Location const* location = reqHandler.getCtx().matched_location;
+			if (!location->getAlias().empty())
+				error_page = location->getAlias();
+			else
+				error_page = location->getRoot() + error_page;
+		}
+
+		int fd = open(error_page.c_str(), O_RDONLY);
 		if (fd == -1) {
 			status_code = INTERNAL_SERVER_ERROR;
 			it = error_pages.find(INTERNAL_SERVER_ERROR);

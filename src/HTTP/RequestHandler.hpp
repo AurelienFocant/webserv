@@ -56,6 +56,7 @@ class RequestHandler
 	const Response&			getResponse() const;
 	Response&				getResponse();
 	const VirtualServer*	getVirtualServer() const;
+	const PathContext&		getCtx() const {return _ctx;}
 
 	/* CGI Getters */
 	std::string				getQuery() const;
