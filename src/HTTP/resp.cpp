@@ -41,10 +41,24 @@ namespace resp
 		std::string	client_id = manager.handleId(id);
 
 		if (client_id != id)
-			response.setHeader("Set-Cookie", "sessionId=" + client_id);
+			response.setHeader("Set-Cookie", "sessionId=" + client_id + "; Path=/");
 		else
-			response.setHeader("Cookie", "sessionId=" + client_id);
-		manager.incrementValue(client_id, response);
+		{
+			if (std::difftime(std::time(NULL), manager.getCookie(id).created_at) > session_lifetime)
+			{
+				char buf[64];
+				std::time_t expired = manager.getCookie(id).expired;
+				std::tm *tm = std::gmtime(&expired);
+				strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm);
+
+				response.setHeader("Set-Cookie", "sessionId= ; Path=/; expires=" + std::string(buf));
+				std::cout << "COOKIE EXPIRED: " << response.getHeader("Set-Cookie") << std::endl;
+				manager.deleteCookie(id);
+			}
+			else
+				response.setHeader("Cookie", "sessionId=" + client_id);
+			manager.incrementValue(client_id, response);
+		}
 
 		if (response.getStatusCode() >= 400 && response.getStatusCode() != METHOD_NOT_ALLOWED)
 		{

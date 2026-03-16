@@ -9,6 +9,17 @@
 #include <ctime>
 #include <sstream>
 
+static const int			session_lifetime = 60;
+
+struct	cookies
+{
+	int						count;
+	std::time_t				created_at;
+	std::time_t				expired;	
+
+	cookies() : count(0), created_at(std::time(NULL)), expired(std::time(NULL) + session_lifetime - 1) {};
+};
+
 class SessionManager 
 {
 	public:
@@ -19,6 +30,8 @@ class SessionManager
 
 	void						incrementValue(const std::string& id, Response& response);
 	int							getValue(const std::string& id) const;
+	cookies						getCookie(const std::string& id) const;
+	bool						deleteCookie(const std::string& id);
 
 	private: 
 
@@ -28,7 +41,7 @@ class SessionManager
 	std::string					_generateId();
 	bool						exists(const std::string& id) const;
 
-	std::map<std::string, int>	_sessions;
+	std::map<std::string, cookies>	_sessions;
 };
 
 #endif

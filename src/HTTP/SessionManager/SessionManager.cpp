@@ -20,7 +20,7 @@ std::string	SessionManager::handleId(std::string id)
 std::string	SessionManager::_createSession()
 {
 	std::string id = _generateId();
-	_sessions[id] = 0;
+	_sessions[id].count = 0;
 	return id;
 }
 
@@ -47,15 +47,28 @@ bool	SessionManager::exists(const std::string& id) const
 
 void	SessionManager::incrementValue(const std::string& id, Response& response)
 {
-	_sessions[id] += 1;
-	response.setCounterSession(_sessions[id]);
+	_sessions[id].count += 1;
+	response.setCounterSession(_sessions[id].count);
 
 }
 
 int		SessionManager::getValue(const std::string& id) const
 {
-	std::map<std::string, int>::const_iterator it = _sessions.find(id);
+	std::map<std::string, cookies>::const_iterator it = _sessions.find(id);
 	if (it == _sessions.end())
 		return 0;
-	return it->second;
+	return it->second.count;
+}
+
+cookies	SessionManager::getCookie(const std::string& id) const
+{
+	return _sessions.find(id)->second;
+}
+
+bool	SessionManager::deleteCookie(const std::string& id)
+{
+	if (!exists(id))
+		return false;
+	_sessions.erase(id);
+	return true;
 }
