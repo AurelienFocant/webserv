@@ -41,7 +41,7 @@ class RequestHandler
 	RequestHandler&	operator=(const RequestHandler& rhs);
 
 	/* Public methods*/
-	void					processRequest(const std::string& inpput);
+	void					processRequest(std::string& input);
 	void					processBody();
 	void					handleRequest();
 	void					findLocation();

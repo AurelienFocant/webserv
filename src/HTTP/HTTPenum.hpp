@@ -13,7 +13,8 @@ typedef	enum s_method
 	HEAD,
 	POST,
 	DELETE,
-	UNKNOWN
+	UNKNOWN,
+	WRONG
 }		t_method;
 
 typedef	enum s_progress

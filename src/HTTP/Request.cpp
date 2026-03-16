@@ -13,10 +13,6 @@
 
 #include "Request.hpp"
 
-const std::string	Request::authorized_method = "GET POST";
-const std::string	Request::unimplemented_method =
-						"CONNECT DELETE HEAD OPTIONS PATCH PUT TRACE";
-
 /*Constructor - Copy Constructor - Destructor*/
 Request::Request() : HTTPTokenizer()
 {
@@ -191,9 +187,18 @@ void	Request::parseHeader() {
 void	Request::extractFirstLineInfo() {
 	//Assign WORD token value to the correct attribute in Request
 	//depending on the current progression
+	int	i = 0;
 	switch (_progress) {
 		case (START):
-			_method = methodFromString((*_list_it).lexeme);
+			while (methods[i]) {
+				if ((*_list_it).lexeme == methods[i]) {
+					_method = methodFromString(methods[i]);
+					break ;
+				}
+				i++;
+			}
+			if (!methods[i])
+				_method = WRONG;
 			_progress = METHOD;
 			break ;
 		case (METHOD):
@@ -219,6 +224,10 @@ bool	Request::isFirstLineValid() {
 	}
 	else if (_method == UNKNOWN) {
 		_status_code = NOT_IMPLEMENTED;
+		return (false);
+	}
+	else if (_method == WRONG){
+		_status_code = BAD_REQUEST;
 		return (false);
 	}
 	if (!(_http_version == "HTTP/1.0" || _http_version == "HTTP/1.1")) {
@@ -261,8 +270,6 @@ bool	Request::defineBodyExtractionHandler() {
 	}
 	else {
 		_progress = DONE;
-//		_complete = true;
-//		_status_code = NOT_IMPLEMENTED;
 		return (false);
 	}
 	_progress = BODY_HANDLING;
@@ -329,7 +336,6 @@ bool	Request::bodyHandlerTransfertEncoding(unsigned int max_body) {
 				_complete = true;
 				_status_code = OK;
 				_content_length = _body.size();
-				//std::cerr << "\nRequest: ligne -321: " << _body << std::endl; //->
 			}
 		}
 	}
@@ -362,11 +368,11 @@ bool	Request::bodyHandlerMultipart() {
 	if (ender.empty()) {
 		std::string	delimiter = _content_type.substr(_content_type.find('=') + 1);
 		delimiter.erase(delimiter.find('"'), 1);
-		delimiter.erase(delimiter.find('"'), 1); //CHANGE that after
+		delimiter.erase(delimiter.find('"'), 1);
 		std::string	ender = "--" + delimiter + "--";
 	}
 	size_t	len = 1000;
-	_body += extractInput(len);//FIND another way after proof of concept
+	_body += extractInput(len);
 	if (_body.find(ender) != std::numeric_limits<unsigned long>::max()) {
 		ender.clear();
 		_complete = true;
@@ -420,9 +426,6 @@ void	Request::safeInsertion(const std::string& key, const std::string& value) {
 bool	Request::areHeadersValid() const {
 	std::multimap<std::string, std::string>::const_iterator it = _headers.begin();
 	if (_http_version == "HTTP/1.0") {
-		const char*		uniqueHeadersHttp_0[2] = {
-			"CONTENT_LENGTH", NULL
-			};
 			while (it != _headers.end()) {
 				int nbr_headers = _headers.count(it->first);
 				if (isUniqueHeader(it->first, uniqueHeadersHttp_0) &&  nbr_headers > 1)
@@ -432,9 +435,6 @@ bool	Request::areHeadersValid() const {
 			}
 	}
 	else if (_http_version == "HTTP/1.1") {
-		const char*		uniqueHeadersHttp_1[2] = { 
-			"CONTENT_LENGTH", NULL
-			};
 			while (it != _headers.end()) {
 				int nbr_headers = _headers.count(it->first);
 				if (isUniqueHeader(it->first, uniqueHeadersHttp_1) &&  nbr_headers > 1)
@@ -462,9 +462,6 @@ bool	Request::isUniqueHeader(const std::string& header_key, const char** unique_
 
 bool	Request::areMandatoryHeadersPresent() const {
 	if (_http_version == "HTTP/1.0") {
-		const char*		mandatoryHeadersHttp_0[1] = {
-			NULL
-		};
 		int i = 0;
 		while (mandatoryHeadersHttp_0[i]) {
 			if (_headers.count(mandatoryHeadersHttp_0[i]) < 1)
@@ -473,9 +470,6 @@ bool	Request::areMandatoryHeadersPresent() const {
 		}
 	}
 	else if (_http_version == "HTTP/1.1") {
-		const char*		mandatoryHeadersHttp_1[2] = {
-		"HOST", NULL
-		};
 		int i = 0;
 		while (mandatoryHeadersHttp_1[i]) {
 			if (_headers.count(mandatoryHeadersHttp_1[i]) < 1)
@@ -497,16 +491,12 @@ std::string	Request::normalizeHeadersKey(std::string argument) const {
 }
 
 bool	Request::detectImportantValue(std::string& argument, std::string value) {
-	const char*	important_argument[3] = {
-		"CONTENT_LENGTH", "TRANSFER_ENCODING", NULL
-		};
-
 	int	i = 0;
 	while (important_argument[i] && important_argument[i] != argument)
 		i++;
+	if (!important_argument[i])
+		return (true);
 	switch (i) {
-		case (sizeof(important_argument)):
-			break ;
 		case (0):
 			_content_length = std::atol(value.c_str()); 
 			break ;
@@ -601,6 +591,20 @@ bool	Request::addInput(const std::string& input) {
 	_full_input += input;
 	HTTPTokenizer::addInput(input);
 	return (true);
+}
+
+void	Request::sanitizeInput(std::string& input) {
+	int		i = 0;
+	size_t	pos = 0;
+	while (methods[i]) {
+		pos = input.find(methods[i]);
+		if (pos != std::string::npos)
+			break ;
+		i++;
+	}
+	if (pos != 0)
+		input.erase(0, pos);
+	return ;
 }
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) {

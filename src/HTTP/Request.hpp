@@ -17,6 +17,32 @@
 
 /*MACROS*/
 
+//Implemented methods
+// GET, POST, DELETE, HEAD --> see t_method enum(HTTPenum.hpp)
+
+static const char*		methods[] = {
+	"GET", "POST", "DELETE", "HEAD", "PUT", "CONNECT", "OPTIONS", "TRACE"
+	, NULL};
+
+static const char*		uniqueHeadersHttp_0[] = {
+	"CONTENT_LENGTH"
+	, NULL};
+
+static const char*		uniqueHeadersHttp_1[] = { 
+	"CONTENT_LENGTH"
+	, NULL};
+
+static const char*		mandatoryHeadersHttp_0[] = {
+	NULL};
+
+static const char*		mandatoryHeadersHttp_1[] = {
+	"HOST"
+	, NULL};
+
+static const char*	important_argument[] = {
+	"CONTENT_LENGTH", "TRANSFER_ENCODING"
+	, NULL};
+
 class	Request	: private HTTPTokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
@@ -24,14 +50,12 @@ class	Request	: private HTTPTokenizer {
 		Request(std::string const& request);
 		~Request() {};
 
-	/*Overloaded operators*/
-//		Request&	operator=(const Request& other) ;
-
 	/*Publics Methods*/
 		bool			parseRequest();
 		bool			handleBody(unsigned int max_body);
 		bool			cleanRequest();
 		bool			addInput(const std::string& input) ;
+		void			sanitizeInput(std::string& input);
 
 	/*Setters - Getters*/
 		void				setComplete(bool status);
@@ -53,6 +77,7 @@ class	Request	: private HTTPTokenizer {
 	/*Private Attributes*/
 		//debug
 		std::string								_full_input;
+
 		//Request State
 		int										_progress;
 		bool									_complete;
@@ -71,17 +96,8 @@ class	Request	: private HTTPTokenizer {
 		bool									_content_encoding;
 		std::string								_content_type;
 		size_t									_content_length;
-        // + Connection, Host, etc etc ?
-
-		//Http methods limits -> assigned in Request.cpp
-		static const std::string				authorized_method;
-		static const std::string				unimplemented_method;
-		static const char*		 				important_argument[];
-
-		//std::vector<t_Token>::const_iterator	_list_it;
 
 	/*Private Methods*/
-//		t_method	idMethod(std::string& method) ;
 		void	parseFirstLine() ;
 		void	extractFirstLineInfo() ;
 		void	parseHeader() ;
