@@ -44,7 +44,7 @@ namespace resp
 			response.setHeader("Set-Cookie", "sessionId=" + client_id);
 		else
 			response.setHeader("Cookie", "sessionId=" + client_id);
-		manager.incrementValue(client_id);
+		manager.incrementValue(client_id, response);
 
 		if (response.getStatusCode() >= 400 && response.getStatusCode() != METHOD_NOT_ALLOWED)
 		{

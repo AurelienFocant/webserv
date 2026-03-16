@@ -128,6 +128,10 @@ size_t	Response::getOffset() const
 	return _offset;
 }
 
+int	Response::getCounterSession() const
+{
+	return _count_session;
+}
 
 /* SETTERS */
 
@@ -165,6 +169,11 @@ std::string	Response::getBody() const
 void	Response::setBody(const std::string& content)
 {
 	_body = content;
+}
+
+void	Response::setCounterSession(int count)
+{
+	_count_session = count;
 }
 
 void	Response::addCgiBody(char* content, size_t bytes_read)

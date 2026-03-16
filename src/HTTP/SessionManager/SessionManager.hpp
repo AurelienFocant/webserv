@@ -2,12 +2,12 @@
 #define SESSIONMANAGER_HPP
 
 #include "Request.hpp"
+#include "Response.hpp"
 
 #include <map>
 #include <string>
 #include <ctime>
 #include <sstream>
-
 
 class SessionManager 
 {
@@ -17,7 +17,7 @@ class SessionManager
 	std::string					extractCookies(const Request& request, const std::string& id);
 	std::string					handleId(std::string id);
 
-	void						incrementValue(const std::string& id);
+	void						incrementValue(const std::string& id, Response& response);
 	int							getValue(const std::string& id) const;
 
 	private: 

@@ -103,7 +103,7 @@ namespace path
 	{
 		if (detectCGI(ctx))
 		{
-			if (!ctx.matched_location->getAlias().empty())
+			if (!ctx.matched_location->getAlias().empty() && ctx.matched_location)
 			{
 				std::string	location_path	= ctx.matched_location->getName();
 				std::string	remaining_path	= ctx.request_path.substr(location_path.size());
