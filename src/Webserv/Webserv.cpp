@@ -340,7 +340,7 @@ bool	Webserv::clientOutHandler(Connection & conn)
 			reqHandler.handleRequest();
 
 			if (reqHandler.validCgiRequest()) {
-				resp::handleSession(request, response);
+				resp::handleSession(reqHandler.getRequest(), response);
 				if (!_startCGIresponse(conn.request_handler, conn))
 				{
 					response.setStatusCode(INTERNAL_SERVER_ERROR);
