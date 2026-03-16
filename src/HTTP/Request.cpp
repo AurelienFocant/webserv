@@ -13,6 +13,30 @@
 
 #include "Request.hpp"
 
+//Methods Handling
+const char* Request::methods[] = {
+		"GET", "POST", "DELETE", "HEAD", "PUT", "CONNECT", "OPTIONS", "TRACE"
+		, NULL};
+
+const char* Request::uniqueHeadersHttp_0[] = {
+		"CONTENT_LENGTH"
+		, NULL};
+
+const char* Request::uniqueHeadersHttp_1[] = { 
+		"CONTENT_LENGTH"
+		, NULL};
+
+const char* Request::mandatoryHeadersHttp_0[] = {
+		NULL};
+
+const char* Request::mandatoryHeadersHttp_1[] = {
+		"HOST"
+		, NULL};
+
+const char* Request::important_argument[] = {
+		"CONTENT_LENGTH", "TRANSFER_ENCODING"
+		, NULL};
+
 /*Constructor - Copy Constructor - Destructor*/
 Request::Request() : HTTPTokenizer()
 {
@@ -43,31 +67,7 @@ Request::Request(std::string const& request) : HTTPTokenizer(request)
 	parseRequest();
 }
 
-bool	Request::cleanRequest() {
-	//Request State
-	_progress = START;
-	_complete = false;
-	_status_code = INIT_STATE;
-
-	//Request informations
-	_method = NOT_SET;
-	_request_uri.clear();
-	_http_version = "HTTP/1.0";
-	_body.clear();
-	_body.reserve(0);
-
-	//request usefull header informations
-	_headers.clear();
-	_nbr_headers = 0;
-	_content_encoding = false;
-	_content_type.clear();
-	_content_length = std::numeric_limits<size_t>::max(); 
-
-	//Tokenizer cleaning
-	cleanTokenList();
-
-	return (true);
-}
+Request::~Request() {}
 
 /*Public Methods*/
 
@@ -120,6 +120,51 @@ bool	Request::handleBody(unsigned int max_body) {
 		if (_complete)
 			cleanTokenList();
 		return (_complete);
+}
+
+bool	Request::cleanRequest() {
+	//Request State
+	_progress = START;
+	_complete = false;
+	_status_code = INIT_STATE;
+
+	//Request informations
+	_method = NOT_SET;
+	_request_uri.clear();
+	_http_version = "HTTP/1.0";
+	_body.clear();
+	_body.reserve(0);
+
+	//request usefull header informations
+	_headers.clear();
+	_nbr_headers = 0;
+	_content_encoding = false;
+	_content_type.clear();
+	_content_length = std::numeric_limits<size_t>::max(); 
+
+	//Tokenizer cleaning
+	cleanTokenList();
+
+	return (true);
+}
+
+bool	Request::addInput(const std::string& input) {
+	HTTPTokenizer::addInput(input);
+	return (true);
+}
+
+void	Request::sanitizeInput(std::string& input) {
+	int		i = 0;
+	size_t	pos = 0;
+	while (methods[i]) {
+		pos = input.find(methods[i]);
+		if (pos != std::string::npos)
+			break ;
+		i++;
+	}
+	if (pos != 0)
+		input.erase(0, pos);
+	return ;
 }
 
 /*Private Methods*/
@@ -580,25 +625,6 @@ void	Request::setComplete(bool status) {
 void	Request::setStatusCode(t_HttpCode status_code)
 {
 	_status_code = status_code;
-}
-
-bool	Request::addInput(const std::string& input) {
-	HTTPTokenizer::addInput(input);
-	return (true);
-}
-
-void	Request::sanitizeInput(std::string& input) {
-	int		i = 0;
-	size_t	pos = 0;
-	while (methods[i]) {
-		pos = input.find(methods[i]);
-		if (pos != std::string::npos)
-			break ;
-		i++;
-	}
-	if (pos != 0)
-		input.erase(0, pos);
-	return ;
 }
 
 std::ostream&	operator<<(std::ostream& ostream, Request& other) {

@@ -15,38 +15,12 @@
 /*ENUM*/
 # include "HTTPenum.hpp" // Moved enum to their own .hpp, was getting out of hand
 
-//Implemented methods
-// GET, POST, DELETE, HEAD --> see t_method enum(HTTPenum.hpp)
-
-static const char*		methods[] = {
-	"GET", "POST", "DELETE", "HEAD", "PUT", "CONNECT", "OPTIONS", "TRACE"
-	, NULL};
-
-static const char*		uniqueHeadersHttp_0[] = {
-	"CONTENT_LENGTH"
-	, NULL};
-
-static const char*		uniqueHeadersHttp_1[] = { 
-	"CONTENT_LENGTH"
-	, NULL};
-
-static const char*		mandatoryHeadersHttp_0[] = {
-	NULL};
-
-static const char*		mandatoryHeadersHttp_1[] = {
-	"HOST"
-	, NULL};
-
-static const char*	important_argument[] = {
-	"CONTENT_LENGTH", "TRANSFER_ENCODING"
-	, NULL};
-
 class	Request	: private HTTPTokenizer {
 	public:
 	/*Constructor - Copy Constructor - Destructor*/
 		Request();
 		Request(std::string const& request);
-		~Request() {};
+		~Request();
 
 	/*Publics Methods*/
 		bool			parseRequest();
@@ -67,8 +41,8 @@ class	Request	: private HTTPTokenizer {
 		const int&			getState() const ;
 		size_t				getContentLength() const ;
 
-		std::vector<std::string>	getHeaderValues(std::string header_name) const ;
 		const std::multimap<std::string, std::string>&	getHeaders() const ;
+		std::vector<std::string>						getHeaderValues(std::string header_name) const ;
 
 	private:
 		Request(const Request& copy_from);
@@ -113,6 +87,17 @@ class	Request	: private HTTPTokenizer {
 		bool	bodyHandlerMultipart() ;
 
 		std::string	normalizeHeadersKey(std::string argument) const ;
+
+		//Method Handling --> define in Request.cpp
+		//Implemented methods
+		// GET, POST, DELETE, HEAD --> see t_method enum(HTTPenum.hpp)
+
+		static const char*		methods[];
+		static const char*		uniqueHeadersHttp_0[];
+		static const char*		uniqueHeadersHttp_1[];
+		static const char*		mandatoryHeadersHttp_0[];
+		static const char*		mandatoryHeadersHttp_1[];
+		static const char*		important_argument[];
 
 };
 
