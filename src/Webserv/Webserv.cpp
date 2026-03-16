@@ -2,6 +2,7 @@
 #include "ConfigParser.hpp"
 #include "ConfigBuilder.hpp"
 #include "RequestHandler.hpp"
+#include "SessionManager.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -206,7 +207,7 @@ void	Webserv::initWebServer()
 		ev_hints.events = EPOLLIN;
 		ev_hints.data.fd = listenSocket;
 		epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, listenSocket, &ev_hints);
-
+		
 		signal(SIGINT, sigintHandler);
 		signal(SIGPIPE, SIG_IGN);
 	}

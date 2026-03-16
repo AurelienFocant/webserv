@@ -1,6 +1,7 @@
 #include "resp.hpp"
 #include "Response.hpp"
 #include "Request.hpp"
+#include "SessionManager.hpp"
 #include "../Utils/httpUtils.hpp"
 #include "../Utils/fileSystem.hpp"
 
@@ -33,6 +34,17 @@ namespace resp
 	void	prepareResponse(Response& response, const Request& request, const std::map<int, std::string>& error_pages)
 	{
 		int status_code = response.getStatusCode();
+
+		SessionManager& manager = SessionManager::createManager();
+
+		std::string id = extractCookie(request, "sessionId");
+		std::string	client_id = manager.handleId(id);
+
+		if (client_id != id)
+			response.setHeader("Set-Cookie", "sessionId=" + client_id);
+		else
+			response.setHeader("Cookie", "sessionId=" + client_id);
+		manager.incrementValue(client_id);
 
 		if (response.getStatusCode() >= 400 && response.getStatusCode() != METHOD_NOT_ALLOWED)
 		{
@@ -121,5 +133,20 @@ namespace resp
 			allow_header += *it;
 		}
 		return allow_header;
+	}
+
+	std::string	extractCookie(const Request& request, const std::string& cookie_name)
+	{
+	std::vector<std::string> cookie = request.getHeaderValues("Cookie");
+	if (cookie.empty() || cookie[0].empty())
+		return "";
+	
+	size_t pos = cookie[0].find(cookie_name + "=");
+	if (pos == std::string::npos)
+		return "";
+
+	pos += cookie_name.size() + 1;
+	std::string count = cookie[0].substr(pos);
+	return count;
 	}
 }

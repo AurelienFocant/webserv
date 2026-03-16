@@ -3,15 +3,21 @@
 
 SessionManager::SessionManager() {}
 
-SessionManager::~SessionManager() {}
-
 SessionManager&	SessionManager::createManager()
 {
 	static SessionManager manager;
 	return manager;
 }
 
-std::string	SessionManager::createSession()
+std::string	SessionManager::handleId(std::string id)
+{
+	if (!id.empty() && exists(id))
+		return id;
+	return _createSession();
+}
+
+
+std::string	SessionManager::_createSession()
 {
 	std::string id = _generateId();
 	_sessions[id] = 0;
@@ -20,7 +26,7 @@ std::string	SessionManager::createSession()
 
 std::string	SessionManager::_generateId()
 {
-	bool init = false;
+	static bool init = false;
 
 	if (!init)
 	{
@@ -29,7 +35,7 @@ std::string	SessionManager::_generateId()
 	}
 
 	std::stringstream ss;
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 4; i++)
 		ss << std::rand();
 	return ss.str();
 }
