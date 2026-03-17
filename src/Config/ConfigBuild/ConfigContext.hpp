@@ -82,8 +82,8 @@ class ConfigContext {
 		void		setVirtualLocation(bool b)									{_virtualLocation = b;}
 		void		setAlias(std::string a)										{_alias = a;}
 		void		setErrorPages(std::map<int, std::string> ep)				{_error_pages = ep;}
-		void		setErrorPage(int code, std::string page)					{_error_pages.insert(std::make_pair(code, page));}
-		void		setMaxBodySize(size_t l)										{_max_body_size = l;}
+		void		setErrorPage(int code, std::string page)					{_error_pages[code] = page;}
+		void		setMaxBodySize(size_t l)									{_max_body_size = l;}
 
 		ConfigContext(void);
 		ConfigContext(ContextType t);

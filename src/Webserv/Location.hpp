@@ -56,7 +56,7 @@ class Location
 	void   	setCGI(bool b)										{_cgi = b;}
 	void   	setAlias(std::string a)								{_alias = a;}
 	void   	setErrorPages(std::map<int, std::string> ep)		{_error_pages = ep;}
-	void   	setErrorPage(int code, std::string page)			{_error_pages.insert(std::make_pair(code, page));}
+	void   	setErrorPage(int code, std::string page)			{_error_pages[code] = page;}
 	void	setMaxBodySize(long l)								{_max_body_size = l;}
 	void	setCGITimeout(int n)								{_cgi_timeout = n;}
 	void	setCGIExec(std::string x)							{_cgi_exec = x;}

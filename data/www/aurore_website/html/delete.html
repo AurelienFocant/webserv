@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete — Webserv</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/ico" sizes="32x32" href="../favicon.ico">
+  <style>
+    :root {
+      --pink: #ff4fa3;
+      --rose: #ff7fb3;
+      --orange: #ff5a2f;
+      --cyan: #259AA1;
+      --blue: #203D57;
+      --red: #c0392b;
+      --red-light: #e74c3c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Playfair Display", serif;
+      background: radial-gradient(circle at 50% 20%, #ff9266 0%, var(--orange) 40%, #e6452d 100%);
+      color: #1a1a1a;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.18) 0px,
+        rgba(255,255,255,0.18) 2px,
+        transparent 3px,
+        transparent 22px
+      );
+      opacity: 0.35;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 56px 20px 90px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Back link ── */
+    .back {
+      display: inline-block;
+      margin-bottom: 40px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+    .back:hover { color: white; }
+
+    /* ── Title ── */
+    .title-wrapper { text-align: center; margin-bottom: 48px; }
+
+    h1 {
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      font-size: 3rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pink);
+      text-shadow:
+        0 0 8px rgba(255,255,255,0.6),
+        3px 3px 0 #fff,
+        6px 6px 0 rgba(0,0,0,0.15);
+      transform: skewX(-6deg);
+    }
+
+    .subtitle {
+      margin-top: 12px;
+      font-size: 1rem;
+      color: #3d2b28;
+    }
+
+    /* ── Card ── */
+    .card {
+      padding: 40px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(255,255,255,0.58));
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,0.18),
+        inset 0 0 10px rgba(255,255,255,0.4);
+    }
+
+    /* ── File list ── */
+    .file-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .field-label {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+    }
+
+    .btn-refresh {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 1rem;
+      border-radius: 50%;
+      background: rgba(32,61,87,0.1);
+      color: var(--blue);
+      box-shadow: none;
+      letter-spacing: 0;
+    }
+
+    .btn-refresh:hover {
+      background: rgba(32,61,87,0.2);
+      transform: rotate(90deg);
+    }
+
+    .file-list {
+      list-style: none;
+      margin: 0 0 28px;
+      padding: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid rgba(32,61,87,0.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.5);
+    }
+
+    .file-list li {
+      padding: 10px 16px;
+      font-family: "Courier New", monospace;
+      font-size: 0.88rem;
+      color: #1a1a1a;
+      border-bottom: 1px solid rgba(32,61,87,0.07);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .file-list li:last-child { border-bottom: none; }
+
+    .file-list li:hover { background: rgba(192,57,43,0.08); }
+
+    .file-list li.file-empty {
+      color: #999;
+      cursor: default;
+      font-style: italic;
+      font-family: "Playfair Display", serif;
+    }
+
+    .file-list li.selected {
+      background: rgba(192,57,43,0.12);
+      color: var(--red);
+      font-weight: bold;
+    }
+
+    /* ── Input row ── */
+    .field-row {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .field-row label {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+    }
+
+    .field-row input {
+      width: 100%;
+      border: 1px solid rgba(32,61,87,0.18);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font: inherit;
+      font-size: 0.95rem;
+      color: #1a1a1a;
+      background: rgba(255,255,255,0.78);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+      transition: border-color 0.2s, outline 0.2s;
+    }
+
+    .field-row input:focus {
+      outline: 2px solid rgba(192,57,43,0.25);
+      border-color: rgba(192,57,43,0.4);
+    }
+
+    .field-hint {
+      font-size: 0.82rem;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* ── Button ── */
+    button {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: white;
+      background: linear-gradient(135deg, var(--red-light), var(--red));
+      box-shadow:
+        0 10px 25px rgba(0,0,0,0.2),
+        inset 0 0 8px rgba(255,255,255,0.5);
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    button:hover {
+      transform: translateY(-3px) scale(1.02);
+      background: linear-gradient(135deg, var(--pink), var(--red));
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Status ── */
+    .status {
+      margin-top: 24px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-align: center;
+      display: none;
+    }
+
+    .status.success {
+      display: block;
+      background: rgba(37,154,161,0.15);
+      border: 1px solid rgba(37,154,161,0.4);
+      color: #154875;
+    }
+
+    .status.error {
+      display: block;
+      background: rgba(255,79,163,0.12);
+      border: 1px solid rgba(255,79,163,0.35);
+      color: #8b1a4a;
+    }
+
+    @media (max-width: 700px) {
+      h1 { font-size: 2.2rem; }
+      .card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a class="back" href="/">← Back to home</a>
+
+    <div class="title-wrapper">
+      <h1>Delete</h1>
+      <p class="subtitle">Remove a file from the server</p>
+    </div>
+
+    <div class="card">
+    <div class="card">
+      <div class="file-list-header">
+        <span class="field-label">Files in /upload/</span>
+        <button type="button" class="btn-refresh" onclick="loadFiles()" title="Refresh">↻</button>
+      </div>
+      <ul class="file-list" id="file-list">
+        <li class="file-empty">Loading…</li>
+      </ul>
+
+      <div class="field-row">
+        <label for="file-path">File path</label>
+        <input
+          type="text"
+          id="file-path"
+          placeholder="/upload/myfile.txt"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <span class="field-hint">Click a file above or type a path manually.</span>
+      </div>
+      <button type="button" id="delete-btn" disabled>Delete file</button>
+      <div class="status" id="status"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const input     = document.getElementById('file-path');
+    const deleteBtn = document.getElementById('delete-btn');
+    const status    = document.getElementById('status');
+    const fileList  = document.getElementById('file-list');
+
+    // Load files from /upload/ autoindex
+    function loadFiles() {
+      fileList.innerHTML = '<li class="file-empty">Loading…</li>';
+      fetch('/upload/')
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const links = Array.from(doc.querySelectorAll('a'));
+          const files = links
+            .map(a => a.getAttribute('href'))
+            .filter(href => href && href !== '../' && !href.endsWith('/'));
+
+          if (!files.length) {
+            fileList.innerHTML = '<li class="file-empty">No files found</li>';
+            return;
+          }
+
+          fileList.innerHTML = '';
+          files.forEach(name => {
+            const li = document.createElement('li');
+            li.textContent = name;
+            li.addEventListener('click', () => {
+              document.querySelectorAll('.file-list li').forEach(el => el.classList.remove('selected'));
+              li.classList.add('selected');
+              input.value = '/upload/' + name;
+              deleteBtn.disabled = false;
+              status.className = 'status';
+            });
+            fileList.appendChild(li);
+          });
+        })
+        .catch(() => {
+          fileList.innerHTML = '<li class="file-empty">Could not load file list</li>';
+        });
+    }
+
+    // Enable button on manual input
+    input.addEventListener('input', () => {
+      deleteBtn.disabled = input.value.trim() === '';
+      status.className = 'status';
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      const path = input.value.trim();
+      if (!path) return;
+
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = 'Deleting…';
+      status.className = 'status';
+
+      fetch(path, { method: 'DELETE' })
+        .then(res => {
+          if (res.ok || res.status === 204) {
+            status.className = 'status success';
+            status.textContent = '✓ ' + path + ' deleted successfully';
+            input.value = '';
+            loadFiles();
+          } else {
+            status.className = 'status error';
+            status.textContent = '✗ Server returned ' + res.status;
+          }
+        })
+        .catch(() => {
+          status.className = 'status error';
+          status.textContent = '✗ Network error';
+        })
+        .finally(() => {
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = 'Delete file';
+        });
+    });
+
+    // Load on page open
+    loadFiles();
+  </script>
+</body>
+</html>

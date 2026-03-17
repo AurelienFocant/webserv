@@ -192,7 +192,7 @@ void	Webserv::initWebServer()
 		if (bind(listenSocket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
 		{
 			perror("bind");
-			throw (std::runtime_error("bind failed"));
+			throw (std::runtime_error("bind failed")); //continue instead of throw???
 		}
 
 		if (listen(listenSocket, SOMAXCONN) < 0)

@@ -39,7 +39,7 @@ class VirtualServer
 		void	setAutoindex(bool b)										{_autoindex = b;}
 		void	setIndexes(std::vector<std::string> const& src)				{_indexes.assign(src.begin(), src.end());}
 		void	setErrorPages(std::map<int, std::string> ep)				{_error_pages = ep;}
-		void	setErrorPage(int code, std::string page)					{_error_pages.insert(std::make_pair(code, page));}
+		void	setErrorPage(int code, std::string page)					{_error_pages[code] = page;}
 		void	setLocations(const std::map<std::string, Location> &locs)	{_locations = locs;}
 		void	setLocationsAt(std::string key, Location &loc)				{_locations.insert(std::make_pair(key, loc));}
 		void	setMaxBodySize(long l)										{_max_body_size = l;}

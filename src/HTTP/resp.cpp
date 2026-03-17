@@ -106,7 +106,7 @@ namespace resp
 		{
 			Location const* location = reqHandler.getCtx().matched_location;
 			if (!location->getAlias().empty())
-				error_page = location->getAlias();
+				error_page = location->getAlias() + error_page;
 			else
 				error_page = location->getRoot() + error_page;
 		}
@@ -120,7 +120,7 @@ namespace resp
 				return (false);
 		}
 		close(fd);
-		loadFileToString(it->second, body);
+		loadFileToString(error_page, body);
 		return true;
 	}
 
