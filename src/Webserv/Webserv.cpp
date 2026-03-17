@@ -492,7 +492,8 @@ VirtualServer&	Webserv::getServer(int idx)
 
 // Constructors and stuff
 Webserv::Webserv( void )
-	: _configPath(defaultConfigPath)
+	: _epoll_fd(-1)
+	, _configPath(defaultConfigPath)
 {
 }
 
