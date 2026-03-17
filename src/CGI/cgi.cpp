@@ -33,13 +33,11 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 	if (!argv[0] || !argv[1])
 	{
 		deleteEnv(env);
-		// delete[](env);
 		return (false);
 	}
 
 	if (!launchCgi(conn, argv, env)) {
 		deleteEnv(env);
-		// delete[](env);
 		return (false);
 	}
 
@@ -49,7 +47,6 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 	argv[1] = NULL;
 
 	deleteEnv(env);
-	// delete[](env);
 
 	if (fcntl(conn.cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
 		close(conn.cgi_fd[0]);
@@ -117,40 +114,23 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 
 	if (!handler.getCGIExec().empty())
 	{
+		vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
+		vect.push_back("SCRIPT_FILENAME=" + handler.getCGIExec());
 		vect.push_back("PATH_INFO=" + handler.getPathInfo());
-		vect.push_back("PATH_TRANSLATED=" + handler.getCGIExec());
+		vect.push_back("PATH_TRANSLATED=" + handler.getCtx().root + handler.getPathInfo());
 	}
 	else
 	{
 		vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
 		vect.push_back("SCRIPT_FILENAME=" + handler.getResolvedPath());
 		if (!handler.getPathInfo().empty())
+		{
 			vect.push_back("PATH_INFO=" + handler.getPathInfo());
+			vect.push_back("PATH_TRANSLATED=" + handler.getCtx().root + handler.getPathInfo());
+		}
 	}
 	return (true);
 }
-
-/* char*	cgi::findInterpreter(const t_extension& extension)
-{
-	switch (extension) {
-		case (PY):
-			return (convertStringToChar("/usr/bin/python3")); //--> potential problems, need decisions on that 
-		case (SH):
-			return (convertStringToChar("/usr/bin/bash"));
-		default:
-			return (NULL);
-	}
-}
-
-char*	cgi::convertStringToChar(const std::string& string)
-{
-	char* str = new char[string.size()];
-	str[string.size()] = '\0';
-	for (size_t i = 0; i < string.size(); ++i) {
-		str[i] = string[i];
-	}
-	return (str);
-} */
 
 bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 {
@@ -172,6 +152,17 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 		return (false);
 	else if (pid == 0) {
 		// Child process
+/* 		std::string script_path(argv[0]);
+		size_t last_slash = script_path.rfind('/');
+		if (last_slash != std::string::npos)
+		{
+			std::string dir = script_path.substr(0, last_slash);
+			std::string	filename = script_path.substr(last_slash + 1);
+			chdir(dir.c_str());
+			free(argv[0]);
+			argv[0] = strdup(("./" + filename).c_str());
+		} */
+
 		//Setup the pipe to write from the child
 		dup2(pipe_in[0], STDIN_FILENO);
 		close(pipe_in[1]);

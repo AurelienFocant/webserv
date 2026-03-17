@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Old Page — Webserv</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green:      #2ecc71;
+      --teal:       #1abc9c;
+      --forest:     #1a5c3a;
+      --moss:       #4a7c59;
+      --sage:       #8fbc8f;
+      --olive:      #6b8e4e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Playfair Display", serif;
+      background: radial-gradient(circle at 50% 20%, #4a7c59 0%, #1a5c3a 40%, #0d2e1c 100%);
+      color: #e8f5e9;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.08) 0px,
+        rgba(255,255,255,0.08) 2px,
+        transparent 3px,
+        transparent 22px
+      );
+      opacity: 0.4;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 56px 20px 90px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 40px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+    .back:hover { color: white; }
+
+    .title-wrapper {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      font-size: 4rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--sage);
+      text-shadow:
+        0 0 12px rgba(143,188,143,0.4),
+        3px 3px 0 rgba(0,0,0,0.3),
+        6px 6px 0 rgba(0,0,0,0.15);
+      transform: skewX(-6deg);
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: rgba(143,188,143,0.15);
+      border: 1px solid rgba(143,188,143,0.3);
+      color: var(--sage);
+    }
+
+    .divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--sage), transparent);
+      margin: 0 auto 48px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 28px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      padding: 32px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      border: 1px solid rgba(143,188,143,0.2);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 22px 40px rgba(0,0,0,0.4);
+      border-color: rgba(143,188,143,0.4);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: var(--sage);
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .card .icon {
+      font-size: 2rem;
+      margin-bottom: 14px;
+    }
+
+    .cta {
+      text-align: center;
+    }
+
+    button {
+      padding: 18px 48px;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: white;
+      background: linear-gradient(135deg, var(--moss), var(--forest));
+      border: 1px solid rgba(143,188,143,0.3);
+      box-shadow:
+        0 10px 25px rgba(0,0,0,0.3),
+        inset 0 0 8px rgba(255,255,255,0.05);
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    button:hover {
+      transform: translateY(-3px) scale(1.05);
+      background: linear-gradient(135deg, var(--teal), var(--moss));
+    }
+
+    @media (max-width: 700px) {
+      h1 { font-size: 2.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a class="back" href="/">← Back to home</a>
+
+    <div class="title-wrapper">
+      <h1>Old Page</h1>
+      <p class="subtitle">A relic from a simpler time</p>
+      <span class="badge">◈ Legacy</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="icon">🌿</div>
+        <h2>Origins</h2>
+        <p>This page has been around since the beginning. It's seen it all — every request, every redirect.</p>
+      </div>
+      <div class="card">
+        <div class="icon">📜</div>
+        <h2>History</h2>
+        <p>Static, reliable, unchanged. A testament to the enduring power of a well-served HTML file.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🍃</div>
+        <h2>Still Here</h2>
+        <p>Despite all the new features, this page remains. Routed, resolved, and ready to respond.</p>
+      </div>
+    </div>
+
+    <div class="cta">
+      <button type="button" onclick="window.location.href='/'">Back to home</button>
+    </div>
+
+  </div>
+</body>
+</html>
