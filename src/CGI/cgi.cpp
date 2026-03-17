@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   cgi.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: stempels <stempels@student.42belgium.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/17 14:29:10 by stempels          #+#    #+#             */
+/*   Updated: 2026/03/17 14:29:14 by stempels         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "cgi.hpp"
 
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect);
@@ -33,13 +45,11 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 	if (!argv[0] || !argv[1])
 	{
 		deleteEnv(env);
-		// delete[](env);
 		return (false);
 	}
 
 	if (!launchCgi(conn, argv, env)) {
 		deleteEnv(env);
-		// delete[](env);
 		return (false);
 	}
 
@@ -49,7 +59,6 @@ bool	cgi::execute(const RequestHandler& handler, Connection& conn, char** env)
 	argv[1] = NULL;
 
 	deleteEnv(env);
-	// delete[](env);
 
 	if (fcntl(conn.cgi_fd[1], F_SETFL, O_NONBLOCK) < 0) {
 		close(conn.cgi_fd[0]);
@@ -129,28 +138,6 @@ static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::str
 	}
 	return (true);
 }
-
-/* char*	cgi::findInterpreter(const t_extension& extension)
-{
-	switch (extension) {
-		case (PY):
-			return (convertStringToChar("/usr/bin/python3")); //--> potential problems, need decisions on that 
-		case (SH):
-			return (convertStringToChar("/usr/bin/bash"));
-		default:
-			return (NULL);
-	}
-}
-
-char*	cgi::convertStringToChar(const std::string& string)
-{
-	char* str = new char[string.size()];
-	str[string.size()] = '\0';
-	for (size_t i = 0; i < string.size(); ++i) {
-		str[i] = string[i];
-	}
-	return (str);
-} */
 
 bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 {

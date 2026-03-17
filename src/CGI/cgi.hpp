@@ -1,3 +1,14 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   cgi.hpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: stempels <stempels@student.42belgium.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/17 14:28:59 by stempels          #+#    #+#             */
+/*   Updated: 2026/03/17 14:29:02 by stempels         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #ifndef		CGI_HPP
 # define	CGI_HPP
@@ -20,7 +31,6 @@ namespace	cgi {
 		char*		convertStringToChar(const std::string& string) ;
 		char*		findInterpreter(const t_extension& extension) ;
 		bool		parseOutput(Response& response);
-
 };
 
 #endif
