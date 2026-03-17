@@ -498,7 +498,8 @@ Webserv::Webserv( void )
 }
 
 Webserv::Webserv(char* configPath)
-	: _configPath(defaultConfigPath)
+	: _epoll_fd(-1)
+	, _configPath(defaultConfigPath)
 {
 	if (configPath) {
 		_configPath = configPath;
@@ -526,6 +527,7 @@ Webserv::~Webserv( void )
 			close(conn.getFd());
 		delete (&(conn));
 	}
-	close(_epoll_fd);
+	if (_epoll_fd > -1)
+		close(_epoll_fd);
 	std::cout << "Webserv Object Destroyed" << std::endl;
 }
