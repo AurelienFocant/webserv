@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Request.hpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: stempels <stempels@student.42belgium.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/17 14:33:35 by stempels          #+#    #+#             */
+/*   Updated: 2026/03/17 14:33:58 by stempels         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef		REQUEST_HPP
 # define	REQUEST_HPP
 
@@ -13,7 +25,7 @@
 # include "HTTPTokenizer.hpp"
 
 /*ENUM*/
-# include "HTTPenum.hpp" // Moved enum to their own .hpp, was getting out of hand
+# include "HTTPenum.hpp"
 
 class	Request	: private HTTPTokenizer {
 	public:

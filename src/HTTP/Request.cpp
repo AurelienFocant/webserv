@@ -2,12 +2,11 @@
 /*                                                                            */
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
-
 /*                                                    +:+ +:+         +:+     */
-/*   By: stempels <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: stempels <stempels@student.42belgium.      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/23 15:18:42 by stempels          #+#    #+#             */
-/*   Updated: 2026/02/25 13:40:43 by stempels         ###   ########.fr       */
+/*   Created: 2026/03/17 14:32:35 by stempels          #+#    #+#             */
+/*   Updated: 2026/03/17 14:33:24 by stempels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +112,6 @@ bool	Request::parseRequest() {
 }
 
 bool	Request::handleBody(unsigned int max_body) {
-		//add body size checking
 		if (_progress == BODY_HANDLING)
 			(this->*_body_handler)(max_body);
 
