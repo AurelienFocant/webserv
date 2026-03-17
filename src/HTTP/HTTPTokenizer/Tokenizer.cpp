@@ -1,10 +1,20 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Tokenizer.cpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: stempels <stempels@student.42belgium.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/17 14:31:13 by stempels          #+#    #+#             */
+/*   Updated: 2026/03/17 14:31:15 by stempels         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Tokenizer.hpp"
 
 #include <iostream>
 
 Tokenizer::Tokenizer( void )
-	//: _input("default input")
-	//, _it(_input.begin())
 {
 }
 
@@ -23,7 +33,7 @@ Tokenizer::Tokenizer( const Tokenizer& src )
 Tokenizer&	Tokenizer::operator=( const Tokenizer& rhs )
 {
 	if (this != &rhs) {
-		// clone input ??
+		//DO NOTHING
 	}
 	return (*this);
 }

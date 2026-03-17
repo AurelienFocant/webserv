@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Tokenizer.hpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: stempels <stempels@student.42belgium.      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/17 14:31:38 by stempels          #+#    #+#             */
+/*   Updated: 2026/03/17 14:31:48 by stempels         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef TOKENIZER_HPP
 #define TOKENIZER_HPP
 
@@ -23,8 +35,6 @@ class Tokenizer
 		std::string					_input;
 		std::string::const_iterator _it;
 		unsigned int				_current_line;
-
-		// char	match	();
 
 	public:
 		Tokenizer	( void );
