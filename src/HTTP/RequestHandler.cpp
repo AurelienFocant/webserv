@@ -54,13 +54,18 @@ void	RequestHandler::handleRequest()
 
 void	RequestHandler::findLocation()
 {
-	if (_ctx.request_path.empty())
-		path::extract(_ctx, _request, _response);
+	if (!path::extract(_ctx, _request))
+	{
+		_request.setComplete(true);
+		_request.setStatusCode(BAD_REQUEST);
+		return;
+	}
 	path::matchLocation(_ctx, _server);
 }
 
 bool	RequestHandler::isAllowedMethod()
-{
+{	if (!_ctx.matched_location)
+		return true;
 	return (method::isAllowed(_ctx, _request, _response));
 }
 

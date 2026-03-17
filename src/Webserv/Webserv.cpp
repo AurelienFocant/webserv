@@ -308,11 +308,11 @@ bool	Webserv::clientInHandler(Connection & conn)
 		{
 			reqHandler.setVirtualServer(_resolveVirtualServer(conn));
 			reqHandler.findLocation();
+			return true;;
 		}
 
-		if (reqHandler.getVirtualServer() != NULL)
+		if (reqHandler.getVirtualServer() != NULL && reqHandler.getCtx().matched_location != NULL)
 		{
-
 			reqHandler.setRoot(reqHandler.getVirtualServer()->getRoot());
 			if (!reqHandler.isAllowedMethod())
 				reqHandler.setRequestToComplete();

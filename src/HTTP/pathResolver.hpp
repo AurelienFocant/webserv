@@ -35,16 +35,17 @@ struct PathContext
 
 namespace path
 {
-	bool		extract(PathContext& ctx, const Request& req, Response& resp);
+	bool		extract(PathContext& ctx, const Request& req);
 	void		matchLocation(PathContext& ctx, const VirtualServer* server);
 	bool		resolve(PathContext& ctx, Response& resp);
 	bool		validate(PathContext& ctx, Response& resp);
 
-	bool		decodePath(const std::string& encoded, std::string& decoded);
+	bool		decodeUri(std::string& request_uri);
 	bool		normalizePath(PathContext& ctx, Response& resp);
 	bool		detectCGI(PathContext& ctx);
 	bool		handleConfigRedirect(PathContext& ctx, Response& resp);
 	bool		hasTrailingSlash(PathContext& ctx, Response& resp);
+	bool 		isValidUriChar(char c);
 	bool		hasRedirect(const Response& resp);
 }
 

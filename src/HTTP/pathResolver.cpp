@@ -23,15 +23,21 @@ PathContext::PathContext()
 
 namespace path
 {
-	bool	extract(PathContext& ctx, const Request& req, Response& resp)
+	bool	extract(PathContext& ctx, const Request& req)
 	{
 		if (req.getRequestUri().empty() || req.getRequestUri().at(0) != '/')
-		{
-			resp.setStatusCode(BAD_REQUEST);
 			return false;
-		}
 
 		ctx.request_path = req.getRequestUri();
+
+		for (size_t i = 0; i < ctx.request_path.size(); i++)
+		{
+			if (!isValidUriChar(ctx.request_path[i]))
+				return false;
+		}
+
+		if (!decodeUri(ctx.request_path))
+			return false;
 
 		size_t query_pos = ctx.request_path.find("?");
 		if (query_pos != std::string::npos)
@@ -179,7 +185,7 @@ namespace path
 		if (ctx.is_directory && !hasTrailingSlash(ctx, resp))
 			return false;
 
-		if (!ctx.is_directory && !ctx.is_cgi)
+		if (!ctx.is_directory && !ctx.is_cgi && resp.getMethod() != POST)
 		{
 			char buf[64];
 			struct tm *tm_info = gmtime(&statBuf.st_mtime);
@@ -190,9 +196,12 @@ namespace path
 		return true;
 	}
 
-	bool	decodePath(const std::string& encoded, std::string& decoded)
+	bool	decodeUri(std::string& request_uri)
 	{
 		//avoid useless reallocations (borne superieure)
+		std::string encoded = request_uri;
+		request_uri.clear();
+		std::string& decoded = request_uri;
 		decoded.reserve(encoded.size());
 
 		for (size_t i = 0; i < encoded.size(); i++)
@@ -227,16 +236,7 @@ namespace path
 		std::string cage_root = ctx.matched_location->getName() == "MAIN" || ctx.matched_extension != NO_EXT 
 			? "" : ctx.location_name;
 
-		std::string	decoded_path;
-
-		if (!decodePath(ctx.request_path, decoded_path))
-		{
-			std::cerr << "[ERROR] Path traversal attempt" << std::endl;
-			resp.setStatusCode(FORBIDDEN);
-			return false;
-		}
-
-		std::string temp_path = decoded_path.substr(cage_root.size());
+		std::string temp_path = ctx.request_path.substr(cage_root.size());
 
 		bool slash[2] = {true, true};
 
@@ -251,7 +251,6 @@ namespace path
 			temp_path += '/';
 
 		std::vector<std::string> segments;
-
 		size_t pos = 0;
 		size_t start = 0;
 
@@ -362,6 +361,17 @@ namespace path
 		return false;
 	}
 	
+	bool isValidUriChar(char c)
+	{
+		return (std::isalnum(c)
+			|| c == '-' || c == '_' || c == '.' || c == '~'
+			|| c == '/' || c == '?' || c == '='
+			|| c == '&' || c == '+' || c == ','
+			|| c == ':' || c == '@'
+			|| c == '!' || c == '$' || c == ';'
+			|| c == '%');
+	}
+
 	bool	hasRedirect(const Response& resp)
 	{
 		int status = resp.getStatusCode();
