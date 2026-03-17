@@ -379,7 +379,7 @@ bool	Webserv::_startCGIresponse(RequestHandler& reqHandler, Connection& conn)
 {
 	Response& response = reqHandler.getResponse();
 
-	if (!_addFdToEpoll(conn.getFd(), 0, EPOLL_CTL_MOD))
+	if (!_addFdToEpoll(conn.getFd(), EPOLLRDHUP, EPOLL_CTL_MOD))
 		conn.conn_closed = true;
 	char **env = cgi::buildCgiEnv(reqHandler);
 	if (!env)
