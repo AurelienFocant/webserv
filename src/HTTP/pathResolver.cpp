@@ -87,6 +87,7 @@ namespace path
 					{
 						longest_match = route_path.size();
 						ctx.matched_location = location;
+						ctx.is_cgi = location->getCGI();
 						ctx.location_name = route_path;;
 						
 					}

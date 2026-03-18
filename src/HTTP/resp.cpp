@@ -93,7 +93,7 @@ namespace resp
 		if (!file.is_open())
 			return false;
 		std::stringstream ss;
-		ss << file.rdbuf(); //lire tout le fichier en une fois
+		ss << file.rdbuf();
 		if (file.fail())
 			return false;
 
@@ -177,15 +177,7 @@ void	handleSession(const Request& request, Response& response)
 		{
 			if (std::difftime(std::time(NULL), manager.getCookie(id).created_at) > session_lifetime)
 			{
-/* 					char buf[64];
-				std::time_t expired = manager.getCookie(id).expired;
-				std::tm *tm = std::gmtime(&expired);
-				strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm);
-
-				std::string cookie = "sessionId= ; Path=/; expires=" + std::string(buf);
-				response.setHeader("Set-Cookie", cookie); */
 				manager.deleteCookie(id);
-				//response.setHeader("Set-Cookie", "sessionId=" + client_id + "; Path=/ ; SameSite=Lax");
 				client_id = manager.handleId("");
 			}
 		}

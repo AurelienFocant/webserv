@@ -91,7 +91,6 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 		vect.push_back(header);
 	}
 
-
 	std::stringstream ss;
 	ss << handler.getResponse().getCounterSession();
 	vect.push_back("SESSION_VISITS=" + ss.str());
@@ -105,32 +104,6 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 	}
 	return (c_enc);
 }
-
-/* static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect)
-{
-	vect.push_back("REQUEST_METHOD=" + methodToString(handler.getRequest().getMethod()));
-	vect.push_back("SERVER_PROTOCOL=" + handler.getRequest().getHttpVersion());
-	vect.push_back("QUERY_STRING=" + handler.getQuery());
-
-	if (!handler.getCGIExec().empty())
-	{
-		vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
-		vect.push_back("SCRIPT_FILENAME=" + handler.getCGIExec());
-		vect.push_back("PATH_INFO=" + handler.getPathInfo());
-		vect.push_back("PATH_TRANSLATED=" + handler.getCtx().root + handler.getPathInfo());
-	}
-	else
-	{
-		vect.push_back("SCRIPT_NAME=" + handler.getScriptName());
-		vect.push_back("SCRIPT_FILENAME=" + handler.getResolvedPath());
-		if (!handler.getPathInfo().empty())
-		{
-			vect.push_back("PATH_INFO=" + handler.getPathInfo());
-			vect.push_back("PATH_TRANSLATED=" + handler.getCtx().root + handler.getPathInfo());
-		}
-	}
-	return (true);
-} */
 
 static bool	addFirstLineInfo(const RequestHandler& handler, std::vector<std::string>& vect)
 {

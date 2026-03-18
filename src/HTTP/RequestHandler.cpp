@@ -19,9 +19,6 @@ void	RequestHandler::processRequest(std::string& input)
 {
 	if (_request.getMethod() == NOT_SET)
 		_request.sanitizeInput(input);
-/*	if (input.find('\n') == std::string::npos)
-		return ;
-		*/
 	_request.addInput(input);
 	_request.parseRequest();
 	return ;
