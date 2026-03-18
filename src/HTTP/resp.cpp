@@ -162,10 +162,6 @@ namespace resp
 		std::string result = (end == std::string::npos)
 			? cookie[0].substr(pos) 
 			: cookie[0].substr(pos, end - pos);
-
-		size_t last = result.find_last_not_of(" \r\n\t");
-		if (last != std::string::npos)
-			result = result.substr(0, last + 1);
 		
 		return result;
 	}
