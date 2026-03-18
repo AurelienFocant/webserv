@@ -1,7 +1,3 @@
----
-geometry: margin=0.5in
----
-
 # README
 
 ---
@@ -60,7 +56,18 @@ The following features and directives are implemented:
 
 
 ## Instructions
-make and blahblahblah
+Build the executable on Linux by simply running `make`
+Usage: `./webServMeBaby [config_file]` 
+If no config file is provided, the default one is at path `./data/webserv.nginx.conf`
+
+A minimal config file should ideally have:
+- a server block with:
+- a listen directive
+- a root directive
 
 ## Resources
-RFC + Mozilla
+RFC [9110](https://datatracker.ietf.org/doc/html/rfc9110) and 9112 are the official sources for the HTTP specification.
+
+The [Mozilla Developer Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP) is a de facto authoritative source of detailed explanation on numerous web-related technologies.
+
+CGI being on the verge of being an obsolete technology, the [CGI 101 book](https://www.cgi101.com/) is a great resource to learn about it.
