@@ -57,8 +57,17 @@ namespace resp
 		std::string connection;
 		if (header_values.empty() || header_values[0].empty())
 			connection = (response.getHttpVersion() == "HTTP/1.1") ? "keep-alive" : "close";
-		else 
-			connection = header_values[0];
+		else
+		{
+			std::string value = header_values[0];
+			for (size_t i = 0; i < value.size(); i++)
+				value[i] = std::tolower(value[i]);
+
+			if (value == "keep-alive" || value == "close")
+				connection = value;
+			else
+				connection = (response.getHttpVersion() == "HTTP/1.1") ? "keep-alive" : "close";
+		}
 
 		response.setHeader("Connection", connection);
 		response.setState(Response::READY);
@@ -149,15 +158,11 @@ namespace resp
 
 		pos += cookie_name.size() + 1;
 		size_t end = cookie[0].find(";", pos);
-	/* 	if (end == std::string::npos)
-			return cookie[0].substr(pos);
-		return cookie[0].substr(pos, end - pos); */
 
 		std::string result = (end == std::string::npos)
 			? cookie[0].substr(pos) 
 			: cookie[0].substr(pos, end - pos);
 
-		// trim \r, \n, espaces
 		size_t last = result.find_last_not_of(" \r\n\t");
 		if (last != std::string::npos)
 			result = result.substr(0, last + 1);
