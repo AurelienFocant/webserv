@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Page — Webserv</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green:      #2ecc71;
+      --green-dark: #27ae60;
+      --teal:       #1abc9c;
+      --forest:     #1a5c3a;
+      --lime:       #a8e063;
+      --cream:      #e8f5e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Playfair Display", serif;
+      background: radial-gradient(circle at 50% 20%, #a8e063 0%, var(--green-dark) 40%, #145a32 100%);
+      color: #1a1a1a;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.15) 0px,
+        rgba(255,255,255,0.15) 2px,
+        transparent 3px,
+        transparent 22px
+      );
+      opacity: 0.3;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 56px 20px 90px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 40px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+    .back:hover { color: white; }
+
+    .title-wrapper {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      font-size: 4rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--lime);
+      text-shadow:
+        0 0 8px rgba(255,255,255,0.5),
+        3px 3px 0 #fff,
+        6px 6px 0 rgba(0,0,0,0.15);
+      transform: skewX(-6deg);
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: rgba(46,204,113,0.3);
+      border: 1px solid rgba(46,204,113,0.5);
+      color: var(--lime);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 28px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      padding: 32px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(232,245,233,0.6));
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,0.15),
+        inset 0 0 10px rgba(255,255,255,0.4);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 22px 40px rgba(0,0,0,0.2);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: var(--forest);
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: #2d4a35;
+    }
+
+    .card .icon {
+      font-size: 2rem;
+      margin-bottom: 14px;
+    }
+
+    .cta {
+      text-align: center;
+    }
+
+    button {
+      padding: 18px 48px;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: white;
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      box-shadow:
+        0 10px 25px rgba(0,0,0,0.2),
+        inset 0 0 8px rgba(255,255,255,0.5);
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    button:hover {
+      transform: translateY(-3px) scale(1.05);
+      background: linear-gradient(135deg, var(--teal), var(--forest));
+    }
+
+    @media (max-width: 700px) {
+      h1 { font-size: 2.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a class="back" href="/">← Back to home</a>
+
+    <div class="title-wrapper">
+      <h1>New Page</h1>
+      <p class="subtitle">Fresh and ready to go</p>
+      <span class="badge">✦ New</span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="icon">🌱</div>
+        <h2>Getting Started</h2>
+        <p>Everything is set up and running. This page is served fresh from your custom HTTP server.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h2>Fast</h2>
+        <p>Non-blocking I/O with epoll keeps every request snappy, even under heavy load.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔒</div>
+        <h2>Secure</h2>
+        <p>Path traversal protection, method restrictions and body size limits built right in.</p>
+      </div>
+    </div>
+
+    <div class="cta">
+      <button type="button" onclick="window.location.href='/'">Back to home</button>
+    </div>
+
+  </div>
+</body>
+</html>

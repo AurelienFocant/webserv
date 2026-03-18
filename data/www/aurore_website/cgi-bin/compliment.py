@@ -60,6 +60,7 @@ def main():
     compliment = html.escape(pick_compliment(mood))
 
     print("Content-Type: text/html")
+    print("Status: 200")
     print()
 
     print("""<!DOCTYPE html>

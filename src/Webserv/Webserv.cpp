@@ -50,11 +50,8 @@ void	Webserv::_parseConfig(void)
 	ConfigParser	parser(tokenizer.getTokenVec());
 	parser.parseConfig();
 
-	// both tokenizer and parser are constructed with what they need,
-	// but builder takes it as argument to main fct ?
 	ConfigBuilder	builder;
 
-	//previous
 	_servers = builder.build(parser.getRoot());
 
 }
@@ -108,9 +105,6 @@ void	Webserv::_closeStaleConnections(void)
 			--it;
 			_closeConnection(conn);
 		}
-		// what about if its the very first connection and doesnt have any virtual server ?
-		// if (conn.hasTimedOut())
-		// 	return (_closeConnection(conn));
 	}
 }
 
@@ -121,8 +115,7 @@ const VirtualServer&	Webserv::_resolveVirtualServer(const Connection& conn)
 
 	//get local port
 	if (getsockname(conn.getFd(), (sockaddr*) &addr, &len) < 0)
-		throw std::runtime_error("getsockname failed"); // add a catch block in clientOutHandler to avoid crashing the server?
-														// only close the compromised connection
+		throw std::runtime_error("getsockname failed"); 
 
 	unsigned int port = ntohs(addr.sin_port);
 
@@ -169,7 +162,6 @@ void	Webserv::initWebServer()
 	_epoll_fd = epoll_create(1);
 	if (_epoll_fd < 0)
 		throw (std::runtime_error("epoll_create failed"));
-	// ?? put epoll fd non blocking ?
 
 	std::vector<int>	ports;
 	for (std::vector<VirtualServer>::iterator it = _servers.begin(); it != _servers.end(); it++) {
@@ -194,12 +186,11 @@ void	Webserv::initWebServer()
 		if (bind(listenSocket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
 		{
 			perror("bind");
-			throw (std::runtime_error("bind failed")); //continue instead of throw???
+			throw (std::runtime_error("bind failed"));
 		}
 
 		if (listen(listenSocket, SOMAXCONN) < 0)
 			throw (std::runtime_error("listen failed"));
-		// ?? listen options ?
 
 		Connection&	new_connection = *(new Connection(listenSocket, _epoll_fd, LISTEN_SOCK));
 		t_info	info(new_connection, &Webserv::listenHandler);
@@ -251,11 +242,11 @@ void	Webserv::run()
 
 		for (int i = 0; i < event_count; i++) {
 
-			std::map<int, t_info>::iterator it = _connections.find(ready_events[i].data.fd);				// find the right key
+			std::map<int, t_info>::iterator it = _connections.find(ready_events[i].data.fd);
 			if (it == _connections.end())
 				continue ;
 
-			Connection & currConn = it->second.connection;	// currConn is the value of <key, value>
+			Connection & currConn = it->second.connection;
 			currConn.setEvent(ready_events[i]);
 
 			_checkForRdHup(currConn);
@@ -389,7 +380,6 @@ bool	Webserv::_startCGIresponse(RequestHandler& reqHandler, Connection& conn)
 	if (!cgi::execute(reqHandler, conn, env))
 		return (false);
 
-	///////ADD PIPES TO EPOLL + MAP
 	if (!_addFdToEpoll(conn.cgi_fd[1], EPOLLOUT | EPOLLRDHUP, EPOLL_CTL_ADD)) {
 		close(conn.cgi_fd[0]);
 		close(conn.cgi_fd[1]);
@@ -410,7 +400,6 @@ bool	Webserv::_startCGIresponse(RequestHandler& reqHandler, Connection& conn)
 
 	t_info info_out(conn, &Webserv::cgiOutHandler);
 	_connections.insert(std::make_pair(conn.cgi_fd[0], info_out));
-	//////////////////////////////////////////
 
 	response.setState(Response::PROCESSING_CGI);
 	conn.cgi_timeout = std::time(NULL);
@@ -423,7 +412,6 @@ bool	Webserv::cgiInHandler(Connection& conn)
 
 	conn.sendCgiContent(bytes_sent);
 	if (bytes_sent < 0) {
-		//Error do something;
 		return (false);
 	}
 

@@ -44,19 +44,10 @@ void	Connection::sendResponse()
 		std::cerr << "[Status line]: " << buff << std::endl;
 	}
 
-	if (to_send > response.getOffset() )
-		std::cout << "left to send: " << to_send - response.getOffset()  << " / " << response.getDataSize() << std::endl;
-
 	ssize_t bytes_sent = send(_fd, data, to_send, MSG_NOSIGNAL);
 	if (bytes_sent > 0)
 	{
 		response.updateBytesSend(bytes_sent);
-
-		if (response.isDone()) {
-			std::cout << "Final offset: " << response.getOffset()  << std::endl;
-			std::cerr << "[sendResponse] LAST SEND - Response complete!" << std::endl;
-			std::cerr << "******************************************* END" << std::endl;
-		}
 	}
 	else if (bytes_sent < 0)
 		return;

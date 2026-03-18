@@ -56,7 +56,6 @@ namespace path
 			if (route_path.size() > 1 && route_path[route_path.size() -1] == '/')
 				route_path = route_path.substr(0,route_path.size() -1);
 
-			//Check if the requested path match an extension or begin with a Location name
 			if (route_path[route_path.size() -1] == '$')
 			{
 				ext = route_path.substr(0, route_path.size() -1);
@@ -64,7 +63,7 @@ namespace path
 				if (start != std::string::npos)
 				{
 					size_t ext_end = start + ext.size();
-					if (ext_end == ctx.request_path.size() || ctx.request_path[ext_end - 1] == '/' || ctx.request_path[ext_end] == '/')
+					if (ext_end == ctx.request_path.size() || ctx.request_path[ext_end] == '/')
 					{
 						if (ctx.matched_extension == NO_EXT)
 						{
@@ -82,15 +81,15 @@ namespace path
 			{
 				size_t route_len = route_path.size();
 
-				// Test if it's a real match, not just a partial prefix
-				if (ctx.request_path.size() == route_len || ctx.request_path[route_len - 1] == '/' || ctx.request_path[route_len] == '/')
+				if (ctx.request_path.size() == route_len || ctx.request_path[route_len] == '/')
 				{
-					//Keep the longest match
 					if (route_len > longest_match)
 					{
 						longest_match = route_path.size();
 						ctx.matched_location = location;
+						ctx.is_cgi = location->getCGI();
 						ctx.location_name = route_path;;
+						
 					}
 				}
 			}
@@ -135,7 +134,6 @@ namespace path
 				return false;
 			if (!ctx.matched_location->getAlias().empty())
 			{
-				//std::string	location_path	= ctx.matched_location->getName();
 				std::string	remaining_path	= ctx.request_path.substr(ctx.location_name.size());
 				ctx.resolved_path = ctx.matched_location->getAlias() + remaining_path;
 			}
@@ -192,7 +190,6 @@ namespace path
 
 	bool	decodePath(const std::string& encoded, std::string& decoded)
 	{
-		//avoid useless reallocations (borne superieure)
 		decoded.reserve(encoded.size());
 
 		for (size_t i = 0; i < encoded.size(); i++)
@@ -232,7 +229,7 @@ namespace path
 		if (!decodePath(ctx.request_path, decoded_path))
 		{
 			std::cerr << "[ERROR] Path traversal attempt" << std::endl;
-			resp.setStatusCode(FORBIDDEN);
+			resp.setStatusCode(BAD_REQUEST);
 			return false;
 		}
 
@@ -269,7 +266,7 @@ namespace path
 				if (segments.empty())
 				{
 					std::cerr << "[ERROR] Path traversal attempt" << std::endl;
-					resp.setStatusCode(FORBIDDEN);
+					resp.setStatusCode(BAD_REQUEST);
 					return false;
 				}
 				segments.pop_back();
@@ -346,7 +343,6 @@ namespace path
 
 	bool	hasTrailingSlash(PathContext& ctx, Response& resp)
 	{
-		std::cout << "[hasTrailingSlash] REQ METHOD: " << resp.getMethod() << std::endl;
 		if (ctx.request_path[ctx.request_path.size() - 1] == '/' || resp.getMethod() == POST)
 			return true;
 
@@ -357,7 +353,6 @@ namespace path
 		resp.setHeader("Location", redirect_uri);
 		
 		resp.setStatusCode(MOVED_PERMANENTLY);
-		//resp.setStatusCode(TEMPORARY_REDIRECT);
 
 		return false;
 	}

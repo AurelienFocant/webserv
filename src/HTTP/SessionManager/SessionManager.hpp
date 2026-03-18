@@ -15,9 +15,8 @@ struct	cookies
 {
 	int						count;
 	std::time_t				created_at;
-	std::time_t				expired;	
 
-	cookies() : count(0), created_at(std::time(NULL)), expired(std::time(NULL) + session_lifetime - 1) {};
+	cookies() : count(0), created_at(std::time(NULL)) {};
 };
 
 class SessionManager 

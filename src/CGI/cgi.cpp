@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: stempels <stempels@student.42belgium.      +#+  +:+       +#+        */
+/*   By: agaland <agaland@student.s19.be>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:29:10 by stempels          #+#    #+#             */
-/*   Updated: 2026/03/17 14:29:14 by stempels         ###   ########.fr       */
+/*   Updated: 2026/03/18 14:22:28 by agaland          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,6 @@ char**	cgi::buildCgiEnv(const RequestHandler& handler)
 		vect.push_back(header);
 	}
 
-
 	std::stringstream ss;
 	ss << handler.getResponse().getCounterSession();
 	vect.push_back("SESSION_VISITS=" + ss.str());
@@ -159,7 +158,7 @@ bool	cgi::launchCgi(Connection& conn, char** argv, char** env)
 		return (false);
 	else if (pid == 0) {
 		// Child process
-		//Setup the pipe to write from the child
+
 		dup2(pipe_in[0], STDIN_FILENO);
 		close(pipe_in[1]);
 		dup2(pipe_out[1], STDOUT_FILENO);
