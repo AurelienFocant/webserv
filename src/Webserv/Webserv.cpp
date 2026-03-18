@@ -163,6 +163,9 @@ bool	Webserv::_addFdToEpoll(int client_fd, int events, int flags)
 // Setting up listening sockets
 void	Webserv::initWebServer()
 {
+	if (_servers.empty())
+		throw (std::runtime_error("at least one server block should be present in the config file"));
+
 	_epoll_fd = epoll_create(1);
 	if (_epoll_fd < 0)
 		throw (std::runtime_error("epoll_create failed"));
@@ -183,7 +186,6 @@ void	Webserv::initWebServer()
 		int	enable = 1;
 		if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
 			throw (std::runtime_error("socket options failed"));
-		// ?? see more options ?
 
 		struct sockaddr_in server_addr;
 		server_addr.sin_family = AF_INET;
