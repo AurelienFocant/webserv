@@ -1,9 +1,8 @@
 # README
 
+_This project has been created as part of the 42 curriculum by **Agaland**, **Stempels** and **Afocant**_
+
 ---
-
-
-_This project has been created as part of the 42 curriculum by Agaland, Stempels and Afocant_
 
 ## Description
 
@@ -15,7 +14,7 @@ The goal is twofold:
 - understanding the challenges of using blocking or non-blocking IO in terms of treating client requests.
 
 
-The model is one of server-client architecture.
+The model is one of server-client architecture.<br>
 The typical workflow is:
 
 - the server is listening to incoming connections on one or multiple TCP ports.
@@ -26,9 +25,9 @@ The typical workflow is:
 
 
 ### Nginx reference
----
-Our Webserv implements a small subset of Nginx functionalities.
-The server is to be configured using a configuration file, of which syntax is very similar to Nginx's.
+
+Our Webserv implements a small subset of Nginx functionalities.<br>
+The server is to be configured using a configuration file, whose syntax is very similar to Nginx's.
 
 
 The following features and directives are implemented:
@@ -36,37 +35,41 @@ The following features and directives are implemented:
 1. server and location blocks
 
 2. nginx directives:
-- listen    (port);
-- root      (root);
-- alias     (alias);
-- index     (index index*);
-- server_name   (name);
-- autoindex     (on|off);
-- keepalive_time    (time);
-- keepalive_timeout (time);
-- max_body_size     (size);
-- error_pages       (code path);
-- allowed_methods   (method method*)
-- return            (redirect_code location);
+    - listen    (port);
+    - root      (root);
+    - alias     (alias);
+    - index     (index index*);
+    - server_name   (name);
+    - autoindex     (on|off);
+    - keepalive_time    (time);
+    - keepalive_timeout (time);
+    - max_body_size     (size);
+    - error_pages       (code path);
+    - allowed_methods   (method method*)
+    - return            (redirect_code location);
 
 3. adapted directives:
-- cgi           (on|off);
-- cgi_exec      (path);
-- cgi_timeout   (time);
+    - cgi           (on|off);
+    - cgi_exec      (path);
+    - cgi_timeout   (time);
 
+---
 
 ## Instructions
 Build the executable on Linux by simply running `make`
-Usage: `./webServMeBaby [config_file]` 
+Usage: `./webServMeBaby [config_file]`<br> 
 If no config file is provided, the default one is at path `./data/webserv.nginx.conf`
 
-A minimal config file should ideally have:
+A minimal config file should ideally have:<br>
+
 - a server block with:
 - a listen directive
 - a root directive
 
+---
+
 ## Resources
-RFC [9110](https://datatracker.ietf.org/doc/html/rfc9110) and 9112 are the official sources for the HTTP specification.
+RFC [9110](https://datatracker.ietf.org/doc/html/rfc9110) and [9112](https://datatracker.ietf.org/doc/html/rfc9112) are the official sources for the HTTP specification.
 
 The [Mozilla Developer Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP) is a de facto authoritative source of detailed explanation on numerous web-related technologies.
 
